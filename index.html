@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0a0a0a">
-    <title>🏭 Panel Production Manager</title>
+    <title>🏭 Panel Production Manager Ultimate</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -17,11 +17,13 @@
             --text-primary: #ffffff;
             --text-secondary: #888888;
             --accent-blue: #3b82f6;
-            --accent-success: #22c55e;
-            --accent-danger: #ef4444;
-            --accent-warning: #f59e0b;
             --radius-lg: 12px;
             --radius-xl: 16px;
+            
+            /* Customizable Status Colors (defaults) */
+            --color-pending: #6b7280;
+            --color-active: #3b82f6;
+            --color-done: #22c55e;
         }
 
         body {
@@ -34,8 +36,7 @@
 
         /* SPLASH SCREEN */
         .splash-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 9999; transition: opacity 0.8s ease, visibility 0.8s ease;
@@ -45,16 +46,44 @@
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
         .splash-title {
             font-size: 2rem; font-weight: 700; margin-bottom: 1rem;
-            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            background: linear-gradient(135deg, var(--color-active), #60a5fa);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .splash-subtitle { color: #888; font-size: 1rem; margin-bottom: 3rem; text-align: center; max-width: 300px; }
+        .splash-subtitle { color: #888; font-size: 1rem; margin-bottom: 2rem; text-align: center; max-width: 300px; }
+        
+        /* LOGIN SECTION */
+        .login-section { width: 100%; max-width: 350px; margin-top: 20px; }
+        .user-avatar {
+            width: 80px; height: 80px; border-radius: 50%; background: var(--color-active);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; margin: 0 auto 16px; cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .user-avatar:hover { transform: scale(1.05); }
+        .login-input {
+            width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+            color: white; font-size: 1rem; margin-bottom: 12px;
+        }
+        .login-input:focus { outline: none; border-color: var(--color-active); }
+        .login-btn {
+            width: 100%; padding: 16px; background: var(--color-active);
+            color: white; border: none; border-radius: 12px;
+            font-size: 1.1rem; font-weight: 700; cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(59,130,246,0.4); }
+        .switch-user-link {
+            margin-top: 20px; color: var(--text-secondary);
+            font-size: 0.9rem; cursor: pointer; text-decoration: underline;
+        }
+
         .splash-btn {
-            padding: 16px 48px; background: #3b82f6; color: white; border: none;
+            padding: 16px 48px; background: var(--color-active); color: white; border: none;
             border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer;
             box-shadow: 0 10px 25px rgba(59,130,246,0.4); transition: all 0.3s ease;
         }
-        .splash-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(59,130,246,0.5); }
+        .splash-btn:hover { transform: translateY(-2px); }
 
         /* APP CONTAINER */
         .app-container { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; }
@@ -62,272 +91,360 @@
         /* HEADER */
         .header {
             background: var(--bg-surface); border-bottom: 1px solid var(--border-color);
-            padding: 20px; position: sticky; top: 0; z-index: 100;
+            padding: 16px 20px; position: sticky; top: 0; z-index: 100;
         }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .header-title { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-        .header-actions { display: flex; gap: 10px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .header-title { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .header-user {
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+            padding: 6px 12px; background: var(--bg-surface-light);
+            border-radius: 20px; font-size: 0.85rem; transition: all 0.2s ease;
+        }
+        .header-user:hover { background: var(--color-active); }
+        .header-actions { display: flex; gap: 8px; }
         .icon-btn {
-            width: 40px; height: 40px; border-radius: 8px;
+            width: 38px; height: 38px; border-radius: 8px;
             background: var(--bg-surface-light); border: 1px solid var(--border-color);
             color: var(--text-primary); display: flex; align-items: center;
-            justify-content: center; cursor: pointer; font-size: 1.1rem;
+            justify-content: center; cursor: pointer; font-size: 1rem;
         }
 
         /* PROJECT TABS */
         .project-selector {
-            display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding: 4px 0;
+            display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 4px 0;
         }
         .project-selector::-webkit-scrollbar { display: none; }
         .project-tab {
-            flex-shrink: 0; padding: 10px 18px; background: var(--bg-surface-light);
+            flex-shrink: 0; padding: 8px 16px; background: var(--bg-surface-light);
             border: 1px solid var(--border-color); border-radius: 9999px;
             font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;
-            white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap; max-width: 150px; overflow: hidden; text-overflow: ellipsis;
         }
-        .project-tab.active { background: #3b82f6; border-color: #3b82f6; color: white; }
+        .project-tab.active { background: var(--color-active); border-color: var(--color-active); color: white; }
         .project-tab.add {
-            background: transparent; border-style: dashed; width: 42px;
-            padding: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+            background: transparent; border-style: dashed; width: 36px;
+            padding: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
         }
 
-        /* PANEL TABS (NEW!) */
+        /* DASHBOARD SECTION (NEW!) */
+        .dashboard-section {
+            background: var(--bg-surface); margin: 16px; border-radius: var(--radius-xl);
+            padding: 20px; border: 1px solid var(--border-color);
+        }
+        .dashboard-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px;
+        }
+        .dashboard-title {
+            font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px;
+        }
+        .dashboard-toggle {
+            padding: 6px 12px; background: var(--bg-surface-light);
+            border: 1px solid var(--border-color); border-radius: 8px;
+            color: var(--text-secondary); font-size: 0.8rem; cursor: pointer;
+        }
+        .dashboard-stats {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;
+        }
+        .dash-stat {
+            background: var(--bg-surface-light); padding: 14px; border-radius: 12px;
+            text-align: center;
+        }
+        .dash-stat-value { font-size: 1.5rem; font-weight: 800; }
+        .dash-stat-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; }
+        .dashboard-grid {
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .dash-panel-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px;
+            background: var(--bg-surface-light); border-radius: 10px;
+            border: 1px solid var(--border-color); cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .dash-panel-item:hover { border-color: var(--color-active); transform: translateX(4px); }
+        .dash-panel-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: var(--bg-surface); display: flex; align-items: center;
+            justify-content: center; font-size: 1.3rem;
+        }
+        .dash-panel-info { flex: 1; min-width: 0; }
+        .dash-panel-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dash-panel-meta { font-size: 0.75rem; color: var(--text-secondary); }
+        .dash-progress-mini {
+            width: 60px; height: 6px; background: var(--bg-surface); border-radius: 3px; overflow: hidden;
+        }
+        .dash-progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+        .dash-pct { font-size: 0.8rem; font-weight: 700; min-width: 35px; text-align: right; }
+
+        /* PANEL TABS WITH SEARCH/FILTER (NEW!) */
         .panel-tabs-container {
             background: var(--bg-surface-light); border-top: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color); padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color); padding: 12px 16px;
         }
         .panel-tabs-label {
             font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;
             text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
         }
+        .panel-count-badge {
+            background: var(--color-active); color: white; padding: 2px 8px;
+            border-radius: 10px; font-size: 0.7rem;
+        }
+        
+        /* SEARCH BAR (NEW!) */
+        .search-bar {
+            display: flex; gap: 8px; margin-bottom: 10px;
+        }
+        .search-input {
+            flex: 1; padding: 10px 14px; background: var(--bg-surface);
+            border: 1px solid var(--border-color); border-radius: 8px;
+            color: var(--text-primary); font-size: 0.85rem;
+        }
+        .search-input:focus { outline: none; border-color: var(--color-active); }
+        .filter-btn {
+            padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-color);
+            border-radius: 8px; color: var(--text-secondary); cursor: pointer;
+            font-size: 0.85rem; white-space: nowrap;
+        }
+        .filter-btn.active { background: var(--color-active); color: white; border-color: var(--color-active); }
+
         .panel-tabs {
             display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 4px 0;
         }
         .panel-tabs::-webkit-scrollbar { display: none; }
         .panel-tab {
-            flex-shrink: 0; padding: 8px 14px; background: var(--bg-surface);
+            flex-shrink: 0; padding: 8px 12px; background: var(--bg-surface);
             border: 1px solid var(--border-color); border-radius: 8px;
             font-size: 0.8rem; color: var(--text-secondary); cursor: pointer;
-            white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis;
             transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;
         }
-        .panel-tab:hover { border-color: var(--accent-blue); color: var(--text-primary); }
         .panel-tab.active {
-            background: rgba(59,130,246,0.15); border-color: var(--accent-blue);
-            color: var(--accent-blue); font-weight: 600;
+            background: rgba(59,130,246,0.15); border-color: var(--color-active);
+            color: var(--color-active); font-weight: 600;
         }
         .panel-tab.add-panel {
-            background: transparent; border-style: dashed; width: 36px;
-            padding: 8px; justify-content: center; font-size: 1.2rem;
+            background: transparent; border-style: dashed; width: 32px;
+            padding: 8px; justify-content: center; font-size: 1.1rem;
         }
         .panel-count {
-            background: var(--bg-surface-light); padding: 2px 6px;
-            border-radius: 10px; font-size: 0.7rem; font-weight: 700;
+            background: var(--bg-surface); padding: 2px 6px;
+            border-radius: 10px; font-size: 0.65rem; font-weight: 700;
         }
-        .panel-tab.active .panel-count { background: var(--accent-blue); color: white; }
+        .panel-tab.active .panel-count { background: var(--color-active); color: white; }
 
         /* PROGRESS SECTION */
         .progress-section {
-            background: var(--bg-surface); margin: 20px; border-radius: var(--radius-xl);
-            padding: 24px; border: 1px solid var(--border-color);
+            background: var(--bg-surface); margin: 16px; border-radius: var(--radius-xl);
+            padding: 20px; border: 1px solid var(--border-color);
         }
-        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .progress-label { font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; }
-        .progress-value { font-size: 2rem; font-weight: 800; color: #3b82f6; }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .progress-label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; }
+        .progress-value { font-size: 1.8rem; font-weight: 800; color: var(--color-active); }
         .progress-bar-container {
-            height: 10px; background: var(--bg-surface-light); border-radius: 9999px; overflow: hidden;
+            height: 8px; background: var(--bg-surface-light); border-radius: 9999px; overflow: hidden;
         }
         .progress-fill {
-            height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            height: 100%; background: linear-gradient(90deg, var(--color-active), #60a5fa);
             border-radius: 9999px; transition: width 0.5s ease;
         }
         .progress-stats {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-            margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color);
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+            margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);
         }
-        .stat { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px; background: var(--bg-surface-light); border-radius: 8px; }
-        .stat-value { font-size: 1.5rem; font-weight: 700; }
-        .stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
-        .stat.done .stat-value { color: #22c55e; }
-        .stat.active .stat-value { color: #3b82f6; }
-        .stat.pending .stat-value { color: #555; }
+        .stat { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px; background: var(--bg-surface-light); border-radius: 8px; }
+        .stat-value { font-size: 1.3rem; font-weight: 700; }
+        .stat-label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; }
+        .stat.done .stat-value { color: var(--color-done); }
+        .stat.active .stat-value { color: var(--color-active); }
+        .stat.pending .stat-value { color: var(--color-pending); }
 
         /* INFO CARD */
         .info-card {
-            background: var(--bg-surface); margin: 0 20px 20px; border-radius: var(--radius-xl);
-            padding: 20px 24px; border: 1px solid var(--border-color); cursor: pointer;
+            background: var(--bg-surface); margin: 0 16px 16px; border-radius: var(--radius-xl);
+            padding: 16px 20px; border: 1px solid var(--border-color); cursor: pointer;
         }
-        .info-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+        .info-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
         .info-item:last-child { border-bottom: none; }
-        .info-key { font-size: 0.9rem; color: var(--text-secondary); }
-        .info-value { font-size: 0.95rem; font-weight: 600; }
+        .info-key { font-size: 0.85rem; color: var(--text-secondary); }
+        .info-value { font-size: 0.9rem; font-weight: 600; }
 
         /* SECTION TITLE */
         .section-title {
-            font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 1px; color: var(--text-secondary); margin: 28px 20px 16px;
+            font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-secondary); margin: 24px 16px 12px;
         }
 
         /* PROCESS LIST */
-        .process-list { padding: 0 20px; }
+        .process-list { padding: 0 16px; }
         .process-item {
             background: var(--bg-surface); border: 1px solid var(--border-color);
-            border-radius: var(--radius-xl); margin-bottom: 16px; overflow: hidden;
+            border-radius: var(--radius-xl); margin-bottom: 12px; overflow: hidden;
         }
         .process-header {
-            padding: 20px; display: flex; align-items: center; gap: 16px; cursor: pointer;
+            padding: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer;
         }
         .process-icon {
-            width: 48px; height: 48px; border-radius: 12px; background: var(--bg-surface-light);
-            display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+            width: 44px; height: 44px; border-radius: 10px; background: var(--bg-surface-light);
+            display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
         }
-        .process-item.active .process-icon { background: rgba(59,130,246,0.15); border: 2px solid #3b82f6; }
-        .process-item.done .process-icon { background: rgba(34,197,94,0.15); border: 2px solid #22c55e; }
+        .process-item[data-status="active"] .process-icon { 
+            background: rgba(59,130,246,0.15); border: 2px solid var(--color-active); 
+        }
+        .process-item[data-status="done"] .process-icon { 
+            background: rgba(34,197,94,0.15); border: 2px solid var(--color-done); 
+        }
         .process-info { flex: 1; min-width: 0; }
-        .process-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
-        .process-meta { font-size: 0.8rem; color: var(--text-secondary); }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; }
-        .status-dot.pending { background: #555; }
-        .status-dot.active { background: #3b82f6; box-shadow: 0 0 12px #3b82f6; animation: glow 2s infinite; }
-        .status-dot.done { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
-        @keyframes glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .process-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+        .process-meta { font-size: 0.75rem; color: var(--text-secondary); }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .status-dot.pending { background: var(--color-pending); }
+        .status-dot.active { background: var(--color-active); box-shadow: 0 0 10px var(--color-active); animation: glow 2s infinite; }
+        .status-dot.done { background: var(--color-done); box-shadow: 0 0 8px var(--color-done); }
+        @keyframes glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         /* PROCESS CONTENT */
         .process-content { display: none; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border-color); }
         .process-item.expanded .process-content { display: block; }
-        .process-body { padding: 24px; }
+        .process-body { padding: 18px; }
 
         /* FILES */
-        .file-section { margin-bottom: 24px; }
-        .file-label { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px; display: block; font-weight: 600; }
-        .file-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+        .file-section { margin-bottom: 18px; }
+        .file-label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; display: block; font-weight: 600; }
+        .file-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         .file-item {
-            display: flex; align-items: center; gap: 14px; padding: 14px;
-            background: var(--bg-surface-light); border-radius: 12px; border: 1px solid var(--border-color);
+            display: flex; align-items: center; gap: 12px; padding: 12px;
+            background: var(--bg-surface-light); border-radius: 10px; border: 1px solid var(--border-color);
         }
         .file-thumb {
-            width: 52px; height: 52px; border-radius: 8px; background: var(--bg-surface);
-            display: flex; align-items: center; justify-content: center; font-size: 1.6rem;
+            width: 46px; height: 46px; border-radius: 8px; background: var(--bg-surface);
+            display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
         }
         .file-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
         .file-details { flex: 1; min-width: 0; }
-        .file-name { font-size: 0.9rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .file-size { font-size: 0.75rem; color: var(--text-secondary); }
-        .file-actions { display: flex; gap: 8px; }
+        .file-name { font-size: 0.85rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-size { font-size: 0.7rem; color: var(--text-secondary); }
+        .file-actions { display: flex; gap: 6px; }
         .file-btn {
-            width: 36px; height: 36px; border-radius: 8px; border: none;
-            background: var(--bg-surface); color: var(--text-primary); cursor: pointer;
+            width: 32px; height: 32px; border-radius: 6px; border: none;
+            background: var(--bg-surface); color: var(--text-primary); cursor: pointer; font-size: 0.9rem;
         }
         .file-btn.delete { color: #ef4444; }
         .upload-btn {
-            width: 100%; padding: 16px; border: 2px dashed var(--border-color);
-            border-radius: 12px; background: transparent; color: var(--text-secondary);
-            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+            width: 100%; padding: 14px; border: 2px dashed var(--border-color);
+            border-radius: 10px; background: transparent; color: var(--text-secondary);
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem;
         }
-        .upload-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+        .upload-btn:hover { border-color: var(--color-active); color: var(--color-active); }
 
         /* NOTES */
-        .notes-section { margin-bottom: 24px; }
+        .notes-section { margin-bottom: 18px; }
         .notes-input {
-            width: 100%; padding: 14px; background: var(--bg-surface-light);
-            border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary);
-            font-size: 0.9rem; resize: vertical; min-height: 90px; font-family: inherit;
+            width: 100%; padding: 12px; background: var(--bg-surface-light);
+            border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-primary);
+            font-size: 0.85rem; resize: vertical; min-height: 80px; font-family: inherit;
         }
-        .notes-input:focus { outline: none; border-color: #3b82f6; }
+        .notes-input:focus { outline: none; border-color: var(--color-active); }
 
-        /* STATUS TOGGLE */
-        .status-toggle { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        /* STATUS TOGGLE WITH CUSTOM COLORS */
+        .status-toggle { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .toggle-btn {
-            padding: 14px 8px; border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 12px 6px; border: 1px solid var(--border-color); border-radius: 10px;
             background: var(--bg-surface-light); color: var(--text-secondary);
-            font-size: 0.85rem; font-weight: 600; cursor: pointer;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
         }
-        .toggle-btn.active { background: #3b82f6; border-color: #3b82f6; color: white; }
-        .toggle-btn.done { background: #22c55e; border-color: #22c55e; color: white; }
+        .toggle-btn.active { 
+            background: var(--color-active); border-color: var(--color-active); color: white; 
+        }
+        .toggle-btn.done { 
+            background: var(--color-done); border-color: var(--color-done); color: white; 
+        }
 
         /* BOTTOM ACTIONS */
         .bottom-actions {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: var(--bg-surface); border-top: 1px solid var(--border-color);
-            padding: 16px 20px 28px; display: flex; gap: 12px; z-index: 100;
+            padding: 12px 16px 24px; display: flex; gap: 10px; z-index: 100;
         }
         .btn {
-            flex: 1; padding: 16px; border-radius: 12px; border: none;
-            font-size: 0.95rem; font-weight: 700; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+            flex: 1; padding: 14px; border-radius: 10px; border: none;
+            font-size: 0.85rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
         }
         .btn-secondary { background: var(--bg-surface-light); color: var(--text-primary); border: 1px solid var(--border-color); }
-        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+        .btn-primary { background: linear-gradient(135deg, var(--color-active), #2563eb); color: white; }
 
-        /* MODAL */
+        /* MODALS */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; padding: 20px;
+            background: rgba(0,0,0,0.92); z-index: 200; align-items: center; justify-content: center; padding: 20px;
         }
         .modal-overlay.active { display: flex; }
         .modal-container {
             background: var(--bg-surface); border-radius: var(--radius-xl);
-            width: 100%; max-width: 420px; border: 1px solid var(--border-color); overflow: hidden;
+            width: 100%; max-width: 400px; border: 1px solid var(--border-color); overflow: hidden;
+            max-height: 90vh; overflow-y: auto;
         }
         .modal-header {
-            padding: 24px; border-bottom: 1px solid var(--border-color);
+            padding: 20px; border-bottom: 1px solid var(--border-color);
             display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; background: var(--bg-surface); z-index: 10;
         }
-        .modal-title { font-weight: 700; font-size: 1.2rem; }
+        .modal-title { font-weight: 700; font-size: 1.1rem; }
         .modal-close {
             background: none; border: none; color: var(--text-secondary);
-            font-size: 1.8rem; cursor: pointer; width: 36px; height: 36px;
+            font-size: 1.6rem; cursor: pointer; width: 34px; height: 34px;
         }
-        .modal-body { padding: 24px; max-height: 70vh; overflow-y: auto; }
-        .form-group { margin-bottom: 20px; }
-        .form-label { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600; }
+        .modal-body { padding: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
         .form-input {
-            width: 100%; padding: 14px 16px; background: var(--bg-surface-light);
-            border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); font-size: 1rem;
+            width: 100%; padding: 12px 14px; background: var(--bg-surface-light);
+            border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-primary); font-size: 0.9rem;
         }
-        .form-input:focus { outline: none; border-color: #3b82f6; }
+        .form-input:focus { outline: none; border-color: var(--color-active); }
 
-        /* PROJECT LIST IN MODAL */
-        .project-list-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 18px; background: var(--bg-surface-light); border-radius: 12px;
-            margin-bottom: 10px; cursor: pointer; border: 2px solid var(--border-color);
+        /* COLOR PICKER (NEW!) */
+        .color-picker-group { margin-bottom: 16px; }
+        .color-picker-label {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.85rem; margin-bottom: 8px;
         }
-        .project-list-item.active { background: rgba(59,130,246,0.15); border-color: #3b82f6; }
-        .project-info-small { flex: 1; min-width: 0; }
-        .project-name-small { font-weight: 700; margin-bottom: 4px; }
-        .project-meta-small { font-size: 0.8rem; color: var(--text-secondary); }
-        .delete-project-btn {
-            width: 38px; height: 38px; border-radius: 8px; border: none;
-            background: #ef4444; color: white; cursor: pointer;
+        .color-picker-row {
+            display: flex; align-items: center; gap: 12px;
         }
+        .color-preview {
+            width: 40px; height: 40px; border-radius: 8px; border: 2px solid var(--border-color);
+            cursor: pointer;
+        }
+        .color-input[type="color"] {
+            width: 50px; height: 40px; border: none; border-radius: 8px;
+            cursor: pointer; background: transparent;
+        }
+        .color-name { flex: 1; font-weight: 600; }
 
-        /* PANEL LIST IN MODAL (NEW!) */
-        .panel-list-item {
+        /* LIST ITEMS */
+        .list-item {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 18px; background: var(--bg-surface-light); border-radius: 12px;
-            margin-bottom: 10px; cursor: pointer; border: 2px solid var(--border-color);
+            padding: 14px; background: var(--bg-surface-light); border-radius: 10px;
+            margin-bottom: 8px; cursor: pointer; border: 2px solid var(--border-color);
             transition: all 0.2s ease;
         }
-        .panel-list-item:hover { border-color: var(--accent-blue); transform: translateX(4px); }
-        .panel-list-item.active { background: rgba(59,130,246,0.15); border-color: var(--accent-blue); }
-        .panel-info-small { flex: 1; min-width: 0; }
-        .panel-name-small { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-        .panel-progress-badge {
-            font-size: 0.7rem; padding: 2px 8px; border-radius: 10px;
-            background: var(--bg-surface); font-weight: 600;
-        }
-        .panel-meta-small { font-size: 0.75rem; color: var(--text-secondary); }
-        .delete-panel-btn {
-            width: 38px; height: 38px; border-radius: 8px; border: none;
-            background: #ef4444; color: white; cursor: pointer; font-size: 1.1rem;
+        .list-item:hover { border-color: var(--color-active); }
+        .list-item.active { background: rgba(59,130,246,0.15); border-color: var(--color-active); }
+        .list-info { flex: 1; min-width: 0; }
+        .list-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 2px; }
+        .list-meta { font-size: 0.75rem; color: var(--text-secondary); }
+        .delete-btn {
+            width: 34px; height: 34px; border-radius: 6px; border: none;
+            background: #ef4444; color: white; cursor: pointer; font-size: 1rem;
         }
 
         /* TOAST */
         .toast {
-            position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%) translateY(100px);
-            background: var(--bg-surface); color: var(--text-primary); padding: 14px 28px;
-            border-radius: 12px; border: 1px solid var(--border-color); font-size: 0.9rem;
+            position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: var(--bg-surface); color: var(--text-primary); padding: 12px 24px;
+            border-radius: 10px; border: 1px solid var(--border-color); font-size: 0.85rem;
             opacity: 0; transition: all 0.3s ease; z-index: 300;
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -340,34 +457,40 @@
         .image-viewer.active { display: flex; }
         .image-viewer img { max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 12px; }
         .image-viewer-close {
-            position: absolute; top: 24px; right: 24px; background: var(--bg-surface);
-            border: 2px solid var(--border-color); color: white; width: 48px; height: 48px;
-            border-radius: 50%; font-size: 1.8rem; cursor: pointer;
+            position: absolute; top: 20px; right: 20px; background: var(--bg-surface);
+            border: 2px solid var(--border-color); color: white; width: 44px; height: 44px;
+            border-radius: 50%; font-size: 1.6rem; cursor: pointer;
         }
 
-        /* EMPTY STATE */
-        .empty-state { text-align: center; padding: 80px 24px; color: var(--text-secondary); }
-        .empty-state-icon { font-size: 5rem; margin-bottom: 24px; opacity: 0.4; }
-        .empty-state-text { font-size: 1.2rem; margin-bottom: 32px; }
+        /* EMPTY STATES */
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+        .empty-state-icon { font-size: 4rem; margin-bottom: 16px; opacity: 0.4; }
+        .empty-state-text { font-size: 1.1rem; margin-bottom: 24px; }
 
-        .content-wrapper { padding-bottom: 120px; }
-        #pdfContent { display: none; background: white; color: #000; padding: 50px; }
+        .content-wrapper { padding-bottom: 100px; }
+        #pdfContent { display: none; background: white; color: #000; padding: 40px; }
 
-        /* NO PANEL STATE */
-        .no-panel-state {
-            text-align: center; padding: 60px 24px; color: var(--text-secondary);
+        /* Settings icon in header */
+        .settings-btn { position: relative; }
+        .settings-badge {
+            position: absolute; top: -2px; right: -2px; width: 8px; height: 8px;
+            background: var(--color-done); border-radius: 50%;
         }
-        .no-panel-icon { font-size: 4rem; margin-bottom: 20px; opacity: 0.4; }
-        .no-panel-text { font-size: 1.1rem; margin-bottom: 24px; }
     </style>
 </head>
 <body>
-    <!-- SPLASH SCREEN -->
+    <!-- SPLASH / LOGIN SCREEN -->
     <div class="splash-screen" id="splashScreen">
         <div class="splash-logo">🏭</div>
-        <h1 class="splash-title">Panel Production Manager</h1>
-        <p class="splash-subtitle">Tracking produksi multi-panel profesional</p>
-        <button class="splash-btn" onclick="enterApp()">Mulai Sekarang →</button>
+        <h1 class="splash-title">Production Manager</h1>
+        <p class="splash-subtitle">Multi-user • Multi-panel • Custom theme</p>
+        
+        <div class="login-section" id="loginSection">
+            <div class="user-avatar" onclick="cycleAvatar()">👤</div>
+            <input type="text" class="login-input" id="usernameInput" placeholder="Nama kamu..." maxlength="20">
+            <button class="login-btn" onclick="login()">Masuk →</button>
+            <p class="switch-user-link" onclick="showUserList()">Ganti akun lain?</p>
+        </div>
     </div>
 
     <!-- APP CONTAINER -->
@@ -376,18 +499,48 @@
             <!-- HEADER -->
             <header class="header">
                 <div class="header-top">
-                    <h1 class="header-title">🏭 Production Manager</h1>
-                    <div class="header-actions">
-                        <button class="icon-btn" onclick="openProjectsModal()" title="Semua Proyek">☰</button>
-                        <button class="icon-btn" onclick="openNewProjectModal()" title="Proyek Baru">+</button>
+                    <h1 class="header-title">🏭 Production</h1>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <div class="header-user" onclick="openUserMenu()">
+                            <span id="headerUserAvatar">👤</span>
+                            <span id="headerUserName">User</span>
+                        </div>
+                        <div class="header-actions">
+                            <button class="icon-btn settings-btn" onclick="openSettingsModal()" title="Pengaturan">
+                                ⚙️
+                                <span class="settings-badge"></span>
+                            </button>
+                            <button class="icon-btn" onclick="toggleDashboard()" title="Dashboard">📊</button>
+                            <button class="icon-btn" onclick="openNewProjectModal()" title="Proyek Baru">+</button>
+                        </div>
                     </div>
                 </div>
                 <nav class="project-selector" id="projectSelector"></nav>
             </header>
 
-            <!-- PANEL TABS (NEW!) -->
+            <!-- DASHBOARD (NEW!) -->
+            <div class="dashboard-section" id="dashboardSection" style="display:none;">
+                <div class="dashboard-header">
+                    <span class="dashboard-title">📊 Dashboard Overview</span>
+                    <button class="dashboard-toggle" onclick="toggleDashboard()">Sembunyikan ▲</button>
+                </div>
+                <div class="dashboard-stats" id="dashboardStats"></div>
+                <div class="dashboard-grid" id="dashboardGrid"></div>
+            </div>
+
+            <!-- PANEL TABS WITH SEARCH/FILTER -->
             <div class="panel-tabs-container" id="panelTabsContainer" style="display:none;">
-                <div class="panel-tabs-label">📦 Daftar Panel (<span id="panelCountLabel">0</span>)</div>
+                <div class="panel-tabs-label">
+                    <span>📦 Panel (<span id="panelCountLabel">0</span>)</span>
+                    <span class="panel-count-badge" id="filteredCountBadge"></span>
+                </div>
+                <div class="search-bar">
+                    <input type="text" class="search-input" id="panelSearchInput" placeholder="🔍 Cari panel..." oninput="filterPanels()">
+                    <button class="filter-btn" id="filterAllBtn" onclick="setFilter('all')" data-filter="all">Semua</button>
+                    <button class="filter-btn" id="filterPendingBtn" onclick="setFilter('pending')" data-filter="pending">⏳</button>
+                    <button class="filter-btn" id="filterActiveBtn" onclick="setFilter('active')" data-filter="active">▶️</button>
+                    <button class="filter-btn" id="filterDoneBtn" onclick="setFilter('done')" data-filter="done">✅</button>
+                </div>
                 <nav class="panel-tabs" id="panelTabs"></nav>
             </div>
 
@@ -395,23 +548,18 @@
             <div class="empty-state" id="emptyState" style="display:none;">
                 <div class="empty-state-icon">📁</div>
                 <p class="empty-state-text">Belum ada proyek</p>
-                <button class="btn btn-primary" style="max-width:240px;margin:0 auto;" onclick="openNewProjectModal()">
-                    + Buat Proyek Pertama
-                </button>
+                <button class="btn btn-primary" style="max-width:220px;margin:0 auto;" onclick="openNewProjectModal()">+ Buat Proyek</button>
             </div>
 
-            <!-- NO PANEL STATE (NEW!) -->
-            <div class="no-panel-state" id="noPanelState" style="display:none;">
-                <div class="no-panel-icon">📦</div>
-                <p class="no-panel-text">Belum ada panel dalam proyek ini</p>
-                <button class="btn btn-primary" style="max-width:240px;margin:0 auto;" onclick="openNewPanelModal()">
-                    + Tambah Panel Pertama
-                </button>
+            <!-- NO PANEL STATE -->
+            <div class="empty-state" id="noPanelState" style="display:none;">
+                <div class="empty-state-icon">📦</div>
+                <p class="empty-state-text">Belum ada panel</p>
+                <button class="btn btn-primary" style="max-width:220px;margin:0 auto;" onclick="openNewPanelModal()">+ Tambah Panel</button>
             </div>
 
             <!-- PROJECT CONTENT -->
             <main id="projectContent">
-                <!-- PROGRESS -->
                 <section class="progress-section">
                     <div class="progress-header">
                         <span class="progress-label">Progress Panel</span>
@@ -423,38 +571,35 @@
                     <div class="progress-stats">
                         <div class="stat done"><span class="stat-value" id="statDone">0</span><span class="stat-label">Selesai</span></div>
                         <div class="stat active"><span class="stat-value" id="statActive">0</span><span class="stat-label">Aktif</span></div>
-                        <div class="stat pending"><span class="stat-value" id="statPending">6</span><span class="stat-label">Menunggu</span></div>
+                        <div class="stat pending"><span class="stat-value" id="statPending">0</span><span class="stat-label">Menunggu</span></div>
                     </div>
                 </section>
 
-                <!-- INFO CARD -->
                 <article class="info-card" onclick="openEditProjectModal()">
-                    <div class="info-item"><span class="info-key">Nomor Order</span><span class="info-value" id="dispOrder">-</span></div>
+                    <div class="info-item"><span class="info-key">Order</span><span class="info-value" id="dispOrder">-</span></div>
                     <div class="info-item"><span class="info-key">Pelanggan</span><span class="info-value" id="dispCustomer">-</span></div>
                     <div class="info-item"><span class="info-key">Panel Aktif</span><span class="info-value" id="dispPanel">-</span></div>
                 </article>
 
-                <!-- PROCESSES -->
                 <h2 class="section-title">Tahapan Produksi</h2>
                 <div class="process-list" id="processList"></div>
             </main>
         </div>
 
-        <!-- BOTTOM ACTIONS -->
         <footer class="bottom-actions" id="bottomActions" style="display:none;">
-            <button class="btn btn-secondary" onclick="exportProject()">📥 Export JSON</button>
-            <button class="btn btn-primary" onclick="generatePDF()">📄 Laporan PDF</button>
+            <button class="btn btn-secondary" onclick="exportData()">📥 Export</button>
+            <button class="btn btn-primary" onclick="generatePDF()">📄 PDF</button>
         </footer>
     </div>
 
     <!-- MODALS -->
     
-    <!-- NEW PROJECT MODAL -->
-    <div class="modal-overlay" id="newProjectModal" onclick="closeNewProjectModal(event)">
+    <!-- NEW PROJECT -->
+    <div class="modal-overlay" id="newProjectModal" onclick="closeModal('newProjectModal')">
         <div class="modal-container" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <h2 class="modal-title">➕ Proyek Baru</h2>
-                <button class="modal-close" onclick="closeNewProjectModal()">&times;</button>
+                <span class="modal-title">➕ Proyek Baru</span>
+                <button class="modal-close" onclick="closeModal('newProjectModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -462,7 +607,7 @@
                     <input type="text" class="form-input" id="newOrder" placeholder="PO-2024-001">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Nama Pelanggan</label>
+                    <label class="form-label">Pelanggan</label>
                     <input type="text" class="form-input" id="newCustomer" placeholder="Nama pelanggan">
                 </div>
                 <button class="btn btn-primary" style="width:100%" onclick="createProject()">✨ Buat Proyek</button>
@@ -470,12 +615,12 @@
         </div>
     </div>
 
-    <!-- EDIT PROJECT MODAL -->
-    <div class="modal-overlay" id="editProjectModal" onclick="closeEditProjectModal(event)">
+    <!-- EDIT PROJECT -->
+    <div class="modal-overlay" id="editProjectModal" onclick="closeModal('editProjectModal')">
         <div class="modal-container" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <h2 class="modal-title">✏️ Edit Proyek</h2>
-                <button class="modal-close" onclick="closeEditProjectModal()">&times;</button>
+                <span class="modal-title">✏️ Edit Proyek</span>
+                <button class="modal-close" onclick="closeModal('editProjectModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -483,7 +628,7 @@
                     <input type="text" class="form-input" id="editOrder">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Nama Pelanggan</label>
+                    <label class="form-label">Pelanggan</label>
                     <input type="text" class="form-input" id="editCustomer">
                 </div>
                 <button class="btn btn-primary" style="width:100%" onclick="saveEditProject()">💾 Simpan</button>
@@ -491,48 +636,48 @@
         </div>
     </div>
 
-    <!-- ALL PROJECTS MODAL -->
-    <div class="modal-overlay" id="projectsModal" onclick="closeProjectsModal(event)">
+    <!-- ALL PROJECTS -->
+    <div class="modal-overlay" id="projectsModal" onclick="closeModal('projectsModal')">
         <div class="modal-container" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <h2 class="modal-title">📂 Semua Proyek</h2>
-                <button class="modal-close" onclick="closeProjectsModal()">&times;</button>
+                <span class="modal-title">📂 Semua Proyek</span>
+                <button class="modal-close" onclick="closeModal('projectsModal')">&times;</button>
             </div>
             <div class="modal-body" id="projectsList"></div>
         </div>
     </div>
 
-    <!-- NEW PANEL MODAL (NEW!) -->
-    <div class="modal-overlay" id="newPanelModal" onclick="closeNewPanelModal(event)">
+    <!-- NEW PANEL -->
+    <div class="modal-overlay" id="newPanelModal" onclick="closeModal('newPanelModal')">
         <div class="modal-container" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <h2 class="modal-title">📦 Tambah Panel Baru</h2>
-                <button class="modal-close" onclick="closeNewPanelModal()">&times;</button>
+                <span class="modal-title">📦 Panel Baru</span>
+                <button class="modal-close" onclick="closeModal('newPanelModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">Nama Panel *</label>
-                    <input type="text" class="form-input" id="newPanelName" placeholder="Contoh: MDP 1600A">
+                    <input type="text" class="form-input" id="newPanelName" placeholder="MDP 1600A">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Spesifikasi (opsional)</label>
-                    <input type="text" class="form-input" id="newPanelSpec" placeholder="Contoh: 3 Phase, 400V">
+                    <label class="form-label">Spesifikasi</label>
+                    <input type="text" class="form-input" id="newPanelSpec" placeholder="3 Phase, 400V">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Kuantitas</label>
-                    <input type="number" class="form-input" id="newPanelQty" placeholder="1" value="1" min="1">
+                    <input type="number" class="form-input" id="newPanelQty" value="1" min="1">
                 </div>
                 <button class="btn btn-primary" style="width:100%" onclick="createPanel()">📦 Buat Panel</button>
             </div>
         </div>
     </div>
 
-    <!-- EDIT PANEL MODAL (NEW!) -->
-    <div class="modal-overlay" id="editPanelModal" onclick="closeEditPanelModal(event)">
+    <!-- EDIT PANEL -->
+    <div class="modal-overlay" id="editPanelModal" onclick="closeModal('editPanelModal')">
         <div class="modal-container" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <h2 class="modal-title">✏️ Edit Panel</h2>
-                <button class="modal-close" onclick="closeEditPanelModal()">&times;</button>
+                <span class="modal-title">✏️ Edit Panel</span>
+                <button class="modal-close" onclick="closeModal('editPanelModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -547,19 +692,90 @@
                     <label class="form-label">Kuantitas</label>
                     <input type="number" class="form-input" id="editPanelQty" min="1">
                 </div>
-                <button class="btn btn-primary" style="width:100%" onclick="saveEditPanel()">💾 Simpan Perubahan</button>
+                <button class="btn btn-primary" style="width:100%" onclick="saveEditPanel()">💾 Simpan</button>
             </div>
         </div>
     </div>
 
-    <!-- ALL PANELS MODAL (NEW!) -->
-    <div class="modal-overlay" id="panelsModal" onclick="closePanelsModal(event)">
+    <!-- ALL PANELS -->
+    <div class="modal-overlay" id="panelsModal" onclick="closeModal('panelsModal')">
         <div class="modal-container" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <h2 class="modal-title">📦 Semua Panel</h2>
-                <button class="modal-close" onclick="closePanelsModal()">&times;</button>
+                <span class="modal-title">📦 Semua Panel</span>
+                <button class="modal-close" onclick="closeModal('panelsModal')">&times;</button>
             </div>
             <div class="modal-body" id="panelsList"></div>
+        </div>
+    </div>
+
+    <!-- SETTINGS / COLOR PICKER (NEW!) -->
+    <div class="modal-overlay" id="settingsModal" onclick="closeModal('settingsModal')">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span class="modal-title">⚙️ Pengaturan & Tema</span>
+                <button class="modal-close" onclick="closeModal('settingsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3 style="margin-bottom:16px;font-size:1rem;">🎨 Warna Status</h3>
+                
+                <div class="color-picker-group">
+                    <div class="color-picker-label">
+                        <span class="color-name">⏳ Menunggu / Pending</span>
+                    </div>
+                    <div class="color-picker-row">
+                        <div class="color-preview" id="previewPending" style="background:#6b7280;"></div>
+                        <input type="color" class="color-input" id="colorPending" value="#6b7280" onchange="updateColor('pending',this.value)">
+                    </div>
+                </div>
+
+                <div class="color-picker-group">
+                    <div class="color-picker-label">
+                        <span class="color-name">▶️ Aktif / Active</span>
+                    </div>
+                    <div class="color-picker-row">
+                        <div class="color-preview" id="previewActive" style="background:#3b82f6;"></div>
+                        <input type="color" class="color-input" id="colorActive" value="#3b82f6" onchange="updateColor('active',this.value)">
+                    </div>
+                </div>
+
+                <div class="color-picker-group">
+                    <div class="color-picker-label">
+                        <span class="color-name">✅ Selesai / Done</span>
+                    </div>
+                    <div class="color-picker-row">
+                        <div class="color-preview" id="previewDone" style="background:#22c55e;"></div>
+                        <input type="color" class="color-input" id="colorDone" value="#22c55e" onchange="updateColor('done',this.value)">
+                    </div>
+                </div>
+
+                <hr style="border-color:var(--border-color);margin:20px 0;">
+
+                <h3 style="margin-bottom:16px;font-size:1rem;">👤 Akun</h3>
+                <div class="list-item" onclick="logout()" style="justify-content:center;border-style:dashed;">
+                    <span>🚪 Keluar / Ganti Akun</span>
+                </div>
+
+                <hr style="border-color:var(--border-color);margin:20px 0;">
+
+                <h3 style="margin-bottom:16px;font-size:1rem;">🗑️ Data</h3>
+                <button class="btn btn-secondary" style="width:100%;margin-bottom:10px;" onclick="clearAllData()">
+                    🗑️ Hapus Semua Data
+                </button>
+                <p style="font-size:0.75rem;color:var(--text-secondary);text-align:center;">
+                    Hapus semua proyek, panel, dan pengaturan
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- USER LIST (NEW!) -->
+    <div class="modal-overlay" id="userListModal" onclick="closeModal('userListModal')">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span class="modal-title">👥 Pilih Akun</span>
+                <button class="modal-close" onclick="closeModal('userListModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="userListBody"></div>
         </div>
     </div>
 
@@ -574,7 +790,7 @@
 
     <!-- PDF TEMPLATE -->
     <div id="pdfContent">
-        <h1 style="text-align:center;margin-bottom:40px;">Laporan Progress Produksi</h1>
+        <h1 style="text-align:center;margin-bottom:30px;">Laporan Produksi</h1>
         <div id="pdfBody"></div>
     </div>
 
@@ -584,48 +800,234 @@
         // ============================================
         
         const PROCESSES = [
-            {id:'drawing', name:'Drawing', icon:'📐', desc:'Gambar teknis & desain'},
-            {id:'prepare', name:'Preparation', icon:'📦', desc:'Persiapan komponen material'},
-            {id:'assembly', name:'Assembly', icon:'🔧', desc:'Perakitan panel'},
-            {id:'wiring', name:'Wiring', icon:'🔌', desc:'Pemasangan kabel listrik'},
-            {id:'finishing', name:'Finishing', icon:'✨', desc:'Finishing & pengecatan'},
-            {id:'qc', name:'Quality Control', icon:'✓', desc:'Pengendalian mutu'}
+            {id:'drawing', name:'Drawing', icon:'📐'},
+            {id:'prepare', name:'Preparation', icon:'📦'},
+            {id:'assembly', name:'Assembly', icon:'🔧'},
+            {id:'wiring', name:'Wiring', icon:'🔌'},
+            {id:'finishing', name:'Finishing', icon:'✨'},
+            {id:'qc', name:'Quality Control', icon:'✓'}
         ];
 
-        let projects = [];
+        const AVATARS = ['👤','👨','👩','🧑','👨‍💼','👩‍💼','🧔','👱','👴','👵','😎','🤓','🥷','👽'];
+
+        // State
+        let appData = {};
+        let currentUser = null;
         let currentProjectId = null;
         let currentPanelId = null;
+        let currentFilter = 'all';
+        let dashboardVisible = false;
+
+        // Default colors
+        let customColors = {
+            pending: '#6b7280',
+            active: '#3b82f6',
+            done: '#22c55e'
+        };
 
         // ============================================
         // INITIALIZATION
         // ============================================
         
         document.addEventListener('DOMContentLoaded', () => {
-            loadData();
-            if(localStorage.getItem('ppm_visited')) enterApp();
+            loadAppData();
+            applyCustomColors();
+            
+            if(currentUser) {
+                enterApp();
+            }
         });
 
-        function enterApp() {
-            document.getElementById('splashScreen').classList.add('hidden');
-            localStorage.setItem('ppm_visited','true');
-            render();
+        function loadAppData() {
+            try {
+                const saved = localStorage.getItem('ppm_ultimate_v3');
+                if(saved) {
+                    appData = JSON.parse(saved);
+                }
+                
+                // Load colors
+                const savedColors = localStorage.getItem('ppm_colors');
+                if(savedColors) {
+                    customColors = JSON.parse(savedColors);
+                }
+                
+                // Load current user
+                const savedUser = localStorage.getItem('ppm_current_user');
+                if(savedUser) {
+                    currentUser = savedUser;
+                }
+            } catch(e) {
+                console.error('Load error:', e);
+                appData = {};
+            }
         }
 
-        function loadData() {
+        function saveAppData() {
             try {
-                const saved = localStorage.getItem('ppm_data_v2');
-                if(saved) projects = JSON.parse(saved);
-            } catch(e) { projects = []; }
+                localStorage.setItem('ppm_ultimate_v3', JSON.stringify(appData));
+                localStorage.setItem('ppm_colors', JSON.stringify(customColors));
+                if(currentUser) {
+                    localStorage.setItem('ppm_current_user', currentUser);
+                }
+            } catch(e) {
+                showToast('Gagal simpan data');
+            }
         }
 
-        function saveData() {
-            try {
-                localStorage.setItem('ppm_data_v2', JSON.stringify(projects));
-            } catch(e) { showToast('Gagal simpan data'); }
+        function getUserData() {
+            if(!currentUser || !appData[currentUser]) {
+                return { projects: [] };
+            }
+            return appData[currentUser];
+        }
+
+        function saveUserData(data) {
+            appData[currentUser] = data;
+            saveAppData();
         }
 
         // ============================================
-        // DATA STRUCTURE HELPERS
+        // USER MANAGEMENT (NEW!)
+        // ============================================
+        
+        let avatarIndex = 0;
+
+        function cycleAvatar() {
+            avatarIndex = (avatarIndex + 1) % AVATARS.length;
+            document.querySelector('.user-avatar').textContent = AVATARS[avatarIndex];
+        }
+
+        function login() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if(!username) {
+                showToast('⚠️ Masukkan nama dulu!');
+                return;
+            }
+            
+            currentUser = username;
+            
+            // Initialize user data if not exists
+            if(!appData[currentUser]) {
+                appData[currentUser] = { projects: [] };
+            }
+            
+            saveAppData();
+            enterApp();
+            showToast(`Selamat datang, ${username}! 👋`);
+        }
+
+        function logout() {
+            currentUser = null;
+            currentProjectId = null;
+            currentPanelId = null;
+            localStorage.removeItem('ppm_current_user');
+            
+            document.getElementById('splashScreen').classList.remove('hidden');
+            document.getElementById('usernameInput').value = '';
+            closeModal('settingsModal');
+            render();
+        }
+
+        function showUserList() {
+            const users = Object.keys(appData).filter(u => appData[u].projects && appData[u].projects.length > 0);
+            
+            let html = '';
+            
+            if(users.length > 0) {
+                html = users.map(user => `
+                    <div class="list-item ${user===currentUser?'active':''}" onclick="switchUser('${user}')">
+                        <div class="list-info">
+                            <div class="list-name">${AVATARS[Math.abs(user.split('').reduce((a,b)=>a+b.charCodeAt(0),0) % AVATARS.length)]} ${user}</div>
+                            <div class="list-meta">${appData[user].projects.length} proyek</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            html += `
+                <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.85rem;">
+                    Atau buat akun baru di atas 👆
+                </div>
+            `;
+            
+            document.getElementById('userListBody').innerHTML = html;
+            openModal('userListModal');
+        }
+
+        function switchUser(username) {
+            currentUser = username;
+            currentProjectId = null;
+            currentPanelId = null;
+            saveAppData();
+            closeModal('userListModal');
+            enterApp();
+            showToast(`Beralih ke akun ${username}`);
+        }
+
+        function openUserMenu() {
+            showUserList();
+        }
+
+        function enterApp() {
+            document.getElementById('splashScreen').classList.add('hidden');
+            
+            // Update header user info
+            const avatarIdx = Math.abs(currentUser.split('').reduce((a,b)=>a+b.charCodeAt(0),0) % AVATARS.length);
+            document.getElementById('headerUserAvatar').textContent = AVATARS[avatarIdx];
+            document.getElementById('headerUserName').textContent = currentUser?.substring(0,10) || 'User';
+            
+            render();
+        }
+
+        // ============================================
+        // COLOR CUSTOMIZATION (NEW!)
+        // ============================================
+        
+        function updateColor(status, color) {
+            customColors[status] = color;
+            document.getElementById('preview' + status.charAt(0).toUpperCase() + status.slice(1)).style.background = color;
+            applyCustomColors();
+            saveAppData();
+            render(); // Re-render with new colors
+            showToast('Warna diperbarui!');
+        }
+
+        function applyCustomColors() {
+            document.documentElement.style.setProperty('--color-pending', customColors.pending);
+            document.documentElement.style.setProperty('--color-active', customColors.active);
+            document.documentElement.style.setProperty('--color-done', customColors.done);
+            
+            // Update preview boxes
+            document.getElementById('previewPending').style.background = customColors.pending;
+            document.getElementById('previewActive').style.background = customColors.active;
+            document.getElementById('previewDone').style.background = customColors.done;
+            
+            // Update color inputs
+            document.getElementById('colorPending').value = customColors.pending;
+            document.getElementById('colorActive').value = customColors.active;
+            document.getElementById('colorDone').value = customColors.done;
+        }
+
+        function openSettingsModal() {
+            applyCustomColors();
+            openModal('settingsModal');
+        }
+
+        function clearAllData() {
+            if(!confirm('⚠️ Yakin hapus SEMUA data? Tidak bisa dikembalikan!')) return;
+            
+            appData = {};
+            appData[currentUser] = { projects: [] };
+            currentProjectId = null;
+            currentPanelId = null;
+            saveAppData();
+            closeModal('settingsModal');
+            render();
+            showToast('🗑 Semua data dihapus');
+        }
+
+        // ============================================
+        // DATA HELPERS
         // ============================================
         
         function createEmptySteps() {
@@ -638,8 +1040,8 @@
 
         function createNewPanel(name, spec, qty) {
             return {
-                id: 'panel_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                name: name || 'Panel Baru',
+                id: 'panel_' + Date.now(),
+                name: name || 'Panel',
                 spec: spec || '',
                 qty: parseInt(qty) || 1,
                 createdAt: new Date().toISOString(),
@@ -647,14 +1049,157 @@
             };
         }
 
-        function createNewProject(order, customer) {
-            return {
-                id: 'proj_' + Date.now(),
-                order: order || 'Proyek Baru',
-                customer: customer || '',
-                createdAt: new Date().toISOString(),
-                panels: []
-            };
+        function getProjects() {
+            const userData = getUserData();
+            return userData.projects || [];
+        }
+
+        function saveProjects(projects) {
+            const userData = getUserData();
+            userData.projects = projects;
+            saveUserData(userData);
+        }
+
+        function getCurrentProject() {
+            const projects = getProjects();
+            return projects.find(p => p.id === currentProjectId) || projects[0] || null;
+        }
+
+        function getCurrentPanel() {
+            const project = getCurrentProject();
+            if(!project) return null;
+            return project.panels.find(p => p.id === currentPanelId) || project.panels[0] || null;
+        }
+
+        function calculatePanelProgress(panel) {
+            if(!panel) return 0;
+            const steps = Object.values(panel.steps);
+            const done = steps.filter(s=>s.status==='done').length;
+            return Math.round((done / PROCESSES.length) * 100);
+        }
+
+        function getOverallProgress(project) {
+            if(!project || !project.panels.length) return 0;
+            const total = project.panels.reduce((sum, p) => sum + calculatePanelProgress(p), 0);
+            return Math.round(total / project.panels.length);
+        }
+
+        // ============================================
+        // DASHBOARD (NEW!)
+        // ============================================
+        
+        function toggleDashboard() {
+            dashboardVisible = !dashboardVisible;
+            document.getElementById('dashboardSection').style.display = dashboardVisible ? 'block' : 'none';
+            if(dashboardVisible) renderDashboard();
+        }
+
+        function renderDashboard() {
+            const project = getCurrentProject();
+            if(!project) return;
+
+            const panels = project.panels;
+            
+            // Stats
+            const totalPanels = panels.length;
+            const avgProgress = getOverallProgress(project);
+            const completedPanels = panels.filter(p => calculatePanelProgress(p) === 100).length;
+            const activePanels = panels.filter(p => {
+                const steps = Object.values(p.steps);
+                return steps.some(s => s.status === 'active');
+            }).length;
+
+            document.getElementById('dashboardStats').innerHTML = `
+                <div class="dash-stat">
+                    <div class="dash-stat-value" style="color:var(--color-active)">${totalPanels}</div>
+                    <div class="dash-stat-label">Total Panel</div>
+                </div>
+                <div class="dash-stat">
+                    <div class="dash-stat-value" style="color:var(--color-done)">${completedPanels}</div>
+                    <div class="dash-stat-label">Selesai</div>
+                </div>
+                <div class="dash-stat">
+                    <div class="dash-stat-value" style="color:var(--color-active)">${avgProgress}%</div>
+                    <div class="dash-stat-label">Avg Progress</div>
+                </div>
+                <div class="dash-stat">
+                    <div class="dash-stat-value" style="color:var(--color-active)">${activePanels}</div>
+                    <div class="dash-stat-label">Sedang Dikerjakan</div>
+                </div>
+            `;
+
+            // Grid of panels
+            document.getElementById('dashboardGrid').innerHTML = panels.map(panel => {
+                const pct = calculatePanelProgress(panel);
+                const mainStatus = getPanelMainStatus(panel);
+                return `
+                <div class="dash-panel-item" onclick="switchPanel('${panel.id}');toggleDashboard();">
+                    <div class="dash-panel-icon">${mainStatus.icon}</div>
+                    <div class="dash-panel-info">
+                        <div class="dash-panel-name">${panel.name}${panel.qty>1?` (${panel.qty}x)`:''}</div>
+                        <div class="dash-panel-meta">${panel.spec||'-'}</div>
+                    </div>
+                    <div class="dash-progress-mini">
+                        <div class="dash-progress-fill" style="width:${pct}%;background:${getStatusColor(mainStatus.status)}"></div>
+                    </div>
+                    <div class="dash-pct" style="color:${getStatusColor(mainStatus.status)}">${pct}%</div>
+                </div>`;
+            }).join('');
+        }
+
+        function getPanelMainStatus(panel) {
+            const steps = Object.values(panel.steps);
+            if(steps.every(s => s.status === 'done')) return {status:'done', icon:'✅'};
+            if(steps.some(s => s.status === 'active')) return {status:'active', icon:'▶️'};
+            return {status:'pending', icon:'⏳'};
+        }
+
+        function getStatusColor(status) {
+            return customColors[status] || '#888';
+        }
+
+        // ============================================
+        // SEARCH & FILTER (NEW!)
+        // ============================================
+        
+        function filterPanels() {
+            renderPanelTabs(getCurrentProject());
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+            });
+            
+            renderPanelTabs(getCurrentProject());
+        }
+
+        function getFilteredPanels(project) {
+            if(!project) return [];
+            
+            let panels = project.panels;
+            const searchTerm = document.getElementById('panelSearchInput').value.toLowerCase();
+            
+            // Apply search
+            if(searchTerm) {
+                panels = panels.filter(p => 
+                    p.name.toLowerCase().includes(searchTerm) ||
+                    (p.spec && p.spec.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            // Apply filter
+            if(currentFilter !== 'all') {
+                panels = panels.filter(p => {
+                    const mainStatus = getPanelMainStatus(p);
+                    return mainStatus.status === currentFilter;
+                });
+            }
+            
+            return panels;
         }
 
         // ============================================
@@ -664,29 +1209,32 @@
         function render() {
             renderProjectSelector();
             
+            const projects = getProjects();
+            
             if(projects.length === 0) {
                 document.getElementById('emptyState').style.display = 'block';
                 document.getElementById('projectContent').style.display = 'none';
                 document.getElementById('panelTabsContainer').style.display = 'none';
                 document.getElementById('noPanelState').style.display = 'none';
                 document.getElementById('bottomActions').style.display = 'none';
+                if(dashboardVisible) document.getElementById('dashboardSection').style.display = 'none';
             } else {
                 document.getElementById('emptyState').style.display = 'none';
                 
-                const project = projects.find(p => p.id === currentProjectId) || projects[0];
-                if(!currentProjectId || !projects.find(p => p.id === currentProjectId)) {
-                    currentProjectId = project.id;
+                const project = getCurrentProject();
+                if(!currentProjectId || !project) {
+                    currentProjectId = projects[0].id;
                 }
                 
-                if(project.panels.length === 0) {
+                if(!project.panels || project.panels.length === 0) {
                     document.getElementById('projectContent').style.display = 'none';
                     document.getElementById('panelTabsContainer').style.display = 'none';
                     document.getElementById('noPanelState').style.display = 'block';
                     document.getElementById('bottomActions').style.display = 'none';
+                    if(dashboardVisible) document.getElementById('dashboardSection').style.display = 'none';
                 } else {
                     document.getElementById('noPanelState').style.display = 'none';
                     
-                    // Set current panel if not set or invalid
                     if(!currentPanelId || !project.panels.find(p => p.id === currentPanelId)) {
                         currentPanelId = project.panels[0].id;
                     }
@@ -695,60 +1243,58 @@
                     document.getElementById('panelTabsContainer').style.display = 'block';
                     document.getElementById('bottomActions').style.display = 'flex';
                     
+                    if(dashboardVisible) renderDashboard();
                     renderPanelTabs(project);
-                    renderCurrentPanel(project);
+                    renderCurrentPanel();
                 }
             }
         }
 
         function renderProjectSelector() {
+            const projects = getProjects();
             const selector = document.getElementById('projectSelector');
             selector.innerHTML = projects.map(p => `
                 <button class="project-tab ${p.id===currentProjectId?'active':''}" 
                         onclick="switchProject('${p.id}')">${p.order}</button>
-            `).join('') + `<button class="project-tab add" onclick="openNewProjectModal()">+</button>`;
+            `).join('') + `<button class="project-tab add" onclick="openModal('newProjectModal')">+</button>`;
         }
 
         function renderPanelTabs(project) {
+            if(!project) return;
+            
+            const filteredPanels = getFilteredPanels(project);
             const tabsContainer = document.getElementById('panelTabs');
-            const countLabel = document.getElementById('panelCountLabel');
             
-            countLabel.textContent = project.panels.length;
+            document.getElementById('panelCountLabel').textContent = project.panels.length;
+            document.getElementById('filteredCountBadge').textContent = 
+                filteredPanels.length !== project.panels.length ? `${filteredPanels.length}/${project.panels.length}` : '';
             
-            tabsContainer.innerHTML = project.panels.map(panel => {
+            tabsContainer.innerHTML = filteredPanels.map(panel => {
                 const isActive = panel.id === currentPanelId;
                 const pct = calculatePanelProgress(panel);
+                const mainStatus = getPanelMainStatus(panel);
                 return `
                     <button class="panel-tab ${isActive?'active':''}" 
                             onclick="switchPanel('${panel.id}')"
                             title="${panel.name}">
                         <span>${panel.name}</span>
-                        <span class="panel-count">${pct}%</span>
+                        <span class="panel-count" style="background:${getStatusColor(mainStatus.status)};color:white;">${pct}%</span>
                     </button>
                 `;
             }).join('') + `
-                <button class="panel-tab add-panel" 
-                        onclick="openNewPanelModal()"
-                        title="Tambah panel baru">+</button>
+                <button class="panel-tab add-panel" onclick="openModal('newPanelModal')">+</button>
             `;
         }
 
-        function calculatePanelProgress(panel) {
-            const steps = Object.values(panel.steps);
-            const done = steps.filter(s=>s.status==='done').length;
-            return Math.round((done / PROCESSES.length) * 100);
-        }
+        function renderCurrentPanel() {
+            const panel = getCurrentPanel();
+            const project = getCurrentProject();
+            if(!panel || !project) return;
 
-        function renderCurrentPanel(project) {
-            const panel = project.panels.find(p => p.id === currentPanelId);
-            if(!panel) return;
-
-            // Update info card
             document.getElementById('dispOrder').textContent = project.order || '-';
             document.getElementById('dispCustomer').textContent = project.customer || '-';
             document.getElementById('dispPanel').textContent = `${panel.name}${panel.qty > 1 ? ` (${panel.qty}x)` : ''}`;
 
-            // Calculate progress
             const steps = Object.values(panel.steps);
             const done = steps.filter(s=>s.status==='done').length;
             const active = steps.filter(s=>s.status==='active').length;
@@ -761,11 +1307,10 @@
             document.getElementById('statActive').textContent = active;
             document.getElementById('statPending').textContent = total-done-active;
 
-            // Render processes
             document.getElementById('processList').innerHTML = PROCESSES.map(proc => {
                 const step = panel.steps[proc.id];
                 return `
-                <article class="process-item ${step.status} ${step.expanded?'expanded':''}" id="proc-${proc.id}">
+                <article class="process-item" data-status="${step.status}" ${step.expanded?'class="expanded"':''}>
                     <div class="process-header" onclick="toggleExpand('${proc.id}')">
                         <div class="process-icon">${proc.icon}</div>
                         <div class="process-info">
@@ -777,7 +1322,7 @@
                     ${step.expanded?`
                     <div class="process-content">
                         <div class="process-body">
-                            ${renderFiles(panel, proc.id)}
+                            ${renderFiles(proc.id)}
                             <div class="file-section">
                                 <label class="file-label">Tambah File</label>
                                 <button class="upload-btn" onclick="triggerUpload('${proc.id}')">+ Pilih File</button>
@@ -799,7 +1344,9 @@
             }).join('');
         }
 
-        function renderFiles(panel, procId) {
+        function renderFiles(procId) {
+            const panel = getCurrentPanel();
+            if(!panel) return '';
             const files = panel.steps[procId].files;
             if(!files.length) return '';
             return `
@@ -836,109 +1383,98 @@
         }
 
         // ============================================
-        // PROJECT ACTIONS
+        // ACTIONS
         // ============================================
         
         function switchProject(id) {
             currentProjectId = id;
-            currentPanelId = null; // Reset panel when switching project
+            currentPanelId = null;
             render();
-            showToast('✅ Proyek diganti');
+            showToast('Proyek diganti');
+        }
+
+        function switchPanel(panelId) {
+            currentPanelId = panelId;
+            render();
+            showToast('Panel diganti');
         }
 
         function createProject() {
             const order = document.getElementById('newOrder').value.trim();
             if(!order) { showToast('⚠️ Order wajib!'); return; }
             
-            const proj = createNewProject(order, document.getElementById('newCustomer').value.trim());
+            const projects = getProjects();
+            const proj = {
+                id: 'proj_' + Date.now(),
+                order: order,
+                customer: document.getElementById('newCustomer').value.trim(),
+                createdAt: new Date().toISOString(),
+                panels: []
+            };
             projects.push(proj);
+            saveProjects(projects);
             currentProjectId = proj.id;
             currentPanelId = null;
-            saveData();
-            render();
-            closeNewProjectModal();
             
+            closeModal('newProjectModal');
             document.getElementById('newOrder').value = '';
             document.getElementById('newCustomer').value = '';
-            showToast('✅ Proyek dibuat! Sekarang tambah panel ya 👆');
+            render();
+            showToast('✅ Proyek dibuat!');
         }
 
         function deleteProject(id, e) {
             e.stopPropagation();
-            if(!confirm('Hapus proyek ini? Semua panel di dalamnya juga ikut terhapus.')) return;
+            if(!confirm('Hapus proyek?')) return;
+            let projects = getProjects();
             projects = projects.filter(p=>p.id!==id);
-            if(currentProjectId===id) { currentProjectId = projects[0]?.id||null; currentPanelId = null; }
-            saveData();
+            saveProjects(projects);
+            if(currentProjectId===id) { currentProjectId = null; currentPanelId = null; }
             render();
-            closeProjectsModal();
+            closeModal('projectsModal');
             showToast('🗑 Dihapus');
         }
 
         function openEditProjectModal() {
-            const p = projects.find(x=>x.id===currentProjectId);
+            const p = getCurrentProject();
             if(!p) return;
             document.getElementById('editOrder').value = p.order;
             document.getElementById('editCustomer').value = p.customer;
-            document.getElementById('editProjectModal').classList.add('active');
+            openModal('editProjectModal');
         }
 
-        function closeEditProjectModal(e) { if(!e||e.target.id==='editProjectModal') document.getElementById('editProjectModal').classList.remove('active'); }
-        
         function saveEditProject() {
+            const projects = getProjects();
             const p = projects.find(x=>x.id===currentProjectId);
             if(!p) return;
             p.order = document.getElementById('editOrder').value.trim();
             p.customer = document.getElementById('editCustomer').value.trim();
-            saveData();
+            saveProjects(projects);
             render();
-            closeEditProjectModal();
+            closeModal('editProjectModal');
             showToast('💾 Tersimpan!');
         }
 
         function openProjectsModal() {
-            document.getElementById('projectsList').innerHTML = projects.length?projects.map(p=>{
-                const proj = p;
-                return `
-                <div class="project-list-item ${p.id===currentProjectId?'active':''}" onclick="selectAndCloseProject('${p.id}')">
-                    <div class="project-info-small">
-                        <div class="project-name-small">${p.order}</div>
-                        <div class="project-meta-small">${p.customer||'-'} • ${p.panels.length} panel</div>
+            const projects = getProjects();
+            document.getElementById('projectsList').innerHTML = projects.length?projects.map(p=>`
+                <div class="list-item ${p.id===currentProjectId?'active':''}" onclick="selectAndClose('${p.id}','projectsModal')">
+                    <div class="list-info">
+                        <div class="list-name">${p.order}</div>
+                        <div class="list-meta">${p.customer||'-'} • ${p.panels?.length||0} panel</div>
                     </div>
-                    <button class="delete-project-btn" onclick="deleteProject('${p.id}',event)">🗑</button>
-                </div>`;
-            }).join(''):'<p style="text-align:center;padding:40px;color:#888;">Belum ada proyek</p>';
-            document.getElementById('projectsModal').classList.add('active');
-        }
-        function closeProjectsModal(e) { if(!e||e.target.id==='projectsModal') document.getElementById('projectsModal').classList.remove('active'); }
-        function selectAndCloseProject(id) { switchProject(id); closeProjectsModal(); }
-
-        // ============================================
-        // PANEL ACTIONS (NEW!)
-        // ============================================
-        
-        function switchPanel(panelId) {
-            currentPanelId = panelId;
-            const project = projects.find(p => p.id === currentProjectId);
-            if(project) renderCurrentPanel(project);
-            renderPanelTabs(project);
-            showToast('📦 Panel diganti');
+                    <button class="delete-btn" onclick="deleteProject('${p.id}',event)">🗑</button>
+                </div>`).join(''):'<p style="text-align:center;padding:30px;color:#888;">Belum ada proyek</p>';
+            openModal('projectsModal');
         }
 
-        function openNewPanelModal() {
-            document.getElementById('newPanelName').value = '';
-            document.getElementById('newPanelSpec').value = '';
-            document.getElementById('newPanelQty').value = '1';
-            document.getElementById('newPanelModal').classList.add('active');
-            setTimeout(() => document.getElementById('newPanelName').focus(), 100);
-        }
-
-        function closeNewPanelModal(e) { if(!e||e.target.id==='newPanelModal') document.getElementById('newPanelModal').classList.remove('active'); }
-
+        // Panel actions
         function createPanel() {
             const name = document.getElementById('newPanelName').value.trim();
             if(!name) { showToast('⚠️ Nama panel wajib!'); return; }
             
-            const project = projects.find(p => p.id === currentProjectId);
+            const projects = getProjects();
+            const project = projects.find(p=>p.id===currentProjectId);
             if(!project) return;
 
             const panel = createNewPanel(
@@ -947,284 +1483,178 @@
                 document.getElementById('newPanelQty').value
             );
 
+            if(!project.panels) project.panels = [];
             project.panels.push(panel);
             currentPanelId = panel.id;
-            saveData();
+            saveProjects(projects);
+            
+            closeModal('newPanelModal');
+            document.getElementById('newPanelName').value = '';
+            document.getElementById('newPanelSpec').value = '';
+            document.getElementById('newPanelQty').value = '1';
             render();
-            closeNewPanelModal();
-            showToast(`📦 Panel "${name}" berhasil dibuat!`);
+            showToast(`📦 Panel "${name}" dibuat!`);
         }
 
-        function deletePanel(panelId, e) {
+        function deletePanel(pid, e) {
             e.stopPropagation();
-            if(!confirm('Hapus panel ini? Semua data progress dan file akan hilang.')) return;
-            
-            const project = projects.find(p => p.id === currentProjectId);
+            if(!confirm('Hapus panel?')) return;
+            const projects = getProjects();
+            const project = projects.find(p=>p.id===currentProjectId);
             if(!project) return;
-
-            project.panels = project.panels.filter(p => p.id !== panelId);
-            
-            if(currentPanelId === panelId) {
-                currentPanelId = project.panels[0]?.id || null;
-            }
-            
-            saveData();
+            project.panels = project.panels.filter(p=>p.id!==pid);
+            if(currentPanelId===pid) currentPanelId = project.panels[0]?.id||null;
+            saveProjects(projects);
             render();
-            closePanelsModal();
+            closeModal('panelsModal');
             showToast('🗑 Panel dihapus');
         }
 
         function openEditPanelModal() {
-            const project = projects.find(p => p.id === currentProjectId);
-            const panel = project?.panels.find(p => p.id === currentPanelId);
+            const panel = getCurrentPanel();
             if(!panel) return;
-
             document.getElementById('editPanelName').value = panel.name;
             document.getElementById('editPanelSpec').value = panel.spec;
             document.getElementById('editPanelQty').value = panel.qty;
-            document.getElementById('editPanelModal').classList.add('active');
+            openModal('editPanelModal');
         }
 
-        function closeEditPanelModal(e) { if(!e||e.target.id==='editPanelModal') document.getElementById('editPanelModal').classList.remove('active'); }
-
         function saveEditPanel() {
-            const project = projects.find(p => p.id === currentProjectId);
-            const panel = project?.panels.find(p => p.id === currentPanelId);
+            const projects = getProjects();
+            const project = projects.find(p=>p.id===currentProjectId);
+            const panel = project?.panels.find(p=>p.id===currentPanelId);
             if(!panel) return;
-
-            panel.name = document.getElementById('editPanelName').value.trim() || panel.name;
+            panel.name = document.getElementById('editPanelName').value.trim()||panel.name;
             panel.spec = document.getElementById('editPanelSpec').value.trim();
-            panel.qty = parseInt(document.getElementById('editPanelQty').value) || 1;
-            
-            saveData();
+            panel.qty = parseInt(document.getElementById('editPanelQty').value)||1;
+            saveProjects(projects);
             render();
-            closeEditPanelModal();
-            showToast('💀 Panel diperbarui!');
+            closeModal('editPanelModal');
+            showToast('💾 Panel diperbarui!');
         }
 
         function openPanelsModal() {
-            const project = projects.find(p => p.id === currentProjectId);
+            const project = getCurrentProject();
             if(!project) return;
-
-            document.getElementById('panelsList').innerHTML = project.panels.length ? project.panels.map(panel => {
-                const pct = calculatePanelProgress(panel);
-                const isActive = panel.id === currentPanelId;
+            document.getElementById('panelsList').innerHTML = project.panels?.length?project.panels.map(p=>{
+                const pct = calculatePanelProgress(p);
                 return `
-                <div class="panel-list-item ${isActive?'active':''}" onclick="selectAndClosePanel('${panel.id}')">
-                    <div class="panel-info-small">
-                        <div class="panel-name-small">
-                            📦 ${panel.name}
-                            <span class="panel-progress-badge">${pct}%</span>
-                        </div>
-                        <div class="panel-meta-small">
-                            ${panel.spec ? panel.spec + ' • ' : ''}Qty: ${panel.qty}x
-                        </div>
+                <div class="list-item ${p.id===currentPanelId?'active':''}" onclick="selectAndClose('${p.id}','panelsModal')">
+                    <div class="list-info">
+                        <div class="list-name">📦 ${p.name} ${p.qty>1?`(${p.qty}x)`:''}</div>
+                        <div class="list-meta">${p.spec||'-'} • ${pct}%</div>
                     </div>
-                    <button class="delete-panel-btn" onclick="deletePanel('${panel.id}',event)">🗑</button>
+                    <button class="delete-btn" onclick="deletePanel('${p.id}',event)">🗑</button>
                 </div>`;
-            }).join('') : '<p style="text-align:center;padding:40px;color:#888;">Belum ada panel</p>';
-            
-            document.getElementById('panelsModal').classList.add('active');
+            }).join(''):'<p style="text-align:center;padding:30px;color:#888;">Belum ada panel</p>';
+            openModal('panelsModal');
         }
 
-        function closePanelsModal(e) { if(!e||e.target.id==='panelsModal') document.getElementById('panelsModal').classList.remove('active'); }
-        function selectAndClosePanel(id) { switchPanel(id); closePanelsModal(); }
-
-        // ============================================
-        // STEP / PROCESS ACTIONS
-        // ============================================
-        
+        // Step actions
         function toggleExpand(procId) {
-            const project = projects.find(p => p.id === currentProjectId);
-            const panel = project?.panels.find(p => p.id === currentPanelId);
+            const panel = getCurrentPanel();
             if(!panel) return;
-            
             panel.steps[procId].expanded = !panel.steps[procId].expanded;
-            saveData();
-            renderCurrentPanel(project);
+            const projects = getProjects();
+            saveProjects(projects);
+            renderCurrentPanel();
         }
 
         function triggerUpload(procId) { document.getElementById(`file-${procId}`).click(); }
 
         function handleFile(procId, input) {
-            const f = input.files[0];
-            if(!f) return;
+            const f = input.files[0]; if(!f) return;
             if(f.size>10*1024*1024) { showToast('❌ Max 10MB!'); return; }
-            
-            const project = projects.find(p => p.id === currentProjectId);
-            const panel = project?.panels.find(p => p.id === currentPanelId);
-            if(!panel) return;
-
+            const panel = getCurrentPanel(); if(!panel) return;
             const r = new FileReader();
             r.onload = e => {
                 panel.steps[procId].files.push({name:f.name,type:f.type,size:f.size,data:e.target.result});
-                saveData();
-                renderCurrentPanel(project);
-                showToast('📎 File ditambah');
+                const projects = getProjects(); saveProjects(projects);
+                renderCurrentPanel(); showToast('📎 File ditambah');
             };
-            r.readAsDataURL(f);
-            input.value='';
+            r.readAsDataURL(f); input.value='';
         }
 
         function deleteFile(procId, idx) {
             if(!confirm('Hapus file?')) return;
-            const project = projects.find(p => p.id === currentProjectId);
-            const panel = project?.panels.find(p => p.id === currentPanelId);
-            if(!panel) return;
+            const panel = getCurrentPanel(); if(!panel) return;
             panel.steps[procId].files.splice(idx,1);
-            saveData();
-            renderCurrentPanel(project);
-            showToast('🗑 File dihapus');
+            const projects = getProjects(); saveProjects(projects);
+            renderCurrentPanel(); showToast('🗑 File dihapus');
         }
 
         function saveNote(procId, val) {
-            const project = projects.find(p => p.id === currentProjectId);
-            const panel = project?.panels.find(p => p.id === currentPanelId);
-            if(!panel) return;
+            const panel = getCurrentPanel(); if(!panel) return;
             panel.steps[procId].note = val;
-            saveData();
+            const projects = getProjects(); saveProjects(projects);
         }
 
         function setStatus(procId, status) {
-            const project = projects.find(p => p.id === currentProjectId);
-            const panel = project?.panels.find(p => p.id === currentPanelId);
-            if(!panel) return;
+            const panel = getCurrentPanel(); if(!panel) return;
             panel.steps[procId].status = status;
-            saveData();
-            renderCurrentPanel(project);
-            renderPanelTabs(project); // Update tab progress
+            const projects = getProjects(); saveProjects(projects);
+            renderCurrentPanel();
+            renderPanelTabs(getCurrentProject()); // Update tab colors
+            if(dashboardVisible) renderDashboard();
             showToast(status==='done'?'✅ Selesai!':'Status updated');
         }
 
-        // ============================================
-        // MODAL HELPERS
-        // ============================================
-        
-        function openNewProjectModal() { document.getElementById('newProjectModal').classList.add('active'); }
-        function closeNewProjectModal(e) { if(!e||e.target.id==='newProjectModal') document.getElementById('newProjectModal').classList.remove('active'); }
-
-        // ============================================
-        // VIEWERS
-        // ============================================
-        
-        function viewImage(src) {
-            document.getElementById('viewerImage').src = src;
-            document.getElementById('imageViewer').classList.add('active');
+        // Modal helpers
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id, e) { if(!e||e.target.id===id) document.getElementById(id).classList.remove('active'); }
+        function selectAndClose(id, modalId) {
+            if(modalId === 'projectsModal') switchProject(id);
+            else switchPanel(id);
+            closeModal(modalId);
         }
+
+        // Viewers
+        function viewImage(src) { document.getElementById('viewerImage').src = src; document.getElementById('imageViewer').classList.add('active'); }
         function closeImageViewer() { document.getElementById('imageViewer').classList.remove('active'); }
         function viewPdf(data) { window.open(data,'_blank'); }
 
-        // ============================================
-        // EXPORT & PDF
-        // ============================================
-        
-        function exportProject() {
-            const p = projects.find(x=>x.id===currentProjectId);
-            if(!p) return;
-            const blob = new Blob([JSON.stringify(p,null,2)],{type:'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${p.order.replace(/\s+/g,'_')}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('📥 Diekspor!');
+        // Export
+        function exportData() {
+            const project = getCurrentProject(); if(!project) return;
+            const blob = new Blob([JSON.stringify(project,null,2)],{type:'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `${project.order.replace(/\s+/g,'_')}.json`; a.click();
+            URL.revokeObjectURL(url); showToast('📥 Diekspor!');
         }
 
         function generatePDF() {
-            const project = projects.find(x=>x.id===currentProjectId);
-            if(!project) return;
+            const project = getCurrentProject(); if(!project) return;
             showToast('⏳ Membuat PDF...');
             
-            const pdfBody = document.getElementById('pdfBody');
+            let content = `<div style="margin-bottom:25px;padding:20px;background:#f8f9fa;border-radius:10px;border-left:4px solid var(--color-active);">
+                <h3 style="margin-bottom:12px;">${project.order}</h3>
+                <p>Pelanggan: ${project.customer||'-'} | Total Panel: ${project.panels?.length||0}</p>
+            </div>`;
             
-            // Project info
-            let content = `
-                <div style="margin-bottom:30px;padding:25px;background:#f8f9fa;border-radius:10px;border-left:4px solid #3b82f6;">
-                    <h3 style="margin-bottom:15px;">Info Proyek</h3>
-                    <p><strong>Order:</strong> ${project.order}</p>
-                    <p><strong>Pelanggan:</strong> ${project.customer||'-'}</p>
-                    <p><strong>Total Panel:</strong> ${project.panels.length}</p>
-                </div>
-                
-                <h2 style="margin:25px 0 15px;">Detail Per Panel</h2>
-            `;
-
-            // Each panel
-            project.panels.forEach(panel => {
+            project.panels?.forEach(panel => {
                 const pct = calculatePanelProgress(panel);
-                content += `
-                    <div style="margin-bottom:25px;padding:20px;background:#fafafa;border:1px solid #ddd;border-radius:10px;">
-                        <h3 style="color:#3b82f6;margin-bottom:10px;">
-                            📦 ${panel.name} ${panel.qty>1?`(${panel.qty}x)`:''}
-                            <span style="float:right;background:#3b82f6;color:white;padding:4px 12px;border-radius:20px;font-size:12px;">${pct}%</span>
-                        </h3>
-                        ${panel.spec?`<p style="margin-bottom:10px;color:#666;font-size:13px;"><em>${panel.spec}</em></p>`:''}
-                        
-                        <h4 style="margin:15px 0 10px;font-size:14px;">Tahapan Produksi:</h4>
-                        <table style="width:100%;border-collapse:collapse;font-size:12px;">
-                            <tr style="background:#eee;">
-                                <th style="padding:8px;text-align:left;border:1px solid #ddd;">Tahap</th>
-                                <th style="padding:8px;text-align:center;border:1px solid #ddd;">Status</th>
-                                <th style="padding:8px;text-align:left;border:1px solid #ddd;">Catatan</th>
-                            </tr>
-                            ${PROCESSES.map(proc => {
-                                const s = panel.steps[proc.id];
-                                const statusColors = {pending:'#6b7280',active:'#3b82f6',done:'#22c55e'};
-                                return `<tr>
-                                    <td style="padding:6px;border:1px solid #ddd;">${proc.icon} ${proc.name}</td>
-                                    <td style="padding:6px;text-align:center;border:1px solid #ddd;">
-                                        <span style="color:${statusColors[s.status]};font-weight:700;text-transform:uppercase;font-size:10px;">${s.status}</span>
-                                    </td>
-                                    <td style="padding:6px;border:1px solid #ddd;font-style:italic;color:#555;">${s.note||'-'}</td>
-                                </tr>`;
-                            }).join('')}
-                        </table>
-                        
-                        ${panel.steps[Object.keys(panel.steps)[0]].files.length ? `
-                            <p style="margin-top:10px;font-size:11px;color:#666;">
-                                <strong>Total files:</strong> ${panel.steps[Object.keys(panel.steps)[0]].files.length} file terupload
-                            </p>
-                        ` : ''}
-                    </div>
-                `;
+                content += `<div style="margin:15px 0;padding:15px;background:#fafafa;border:1px solid #ddd;border-radius:8px;">
+                    <strong>📦 ${panel.name}</strong> ${panel.qty>1?`(×${panel.qty})`:''} - ${pct}%
+                    ${panel.spec?`<br><em>${panel.spec}</em>`:''}
+                </div>`;
             });
 
-            pdfBody.innerHTML = content;
-
-            const el = document.getElementById('pdfContent');
-            el.style.display='block';
-            html2pdf().from(el).set({
-                margin:10,
-                filename:`Laporan_${project.order.replace(/\s+/g,'_')}.pdf`,
-                html2canvas:{scale:2},
-                jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-            }).save().then(()=>{
-                el.style.display='none';
-                showToast('📄 PDF didownload!');
-            });
+            document.getElementById('pdfBody').innerHTML = content;
+            const el = document.getElementById('pdfContent'); el.style.display='block';
+            html2pdf().from(el).set({margin:10,filename:`Report_${project.order.replace(/\s+/g,'_')}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4'}})
+            .save().then(()=>{ el.style.display='none'; showToast('📄 PDF didownload!'); });
         }
 
-        // ============================================
-        // UTILITIES
-        // ============================================
-        
+        // Utilities
         function showToast(msg) {
-            const t=document.getElementById('toast');
-            t.textContent=msg;
-            t.classList.add('show');
+            const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
             setTimeout(()=>t.classList.remove('show'),2500);
         }
 
         document.addEventListener('keydown', e=>{
-            if(e.key==='Escape'){
+            if(e.key==='Escape') {
                 closeImageViewer();
-                closeNewProjectModal();
-                closeEditProjectModal();
-                closeProjectsModal();
-                closeNewPanelModal();
-                closeEditPanelModal();
-                closePanelsModal();
+                ['newProjectModal','editProjectModal','projectsModal','newPanelModal','editPanelModal','panelsModal','settingsModal','userListModal'].forEach(closeModal);
             }
         });
     </script>
