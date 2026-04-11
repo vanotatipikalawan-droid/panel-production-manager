@@ -1,323 +1,14 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏭 Production Manager v5</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-        :root{
-            --bg:#0a0a0a;--surface:#141414;--surface-light:#1a1a1a;
-            --border:#2a2a2a;--text:#fff;--text2:#888;
-            --blue:#3b82f6;--green:#22c55e;--red:#ef4444;
-            --gray:#6b7280;
-            --radius:12px;
-        }
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
-        
-        /* SPLASH */
-        .splash{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0a0a0a,#16213e);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .8s}
-        .splash.hidden{opacity:0;pointer-events:none}
-        .logo{font-size:5rem;margin-bottom:1.5rem;animation:float 3s ease-in-out infinite}
-        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
-        .splash h1{font-size:2rem;font-weight:800;background:linear-gradient(135deg,#3b82f6,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
-        .splash p{color:#9ca3af;margin-bottom:2rem;text-align:center;max-width:300px;font-size:.95rem}
-        .btn-start{padding:16px 48px;background:var(--blue);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 10px 25px rgba(59,130,246,.4)}
-        .btn-start:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(59,130,246,.6)}
-
-        /* APP */
-        .app{max-width:480px;margin:0 auto;min-height:100vh}
-        
-        /* HEADER */
-        .header{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 20px;position:sticky;top:0;z-index:100}
-        .header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-        .header h1{font-size:1.2rem;font-weight:700;display:flex;align-items:center;gap:8px}
-        .header-btns{display:flex;gap:8px}
-        .hb{width:38px;height:38px;border-radius:8px;background:var(--surface-light);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem}
-
-        /* PROJECT TABS */
-        .tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 0;margin-bottom:14px}
-        .tabs::-webkit-scrollbar{display:none}
-        .tab{flex-shrink:0;padding:10px 16px;background:var(--surface-light);border:1px solid var(--border);border-radius:20px;font-size:.85rem;color:var(--text2);cursor:pointer;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;font-weight:500}
-        .tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
-        .tab.add{background:transparent;border-style:dashed;width:36px;padding:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
-
-        /* PROGRESS */
-        .progress{background:var(--surface);margin:18px;border-radius:14px;padding:20px;border:1px solid var(--border)}
-        .progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-        .progress-label{font-size:.85rem;color:var(--text2);font-weight:600;text-transform:uppercase}
-        .progress-val{font-size:2rem;font-weight:800;color:var(--blue)}
-        .bar{height:8px;background:var(--surface-light);border-radius:4px;overflow:hidden}
-        .fill{height:100%;background:linear-gradient(90deg,var(--blue),#60a5fa);border-radius:4px;transition:width .4s ease}
-        .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
-        .stat{text-align:center;padding:10px;background:var(--surface-light);border-radius:8px;border:1px solid var(--border)}
-        .stat-val{font-size:1.3rem;font-weight:700}
-        .stat-label{font-size:.7rem;color:var(--text2);text-transform:uppercase}
-        .stat.done .stat-val{color:var(--green)}
-        .stat.active .stat-val{color:var(--blue)}
-        .stat.pending .stat-val{color:var(--gray)}
-
-        /* INFO */
-        .info{background:var(--surface);margin:0 18px 18px;border-radius:14px;padding:16px 20px;border:1px solid var(--border);cursor:pointer}
-        .info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
-        .info-row:last-child{border-bottom:none}
-        .info-key{font-size:.88rem;color:var(--text2)}
-        .info-val{font-size:.9rem;font-weight:600}
-
-        /* SECTION TITLE */
-        .sec-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin:24px 18px 14px}
-
-        /* PROCESS LIST */
-        .list{padding:0 18px}
-        .item{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden}
-        .item-header{padding:18px;display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none}
-        .icon{width:46px;height:46px;border-radius:11px;background:var(--surface-light);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;border:2px solid transparent}
-        .item[data-status="active"] .icon{background:rgba(59,130,246,.15);border-color:var(--blue)}
-        .item[data-status="done"] .icon{background:rgba(34,197,94,.15);border-color:var(--green)}
-        .info{flex:1;min-width:0}
-        .name{font-weight:700;font-size:.95rem;margin-bottom:3px}
-        .meta{font-size:.78rem;color:var(--text2)}
-        .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-        .dot.pending{background:var(--gray)}
-        .dot.active{background:var(--blue);box-shadow:0 0 10px var(--blue);animation:pulse 2s infinite}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-
-        /* CONTENT (EXPANDED) */
-        .content{display:none;background:rgba(0,0,0,.3);border-top:1px solid var(--border);animation:slideDown .3s ease}
-        .item.expanded .content{display:block}
-        .body{padding:20px}
-        @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
-
-        /* FILES */
-        .file-sec{margin-bottom:20px}
-        .file-lbl{font-size:.82rem;color:var(--text2);margin-bottom:12px;font-weight:600;display:block}
-        .file-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-        .file-it{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface-light);border:1px solid var(--border);border-radius:10px}
-        .thumb{width:48px;height:48px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;overflow:hidden;border:1px solid var(--border)}
-        .thumb img{width:100%;height:100%;object-fit:cover;border-radius:6px}
-        .file-info{flex:1;min-width:0}
-        .fname{font-size:.87rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .fsize{font-size:.72rem;color:var(--text2)}
-        .file-acts{display:flex;gap:6px;flex-shrink:0}
-        .fb{width:32px;height:32px;border-radius:6px;border:none;background:var(--surface);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem}
-        .fb.del{color:var(--red)}
-        .fb.del:hover{background:var(--red);color:#fff}
-
-        /* UPLOAD BUTTON */
-        .upload{width:100%;padding:14px;border:2px dashed var(--border);border-radius:10px;background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-size:.9rem;font-weight:500;transition:all .2s}
-        .upload:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.05)}
-
-        /* NOTES */
-        .notes-sec{margin-bottom:20px}
-        .notes-input{width:100%;padding:12px;background:var(--surface-light);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:.88rem;resize:vertical;min-height:80px;font-family:inherit}
-        .notes-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-
-        /* STATUS TOGGLE - INI YANG PAING PENTING! */
-        .status-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-        .st-btn{padding:12px 8px;border:1px solid var(--border);border-radius:10px;background:var(--surface-light);color:var(--text2);font-size:.83rem;font-weight:600;cursor:pointer;transition:all .2s}
-        .st-btn:hover{border-color:var(--text)}
-        .st-btn.pending.active{background:var(--gray);border-color:var(--gray);color:#fff}
-        .st-btn.active.active{background:var(--blue);border-color:var(--blue);color:#fff}
-        .st-btn.done.active{background:var(--green);border-color:var(--green);color:#fff}
-
-        /* BOTTOM BAR */
-        .bottom{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:12px 18px 24px;display:flex;gap:10px;z-index:100}
-        .btn{flex:1;padding:14px;border-radius:10px;border:none;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
-        .btn:active{transform:scale(.96)!important}
-        .btn-sec{background:var(--surface-light);color:var(--text);border:1px solid var(--border)}
-        .btn-pri{background:linear-gradient(135deg,var(--blue),#2563eb);color:#fff;box-shadow:0 4px 15px rgba(59,130,246,.4)}
-        .btn-pri:hover{transform:translateY(-2px)}
-
-        /* MODAL */
-        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);z-index:1000;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s}
-        .modal.show{display:flex}
-        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .modal-box{background:var(--surface);border-radius:16px;width:100%;max-width:420px;border:1px solid var(--border);box-shadow:0 25px 50px rgba(0,0,0,.5);animation:slideUp .3s cubic-bezier(.34,1.56,.64,1)}
-        @keyframes slideUp{from{opacity:0;transform:translateY(30px) scale(.95)} to{opacity:1;transform:translateY(0) scale(1)}}
-        .m-head{padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-        .m-title{font-weight:700;font-size:1.1rem}
-        .m-close{width:34px;height:34px;border-radius:8px;border:none;background:var(--surface);color:var(--text2);font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
-        .m-close:hover{background:#ef4444;color:#fff}
-        .m-body{padding:20px;max-height:70vh;overflow-y:auto}
-        .fg{width:100%;padding:12px 16px;background:var(--surface-light);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:.95rem}
-        .fg:focus{outline:none;border-color:var(--blue)}
-        .lbl{display:block;font-size:.85rem;color:var(--text2);margin-bottom:8px;font-weight:600}
-
-        /* LIST ITEM */
-        .li{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface-light);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;cursor:pointer;transition:all .2s}
-        .li:hover{border-color:var(--blue);transform:translateX(4px)}
-        .li.active{background:rgba(59,130,246,.15);border-color:var(--blue)}
-        .li-info{flex:1;min-width:0}
-        .li-name{font-weight:700;font-size:.95rem;margin-bottom:2px}
-        .li-meta{font-size:.78rem;color:var(--text2)}
-        .del-btn{width:36px;height:36px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:1rem;margin-left:8px}
-        .del-btn:hover{background:#dc2626}
-
-        /* TOAST */
-        .toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface);color:var(--text);padding:12px 24px;border-radius:10px;border:1px solid var(--border);font-size:.9rem;font-weight:500;opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);z-index:2000;box-shadow:0 10px 25px rgba(0,0,0,.5)}
-        .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-        /* IMAGE VIEWER */
-        .viewer{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.98);z-index:1500;align-items:center;justify-content:center;padding:20px}
-        .viewer.show{display:flex;animation:fadeIn .2s}
-        .viewer img{max-width:95%;max-height:95%;object-fit:contain;border-radius:12px}
-        .v-close{position:absolute;top:20px;right:20px;background:var(--surface);border:2px solid var(--border);color:#fff;width:44px;height:44px;border-radius:50%;font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-        .v-close:hover{background:#ef4444;border-color:#ef4444;}
-
-        /* EMPTY */
-        .empty{text-align:center;padding:60px 20px;color:var(--text2)}
-        .empty-icon{font-size:4.5rem;margin-bottom:16px;opacity:.4}
-        .empty-text{font-size:1.1rem;margin-bottom:24px;font-weight:500}
-
-        .wrap{padding-bottom:110px}
-        #pdf{display:none;background:#fff;color:#000;padding:40px;max-width:800px;margin:0 auto}
-    </style>
-</head>
-<body>
-
-<!-- ===== SPLASH ===== -->
-<div class="splash" id="splash">
-    <div class="logo">🏭</div>
-    <h1>Production Manager</h1>
-    <p>Sistem tracking produksi panel</p>
-    <button class="btn-start" onclick="startApp()">Mulai →</button>
-</div>
-
-<!-- ===== MAIN APP ===== -->
-<div class="app" id="app">
-
-    <!-- HEADER -->
-    <header class="header">
-        <div class="header-top">
-            <h1>🏭 Production</h1>
-            <div class="header-btns">
-                <button class="hb" onclick="openModal('projModal')">☰</button>
-                <button class="hb" onclick="openModal('newProjModal')">+</button>
-            </div>
-        </div>
-        <!-- PROJECT TABS -->
-        <nav class="tabs" id="projTabs"></nav>
-    </header>
-
-    <!-- EMPTY STATE -->
-    <div class="empty" id="empty" style="display:none;">
-        <div class="empty-icon">📁</div>
-        <p class="empty-text">Belum ada proyek</p>
-        <button class="btn-start" onclick="openModal('newProjModal')">+ Buat Proyek Pertama</button>
-    </div>
-
-    <!-- CONTENT -->
-    <div id="content" style="display:none">
-        <!-- PROGRESS -->
-        <section class="progress">
-            <div class="progress-header">
-                <span class="progress-label">Progress</span>
-                <span class="progress-val" id="pctVal">0%</span>
-            </div>
-            <div class="bar"><div class="fill" id="pctBar" style="width:0%"></div></div>
-            <div class="stats">
-                <div class="stat done"><span class="stat-val" id="sDone">0</span><span class="stat-label">Selesai</span></div>
-                <div class="stat active"><span class="stat-val" id="sActive">0</span><span class="stat-label">Aktif</span></div>
-                <div class="stat pending"><span class="stat-val" id="sPending">6</span><span class="stat-label">Menunggu</span></div>
-            </div>
-        </section>
-
-        <!-- INFO -->
-        <div class="info" onclick="openModal('editProjModal')">
-            <div class="info-row"><span class="info-key">Order</span><span class="info-val" id="dispOrder">-</span></div>
-            <div class="info-row"><span class="info-key">Pelanggan</span><span class="info-val" id="dispCust">-</span></div>
-            <div class="info-row"><span class="info-key">Panel</span><span class="info-val" id="dispPanel">-</span></div>
-        </div>
-
-        <!-- PROCESS LIST -->
-        <h2 class="sec-title">Tahapan Produksi</h2>
-        <div class="list" id="procList"></div>
-    </div>
-
-    <!-- BOTTOM -->
-    <div class="bottom" id="bottom" style="display:none;">
-        <button class="btn btn-sec" onclick="exportJSON()">📥 Export</button>
-        <button class="btn btn-pri" onclick="genPDF()">📄 PDF</button>
-    </div>
-</div>
-
-<!-- ====== NEW PROJECT MODAL ====== -->
-<div class="modal" id="newProjModal">
-    <div class="modal-box" onclick="event.stopPropagation()">
-        <div class="m-head">
-            <span class="m-title">Proyek Baru</span>
-            <button class="m-close" onclick="closeModal('newProjModal')">&times;</button>
-        </div>
-        <div class="m-body">
-            <div class="fg">
-                <label class="lbl">Nomor Order *</label>
-                <input type="text" class="fg" id="inpOrder" placeholder="PO-2024-001">
-            </div>
-            <div class="fg">
-                <label class="lbl">Pelanggan</label>
-                <input type="text" class="fg" id="inpCust" placeholder="Nama pelanggan">
-            </div>
-            <button class="btn btn-pri" style="width:100%" onclick="createProj()">✨ Buat Proyek</button>
-        </div>
-    </div>
-</div>
-
-<!-- ====== EDIT PROJECT MODAL ======-->
-<div class="modal" id="editProjModal">
-    <div class="modal-box" onclick="event.stopPropagation()">
-        <div class="m-head">
-            <span class="m-title">Edit Proyek</span>
-            <button class="m-close" onclick="closeModal('editProjModal')">&times;</button>
-        </div>
-        <div class="m-body">
-            <div class="fg">
-                <label class="label">Nomor Order</label>
-                <input type="text" class="fg" id="edtOrder">
-            </div>
-            <div class="fg">
-                <label class="label">Pelanggan</label>
-                <input type="text" class="fg" id="edtCust">
-            </div>
-            <button class="btn btn-pri" style="width:100%" onclick="saveEditProj()">💾 Simpan</button>
-        </div>
-    </div>
-</div>
-
-<!-- ====== ALL PROJECTS MODAL ======-->
-<div class="modal" id="projModal">
-    <div class="modal-box" onclick="event.stopPropagation()">
-        <div class="m-head">
-            <span class="m-title">Semua Proyek</span>
-            <button class="m-close" onclick="closeModal('projModal')">&times;</button>
-        </div>
-        <div class="m-body" id="projListBody"></div>
-    </div>
-</div>
-
-<!-- IMAGE VIEWER -->
-<div class="viewer" id="imgViewer">
-    <button class="v-close" onclick="closeViewer()">&times;</button>
-    <img id="viewImg" src="" alt="">
-</div>
-
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<!-- PDF -->
-<div id="pdf"></div>
-
 <script>
 // ============================================
-// DATA
+// CONFIG
 // ============================================
 const STEPS = [
     {id:'drawing', name:'Drawing', icon:'📐'},
     {id:'prepare', name:'Preparation', icon:'📦'},
-    {id:'assembly', name:'assembly', icon:'🔧'},
+    {id:'assembly', name:'Assembly', icon:'🔧'},
     {id:'wiring', name:'Wiring', icon:'🔌'},
     {id:'finishing', name:'Finishing', icon:'✨'},
-    {id:'qc', name:'QC', icon:'✓'}
+    {id:'qc', name:'Quality Control', icon:'✅'}
 ];
 
 let projects = [];
@@ -331,21 +22,42 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
 });
 
+function startApp(){
+    document.getElementById('splash').classList.add('hidden');
+}
+
+// ============================================
+// STORAGE
+// ============================================
 function load(){
     try{
-        const s = localStorage.getItem('ppm_v6');
+        const s = localStorage.getItem('ppm_clean');
         if(s) projects = JSON.parse(s);
-    }catch(e){
+    }catch{
         projects = [];
     }
 }
 
 function save(){
-    try{
-        localStorage.setItem('ppm_v6', JSON.stringify(projects));
-    }catch(e){
-        console.error('Save error:', e);
-    }
+    localStorage.setItem('ppm_clean', JSON.stringify(projects));
+}
+
+// ============================================
+// UI HELPERS
+// ============================================
+function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+function openModal(id){
+    document.getElementById(id).classList.add('show');
+}
+
+function closeModal(id){
+    document.getElementById(id).classList.remove('show');
 }
 
 // ============================================
@@ -353,708 +65,249 @@ function save(){
 // ============================================
 function render(){
     renderTabs();
-    
+
     if(projects.length === 0){
-        document.getElementById('empty').style.display='block';
-        document.getElementById('content').style.display='none';
-        document.getElementById('bottom').style.display='none';
-    } else {
-        document.getElementById('empty').style.display='none';
-        document.getElementById('content').style.display='block';
-        document.getElementById('bottom').style.display='flex';
-        
-        if(!currentProj || !projects.find(p => p.id === currentProj)){
-            currentProj = projects[0].id;
-        }
-        
-        const proj = projects.find(p => p.id === currentProj);
-        updateProgress(proj);
-        renderInfo(proj);
-        renderProcs(proj);
+        empty.style.display='block';
+        content.style.display='none';
+        bot.style.display='none';
+        return;
     }
+
+    empty.style.display='none';
+    content.style.display='block';
+    bot.style.display='flex';
+
+    if(!currentProj) currentProj = projects[0].id;
+
+    const proj = projects.find(p => p.id === currentProj);
+    updateProgress(proj);
+    renderInfo(proj);
+    renderProcs(proj);
 }
 
 function renderTabs(){
-    const el = document.getElementById('projTabs');
     let html = '';
-    projects.forEach(p => {
-        html += `<button class="tab${p.id===currentProj?' active':''}" onclick="switchProj('${p.id}')">${escapeHtml(p.order)}</button>`;
+
+    projects.forEach(p=>{
+        html += `<button class="tab ${p.id===currentProj?'active':''}" onclick="switchProj('${p.id}')">${p.order}</button>`;
     });
+
     html += `<button class="tab add" onclick="openModal('newProjModal')">+</button>`;
-    el.innerHTML = html;
-}
-
-function updateProgress(proj){
-    if(!proj || !proj.steps) return;
-    
-    const steps = Object.values(proj.steps);
-    const done = steps.filter(s => s.status==='done').length;
-    const active = steps.filter(s => s.status==='active').length;
-    const total = STEPS.length;
-    const pct = Math.round((done/total)*100);
-    
-    document.getElementById('pctVal').textContent = pct+'%';
-    document.getElementById('pctBar').style.width = pct+'%';
-    document.getElementById('sDone').textContent = done;
-    document>document.getElementById('sActive').textContent = active;
-    document.getElementById('sPending').textContent = total-done-active;
-}
-
-function renderInfo(proj){
-    if(!proj) return;
-    document.getElementById('dispOrder').textContent = proj.order || '-';
-    document.getElementById('dispCust').textContent = proj.customer || '-';
-    document.getElementById('dispPanel).textContent = getCurrentPanelName();
-}
-
-function getCurrentPanelName(){
-    const proj = projects.find(p => p.id === currentProj);
-    if(!proj || !proj.panels || !currentProj) return '-';
-    const panel = proj.panels.find(p => p.id === currentProj);
-    return panel ? panel.name : '-';
+    projTabs.innerHTML = html;
 }
 
 // ============================================
-// PROCESS LIST RENDERER
+// PROJECT
 // ============================================
-function renderProcs(proj){
-    if(!proj) return;
-    
-    const container = document.getElementById('procList');
-    let html = '';
-    
-    STEPS.forEach((proc, i) => {
-        const step = proj.steps[proc.id];
-        const isExp = step.expanded;
-        
-        html += `<div class="item" data-status="${step.status}"${isExp?' expanded':''}">`;
-        html += `<div class="item-header" onclick="toggle('${proc.id}')">`;
-        html += `<div class="icon">${proc.icon}</div>`;
-        html += `<div class="info">`;
-        html += `<div class="name">${proc.name}</div>`;
-        html += `<div class="meta">${step.files?.length||0} file${step.note?' • Catatan':''}</div>`;
-        html += `</div>`;
-        html += `<div class="dot ${step.status}"></div>`;
-        html += `</div>`;
-        
-        // EXPANDED CONTENT - INI YANG PAING PENTING!
-        if(isExp){
-            html += `<div class="content">`;
-            html += `<div class="body">`;
-            
-            // ========== FILES SECTION ==========
-            html += `<div class="file-sec">`;
-            html += `<span class="file-lbl">File (${step.files?.length||0})</span>`;
-            
-            if(step.files && step.files.length > 0){
-                html += `<div class="file-list">`;
-                step.files.forEach((f, idx) => {
-                    html += `<div class="file-it">`;
-                    html += `<div class="thumb">`;
-                    if(f.type && f.type.startsWith('image/')){
-                        html += `<img src="${f.data}" alt="${f.name}" onclick="viewImg('${f.data}')">`;
-                    } else {
-                        html += getFileIcon(f.type);
-                    }
-                    html += `</div>`;
-                    html += `<div class="file-info">`;
-                    html += `<div class="fname">${escapeHtml(f.name)}</div>`;
-                    html += `<div class="fsize">${formatSize(f.size)}</div>`;
-                    html += `</div>`;
-                    html += `<div class="file-acts">`;
-                    html += `<button class="fb" onclick="viewImg('${f.data}')">👁</button>`;
-                    html += `<button class="fb del" onclick="delFile('${proc.id}',${idx})">×</button>`;
-                    html += `</div>`;
-                });
-                html += `</div>`;
-            }
-            
-            // ========== UPLOAD BUTTON ==========
-            html += `<button class="upload" onclick="triggerUpload('${proc.id}', this)">`;
-            html += `+ Tambah File`;
-            html += `</button>`;
-            
-            // Hidden file input - PASTIKAN DI SINI!
-            html += `<input type="file" id="file-${proc.id}" style="display:none" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" onchange="handleFile('${proc.id}', this)">`;
-            
-            html += `</div>`; // End file-sec
-            
-            // ========== NOTES ==========
-            html += `<div class="notes-sec">`;
-            html += `<textarea class="notes-input" placeholder="Catatan untuk tahap ${proc.name}..." onchange="saveNote('${proc.id}', this.value)">${escapeHtml(step.note||'')}</textarea>`;
-            html += `</div>`;
-            
-            // ========== STATUS TOGGLE ==========
-            // INI YANG PAING PENTING!
-            html += `<div class="status-wrap">`;
-            html += `<button class="st-btn pending${step.status==='pending'?' active':''}" onclick="setStatus('${proc.id}','pending')" ${step.status==='pending'?'title="Sedang Menunggukan':'title="Sedang Menunggukan"' :''}>Menunggu</button>`;
-            html += `<button class="st-btn active${step.status==='active'?' active':''}" onclick="setStatus('${proc.id}','active')" ${step.status==='active'?'title="Sedang Aktif':'title="Sedang Aktif"' :''}>Aktif</button>`;
-            html += `<button class="st-btn done${step.status==='done'?' done':''}" onclick="setStatus('${proc.id}','done')" ${step.status==='done'?'title="Sudah Selesai':'title="Sudah Selesai"' :''}>Selesai ✓</button>`;
-            html += `</div>`; // End status-wrap
-            
-            html += `</div>`; // End body
-            html += `</div>`; // End content
-        } else {
-            html += `</div>`; // End item (collapsed)
-        }
-    
-    container.innerHTML = html;
-}
-
-// ============================================
-// FILE ICON HELPER
-// ============================================
-function getFileIcon(type){
-    if(!type) return '📎';
-    if(type==='application/pdf') return '📄';
-    if(type.includes('word')) return '📝';
-    if(type.includes('excel') return '📊';
-    if(type.includes('sheet')) return '📋';
-    return '📎';
-}
-
-function formatSize(b){
-    if(!b) return '0 B';
-    if(b<1024) return b+' B';
-    if(b<1048576) return (b/1024).toFixed(1)+' KB';
-    return (b/1048576).toFixed(1)+' MB';
-}
-
-function escapeHtml(t){
-    if(!t) return '';
-    const d=document.createElement('div');
-    d.textContent=t;
-    return d.innerHTML;
-}
-
-// ============================================
-// PROJECT ACTIONS
-// ============================================
-function switchProj(id){
-    currentProj = id;
-    render();
-    toast('✅ Proyek diganti');
-}
-
 function createProj(){
-    const order = document.getElementById('inpOrder').value.trim();
-    if(!order){ showToast('⚠️ Order wajib!'); return; }
-    
-    const cust = document.getElementById('inpCust').value.trim();
-    
+    const order = inpOrder.value.trim();
+    if(!order) return showToast('Nomor order wajib');
+
     const proj = {
-        id: 'proj_'+Date.now(),
-        order: order,
-        customer: cust,
-        createdAt: new Date().toISOString(),
-        panels: [],
-        steps: {}
+        id: 'p_'+Date.now(),
+        order,
+        customer: inpCust.value,
+        steps:{}
     };
-    
-    // Initialize steps
-    STEPS.forEach(s => {
-        proj.steps[s.id] = {status:'pending', files:[], note:'', expanded:false};
+
+    STEPS.forEach(s=>{
+        proj.steps[s.id] = {status:'pending',files:[],note:'',expanded:false};
     });
-    
+
     projects.push(proj);
     currentProj = proj.id;
-    
+
     save();
     render();
     closeModal('newProjModal');
-    
-    document.getElementById('inpOrder').value='';
-    document.getElementById('inpCust').value='';
-    
-    toast('✅ Proyek "'+order+'" dibuat!');
 }
 
-function saveEditProj(){
-    const proj = projects.find(p => p.id === currentProj);
-    if(!proj) return;
-    
-    proj.order = document.getElementById('edtOrder').value.trim() || proj.order;
-    proj.customer = document.getElementById('edtCust').value.trim();
-    
-    save();
+function switchProj(id){
+    currentProj = id;
     render();
-    closeModal('editProjModal');
-    toast('💾 Disimpan!');
-}
-
-function openProjectsModal(){
-    const list = document.getElementById('projListBody');
-    
-    if(projects.length === 0){
-        list.innerHTML = '<p style="text-align:center;padding:30px;color:#888;">Belum ada proyek</p>';
-    } else {
-        let html = '';
-        projects.forEach(p => {
-            html += `<div class="li${p.id===currentProj?' active':''}" onclick="selectProj('${p.id}')">`;
-            html += `<div class="li-info"><div class="li-name">📋 ${escapeHtml(p.order)}</div>`;
-            html += `<div class="li-meta">${p.customer||'-'} • ${(p.panels||[]).length} panel</div></div>`;
-            html += `<button class="del-btn" onclick="delProj('${p.id}',event)">🗑</button></div>`;
-        });
-        list.innerHTML = html;
-    }
-    
-    openModal('projModal');
-}
-
-function selectProj(id){
-    switchProj(id);
-    closeModal('projModal');
-}
-
-function delProj(id, e){
-    e.stopPropagation();
-    if(!confirm('Hapus proyek?')) return;
-    
-    projects = projects.filter(p => p.id !== id);
-    if(currentProj === id){
-        currentProj = projects[0]?.id || null;
-    }
-    
-    save();
-    render();
-    closeProjectsModal();
-    toast('🗑 Dihapus');
 }
 
 // ============================================
-// PANEL MANAGEMENT
-// =============================================
-function createPanel(){
-    console.log('⚠️ CREATE PANEL TRIGGERED'); // DEBUG
-    
-    const name = document.getElementById('panelName').value.trim();
-    console.log('Name:', name); // DEBUG
-    
-    if(!name){
-        showToast('⚠️ Nama panel wajib!');
-        document.getElementById('panelName').focus();
-        return;
-    }
-    
-    const spec = document.getElementById('panelSpec').value.trim();
-    const qty = document.getElementById('panelQty').value || 1;
-    
-    const proj = projects.find(p => p.id === currentProj);
-    if(!proj){
-        showToast('❌ Error: Tidak ada proyek aktif!');
-        return;
-    }
-    
-    if(!proj.panels) proj.panels = [];
-    
-    const panel = {
-        id: 'pan_'+Date.now()+Math.random().toString(36).substr(2,9),
-        name: name,
-        spec: spec,
-        qty: parseInt(qty)||1,
-        createdAt: new Date().toISOString(),
-        steps: {}
-    };
-    
-    // Initialize steps for this panel
-    STEPS.forEach(s => {
-        panel.steps[s.id] = {status:'pending', files:[], note:'', expanded:false};
+// PROGRESS
+// ============================================
+function updateProgress(proj){
+    const steps = Object.values(proj.steps);
+    const done = steps.filter(s=>s.status==='done').length;
+    const active = steps.filter(s=>s.status==='active').length;
+
+    const pct = Math.round((done/STEPS.length)*100);
+
+    pctVal.textContent = pct+'%';
+    pctBar.style.width = pct+'%';
+
+    sDone.textContent = done;
+    sActive.textContent = active;
+    sPending.textContent = STEPS.length-done-active;
+}
+
+// ============================================
+// INFO
+// ============================================
+function renderInfo(proj){
+    dispOrder.textContent = proj.order;
+    dispCust.textContent = proj.customer || '-';
+    dispPanel.textContent = '-';
+}
+
+// ============================================
+// PROCESS LIST
+// ============================================
+function renderProcs(proj){
+    let html = '';
+
+    STEPS.forEach(proc=>{
+        const step = proj.steps[proc.id];
+
+        html += `
+        <div class="item" data-status="${step.status}">
+            <div class="item-h" onclick="toggle('${proc.id}')">
+                <div class="icon">${proc.icon}</div>
+                <div class="info">
+                    <div class="name">${proc.name}</div>
+                    <div class="meta">${step.files.length} file</div>
+                </div>
+                <div class="dot ${step.status}"></div>
+            </div>
+        `;
+
+        if(step.expanded){
+            html += `<div class="content"><div class="body">`;
+
+            // FILE LIST
+            step.files.forEach((f,i)=>{
+                html += `
+                <div class="fit">
+                    <div class="thumb">${f.type.startsWith('image/') ? `<img src="${f.data}" onclick="viewImg('${f.data}')">` : '📎'}</div>
+                    <div class="fi">
+                        <div>${f.name}</div>
+                    </div>
+                    <button onclick="delFile('${proc.id}',${i})">❌</button>
+                </div>`;
+            });
+
+            html += `
+            <button onclick="triggerUpload('${proc.id}')">+ Upload</button>
+            <input type="file" id="file-${proc.id}" style="display:none" onchange="handleFile('${proc.id}',this)">
+            
+            <textarea onchange="saveNote('${proc.id}',this.value)">${step.note||''}</textarea>
+
+            <div class="st-wrap">
+                <button onclick="setStatus('${proc.id}','pending')">Menunggu</button>
+                <button onclick="setStatus('${proc.id}','active')">Aktif</button>
+                <button onclick="setStatus('${proc.id}','done')">Selesai</button>
+            </div>
+            `;
+
+            html += `</div></div>`;
+        }
+
+        html += `</div>`;
     });
-    
-    proj.panels.push(panel);
-    currentProj = proj.id;
-    
-    save();
-    render();
-    closeModal('newPanelModal');
-    
-    document.getElementById('panelName').value='';
-    document.getElementById('panelSpec').value='';
-    document.getElementById('panelQty').value='1';
-    
-    toast('✅ Panel "'+name+'" berhasil dibuat!');
+
+    procList.innerHTML = html;
 }
 
-function deletePanel(pid, e){
-    e.stopPropagation();
-    if(!confirm('Hapus panel ini?')) return;
-    
-    const proj = projects.find(p => p.id === currentProj);
-    if(!proj) return;
-    
-    proj.panels = proj.panels.filter(p => p.id !== pid);
-    
-    if(currentProj === pid){
-        currentProj = proj.panels[0]?.id || null;
-    }
-    
-    save();
-    render();
-    closePanelsModal();
-    toast('🗑 Panel dihapus');
+function toggle(id){
+    const proj = projects.find(p=>p.id===currentProj);
+    proj.steps[id].expanded = !proj.steps[id].expanded;
+    save(); render();
 }
 
-function openPanelsModal(){
-    const proj = projects.find(p => p.id === currentProj);
-    if(!proj || !proj.panels || proj.panels.length === 0){
-        document.getElementById('panelsListBody').innerHTML = '<p style="text-align:center;padding:30px;color:#888;">Belum ada panel</p>';
-    } else {
-        let html = '';
-        proj.panels.forEach(p => {
-            const pct = calculatePct(p);
-            html += `<div class="li${p.id===currentProj?' active':''}" onclick="selectPanel('${p.id}')">`;
-            html += `<div class="li-info"><div class="li-name">📦 ${p.name}${p.qty>1?' ('+p.qty+'x)':''}</div>`;
-            html += `<div class="li-meta">${p.spec||'-'} • ${pct}%</div></div>`;
-            html += `<button class="del-btn" onclick="deletePanel('${p.id}', event)">🗑</button></div>`;
-        });
-        document.getElementById('panelsListBody').innerHTML = html;
-    }
-    
-    openModal('panelsModal');
+// ============================================
+// FILE
+// ============================================
+function triggerUpload(id){
+    document.getElementById('file-'+id).click();
 }
 
-function selectPanel(id){
-    currentProj = id;
-    render();
-    closePanelsModal();
-}
-
-// =============================================
-// STEP / PROCESS ACTIONS
-// =============================================
-function toggle(procId){
-    console.log('🔽 TOGGLE:', procId); // DEBUG
-    
-    const proj = projects.find(p => p.id === currentProj);
-    if(!proj || !proj.steps[procId]) return;
-    
-    proj.steps[procId].expanded = !proj.steps[procId].expanded;
-    save();
-    render();
-}
-
-// =============================================
-// 🎯 FILE UPLOAD - SUPER FIXED VERSION!
-// =============================================
-function triggerUpload(procId, btnElement){
-    console.log('📁 UPLOAD TRIGGERED for:', procId); // DEBUG
-    
-    const inputId = 'file-'+procId;
-    const input = document.getElementById(inputId);
-    
-    if(!input){
-        console.error('❌ INPUT NOT FOUND:', inputId);
-        showToast('❌ Error: Input tidak ditemukan');
-        return;
-    }
-    
-    // Reset value agar bisa upload file sama berkali kali
-    input.value = '';
-    
-    try {
-        console.log('Trying .click()...');
-        input.click();
-        console.log('.click() SUCCESS!');
-    } catch(err) {
-        console.warn('⚠️ .click() failed, using fallback...', err);
-        
-        // FALLBACK: Hapus input lama, buat baru
-        const oldInput = input;
-        oldInput.parentNode.removeChild(oldInput);
-        
-        const newInput = document.createElement('input');
-        newInput.type = 'file';
-        newInput.id = inputId;
-        newInput.style.display = 'none';
-        newInput.accept = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv';
-        newInput.onchange = function(evt){
-            handleFile(procId, evt.target);
-        };
-        document.body.appendChild(newInput);
-        
-        console.log('Created new input, trying click...');
-        newInput.click();
-    }
-}
-
-function handleFile(procId, inputElement){
-    console.log('📁 HANDLE FILE triggered!'); // DEBUG
-    console.log('ProcID:', procId);
-    console.log('Input:', inputElement);
-    
-    const file = inputElement.files[0];
-    
-    if(!file){
-        console.log('No file selected (cancelled)');
-        return;
-    }
-    
-    console.log('File info:', file.name, '-', file.size, file.type);
-
-    // Validasi ukuran (max 10MB)
-    if(file.size > 10*1024*1024){
-        showToast('❌ Ukuran file maksimal 10MB!\nFile kamu: '+formatSize(file.size));
-        return;
-    }
-
-    const proj = projects.find(p => p.id === currentProj);
-    if(!proj){
-        showToast('❌ Error: Tidak ada proyek aktif');
-        return;
-    }
-
-    showToast('⏳ Membaca file...');
+function handleFile(id,input){
+    const file = input.files[0];
+    if(!file) return;
 
     const reader = new FileReader();
-
-    reader.onloadstart = () => console.log('Reading started...');
-    reader.onprogress = (e) => {
-        if(e.lengthComputable){
-            const pct = Math.round((e.loaded/e.total)*100);
-            console.log('Upload:', pct+'%');
-        }
+    reader.onload = e=>{
+        const proj = projects.find(p=>p.id===currentProj);
+        proj.steps[id].files.push({
+            name:file.name,
+            type:file.type,
+            data:e.target.result
+        });
+        save(); render();
     };
-
-    reader.onload = (e) => {
-        console.log('✅ File read successfully!');
-        
-        try{
-            const fileData = {
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                data: e.target.result,
-                uploadedAt: new Date().toISOString()
-            };
-
-            // Pastikan array files ada
-            if(!proj.steps[procId].files){
-                proj.steps[procId].files = [];
-            }
-
-            proj.steps[procId].files.push(fileData);
-
-            save();
-            render(); // Re-render untuk tampilan file baru
-
-            showToast('✅ File "'+file.name+'" ditambahkan! ('+formatSize(file.size)+')');
-        } catch(err){
-            console.error('Error saving file:', err);
-            showToast('❌ Gagal menyimpan file: '+err.message);
-        }
-    };
-
-    reader.onerror = (e) => {
-        console.error('FileReader error:', e);
-        showToast('❌ Gagal membaca file. Coba file lain.');
-    };
-
-    reader.onabort = () => console.log('Upload cancelled');
-
-    // Baca sebagai base64
-    try{
-        reader.readAsDataURL(file);
-    } catch(err){
-        console.error('readAsDataURL error:', err);
-        showToast('❌ Error: '+err.message);
-    }
+    reader.readAsDataURL(file);
 }
 
-function delFile(procId, idx){
-    if(!confirm('Hapus file ini?')) return;
-
-    const proj = projects.find(p => p.id === currentProj);
-    if(!proj || !proj.steps[procId]) return;
-
-    const fileName = proj.steps[procId].files[idx]?.name || 'file';
-    proj.steps[procId].files.splice(idx, 1);
-
-    save();
-    render();
-    toast('🗑 File "'+fileName+'" dihapus');
+function delFile(id,i){
+    const proj = projects.find(p=>p.id===currentProj);
+    proj.steps[id].files.splice(i,1);
+    save(); render();
 }
 
-// =============================================
-// NOTES
-// =============================================
-function saveNote(procId, val){
-    const proj = projects.find(p => p.id === currentProj);
-    if(!proj || !proj.steps[procId]) return;
-    
-    proj.steps[procId].note = val;
+// ============================================
+// NOTE
+// ============================================
+function saveNote(id,val){
+    const proj = projects.find(p=>p.id===currentProj);
+    proj.steps[id].note = val;
     save();
 }
 
-// =============================================
-// STATUS TOGGLE - YANG INI PAING PENTING!
-// =============================================
-function setStatus(procId, status){
-    console.log('⚡️ SET STATUS:', procId, '-', status); // DEBUG
-
-    const proj = projects.find(p => p.id === currentProj);
-    if(!proj || !proj.steps[procId]){
-        console.error('Project or step not found!');
-        return;
-    }
-
-    proj.steps[procId].status = status;
-    save();
-    render(); // Re-render untuk update UI
-
-    const msgs = {
-        'done': '✅ Tahapan SELESAI!',
-        'active': '▶️ Sedang AKTIF...',
-        'pending': '⏳ Menunggu...'
-    };
-
-    showToast(msgs[status] || 'Status updated!');
+// ============================================
+// STATUS
+// ============================================
+function setStatus(id,status){
+    const proj = projects.find(p=>p.id===currentProj);
+    proj.steps[id].status = status;
+    save(); render();
 }
 
-// =============================================
-// VIEWERS
-// =============================================
+// ============================================
+// VIEWER
+// ============================================
 function viewImg(src){
-    if(!src) return;
-    document.getElementById('viewImg').src = src;
-    document.getElementById('imgViewer').classList.add('show');
+    viewImg.src = src;
+    imgViewer.classList.add('show');
 }
 
 function closeViewer(){
-    document.getElementById('imgViewer').classList.remove('show');
-    document.getElementById('viewImg').src = '';
+    imgViewer.classList.remove('show');
 }
 
-function viewPdf(url){
-    window.open(url, '_blank');
-}
-
-// =============================================
+// ============================================
 // EXPORT
-// =============================================
+// ============================================
 function exportJSON(){
-    const proj = projects.find(p => p.id === currentProj);
-    if(!proj) return;
-
-    const blob = new Blob([JSON.stringify(proj, null, 2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
+    const proj = projects.find(p=>p.id===currentProj);
+    const blob = new Blob([JSON.stringify(proj,null,2)]);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = (proj.order||'data')+'.json';
+    a.href = URL.createObjectURL(blob);
+    a.download = proj.order+'.json';
     a.click();
-    URL.revokeObjectURL(url);
-    showToast('📥 Exported!');
 }
 
-// =============================================
-// PDF GENERATION
-// =============================================
+// ============================================
+// PDF (SIMPLE)
+// ============================================
 function genPDF(){
-    const proj = projects.find(p => calculatePct(p));
-    if(!proj) return;
-
-    showToast('⏳ Membuat PDF...');
-
-    let content = '<h1 style="text-align:center;margin-bottom:30px;">Laporan Produksi</h1>';
-    content += '<div style="margin-bottom:25px;padding:20px;background:#f8f9fa;border-radius:10px;border-left:4px solid #3b82f6;"><h2 style="margin-bottom:12px;color:#1a1a1a;">'+escapeHtml(proj.order)+'</h2><p style="font-size:14px;color:#4b5563;">Pelanggan: '+(proj.customer||'-')+'</p></div>';
-
-    if(proj.panels){
-        proj.panels.forEach(panel => {
-            const pct = calculatePct(panel);
-            content += '<div style="margin:18px 0;padding:18px;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;"><strong style="font-size:15px;">📦 '+escapeHtml(panel.name)+(panel.qty>1?' ('+panel.qty+'x)':'')+'</strong> <span style="float:right;background:'+getStatusColor(getMainStatus(panel))+';color:white;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700;">'+pct+'%</span></div>';
-        });
-    }
-
-    document.getElementById('pdf').innerHTML = content;
+    const proj = projects.find(p=>p.id===currentProj);
     const el = document.getElementById('pdf');
-    el.style.display = 'block';
 
-    html2pdf().set({
-        margin:[10,10],
-        filename:'Report_'+(proj.order||'report')+'.pdf',
-        image:{type:'jpeg',quality:.98},
-        html2canvas:{scale:2},
-        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-    }).from(el).save().then(() => {
-        el.style.display = 'none';
-        showToast('📄 PDF didownload!');
-    }).catch(err => {
-        console.error('PDF error:', err);
-        el.style.display = 'none;
-        showToast('❌ Gagal membuat PDF');
+    let html = `<h1>${proj.order}</h1>`;
+
+    Object.entries(proj.steps).forEach(([k,v])=>{
+        html += `<p>${k} - ${v.status}</p>`;
+    });
+
+    el.innerHTML = html;
+    el.style.display='block';
+
+    html2pdf().from(el).save().then(()=>{
+        el.style.display='none';
     });
 }
-
-// =============================================
-// HELPERS
-// =============================================
-function calculatePct(panel){
-    if(!panel || !panel.steps) return 0;
-    const steps = Object.values(panel.steps);
-    const done = steps.filter(s => s.status==='done').length;
-    return Math.round((done/steps.length)*100);
-}
-
-function getMainStatus(panel){
-    if(!panel || !panel.steps) return 'pending';
-    const steps = Object.values(panel.steps);
-    if(steps.every(s => s.status==='done')) return 'done';
-    if(steps.some(s => s.status==='active')) return 'active';
-    return 'pending';
-}
-
-function getStatusColor(status){
-    const colors = {pending:'#6b7280', active:'#3b82f6', done:'#22c55e'};
-    return colors[status] || '#888';
-}
-
-// =============================================
-// MODAL SYSTEM
-// =============================================
-function openModal(id){
-    document.getElementById(id).classList.add('show');
-}
-
-function closeModal(id){
-    document.getElementById(id)?.classList.remove('show');
-}
-
-// Close modals when clicking overlay
-document.querySelectorAll('.modal').forEach(m => {
-    m.addEventListener('click', e => {
-        if(e.target === m) closeModal(m.id);
-    });
-});
-
-// =============================================
-// TOAST
-// =============================================
-function toast(msg){
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// =============================================
-// KEYBOARD SHORTCUTS
-// =============================================
-document.addEventListener('keydown', e => {
-    if(e.key === 'Escape'){
-        closeViewer();
-        document.querySelectorAll('.modal.show').forEach(m => closeModal(m.id));
-    }
-});
-
-// =============================================
-// START APP
-// =============================================
-function startApp(){
-    document.getElementById('splash').classList.add('hidden');
-    render();
-}
-
-console.log('%c🏭 Production Manager v6.0','color:#3b82f6;font-size:20px;font-weight:bold;padding:15px;');
-console.log('%c✅ Features: Multi-Panel | File Upload | Status Toggle | Export | PDF','color:#22c55e;font-size:13px;padding:5px;');
 </script>
-</body>
-</html>
