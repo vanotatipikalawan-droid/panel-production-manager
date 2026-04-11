@@ -1,313 +1,3629 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏭 Production Manager ULTIMATE v8</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        /* ============================================
+           CSS VARIABLES & THEME SYSTEM
+           ============================================ */
+        :root {
+            /* Dark Theme (Default) */
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --bg-tertiary: #1a1a1a;
+            --border-color: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --text-muted: #666666;
+            --accent-blue: #3b82f6;
+            --accent-blue-hover: #2563eb;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --accent-yellow: #eab308;
+            --accent-orange: #f97316;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --overlay-bg: rgba(0, 0, 0, 0.92);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            
+            /* Spacing */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            
+            /* Transitions */
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --border-color: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --overlay-bg: rgba(0, 0, 0, 0.5);
+            --card-bg: rgba(0, 0, 0, 0.02);
+        }
+
+        /* ============================================
+           BASE STYLES
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background var(--transition-normal), color var(--transition-normal);
+        }
+
+        /* ============================================
+           SPLASH SCREEN
+           ============================================ */
+        .splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0a 0%, #16213e 50%, #1a1a2e 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .splash.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .splash-logo {
+            font-size: 6rem;
+            margin-bottom: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 10px 30px rgba(59, 130, 246, 0.5));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        .splash h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #60a5fa, #22c55e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .splash p {
+            color: #9ca3af;
+            font-size: 1.1rem;
+            margin-bottom: 2.5rem;
+            text-align: center;
+            max-width: 350px;
+        }
+
+        .splash-loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           LOGIN SCREEN
+           ============================================ */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99998;
+            padding: 20px;
+        }
+
+        .login-screen.active {
+            display: flex;
+        }
+
+        .login-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 60px var(--shadow-color);
+            animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-header .logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .login-header h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all var(--transition-fast);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-hover));
+            color: white;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .login-divider {
+            text-align: center;
+            margin: 24px 0;
+            position: relative;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .login-divider::before,
+        .login-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: calc(50% - 80px);
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .login-divider::before { left: 0; }
+        .login-divider::after { right: 0; }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .login-footer a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ============================================
+           MAIN APP CONTAINER
+           ============================================ */
+        .app {
+            max-width: 520px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* ============================================
+           HEADER
+           ============================================ */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all var(--transition-fast);
+            position: relative;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .icon-btn .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-red);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        /* User Avatar in Header */
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            border: 2px solid var(--border-color);
+            transition: all var(--transition-fast);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-blue);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 4px 0;
+            scrollbar-width: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            flex-shrink: 0;
+            padding: 10px 18px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+            transition: all var(--transition-fast);
+        }
+
+        .tab.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+            font-weight: 700;
+        }
+
+        .tab-add {
+            background: transparent;
+            border-style: dashed;
+            width: 38px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        /* ============================================
+           PROGRESS SECTION
+           ============================================ */
+        .progress-section {
+            background: var(--bg-secondary);
+            margin: 18px;
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .progress-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-blue), #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress-bar-container {
+            height: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 18px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), #60a5fa, var(--accent-green));
+            border-radius: 6px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 14px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .stat-done .stat-value { color: var(--accent-green); }
+        .stat-active .stat-value { color: var(--accent-blue); }
+        .stat-pending .stat-value { color: var(--text-muted); }
+
+        /* ============================================
+           INFO CARD
+           ============================================ */
+        .info-card {
+            background: var(--bg-secondary);
+            margin: 0 18px 18px;
+            border-radius: var(--radius-lg);
+            padding: 18px 22px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .info-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateX(4px);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-key {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        /* ============================================
+           SECTION TITLE
+           ============================================ */
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            margin: 28px 18px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ============================================
+           PROCESS LIST (SORTABLE)
+           ============================================ */
+        .process-list {
+            padding: 0 18px;
+        }
+
+        .process-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: all var(--transition-fast);
+            cursor: grab;
+        }
+
+        .process-item:active {
+            cursor: grabbing;
+        }
+
+        .process-item.dragging {
+            opacity: 0.5;
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px var(--shadow-color);
+            border-color: var(--accent-blue);
+        }
+
+        .process-item.drag-over {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .process-item[data-status="active"] {
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .process-item[data-status="done"] {
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .process-header {
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .process-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-md);
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            border: 2px solid transparent;
+            flex-shrink: 0;
+            transition: all var(--transition-fast);
+        }
+
+        .process-item[data-status="active"] .process-icon {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: var(--accent-blue);
+        }
+
+        .process-item[data-status="done"] .process-icon {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: var(--accent-green);
+        }
+
+        .process-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .process-name {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .drag-handle {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: grab;
+            opacity: 0.5;
+        }
+
+        .drag-handle:hover {
+            opacity: 1;
+        }
+
+        .process-meta {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-dot.pending {
+            background: var(--text-muted);
+        }
+
+        .status-dot.active {
+            background: var(--accent-blue);
+            box-shadow: 0 0 12px var(--accent-blue);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .status-dot.done {
+            background: var(--accent-green);
+        }
+
+        /* Expanded Content */
+        .process-content {
+            display: none;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            animation: slideDown 0.3s ease;
+        }
+
+        .process-item.expanded .process-content {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .process-body {
+            padding: 20px;
+        }
+
+        /* File Section */
+        .file-section {
+            margin-bottom: 22px;
+        }
+
+        .file-label {
+            font-size: 0.84rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-weight: 600;
+            display: block;
+        }
+
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+
+        .file-item:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .file-thumbnail {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .file-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .file-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+        }
+
+        .file-btn.delete {
+            color: var(--accent-red);
+        }
+
+        .file-btn:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .upload-btn {
+            width: 100%;
+            padding: 14px;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.92rem;
+            font-weight: 500;
+            transition: all var(--transition-fast);
+        }
+
+        .upload-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        /* Notes Section */
+        .notes-section {
+            margin-bottom: 22px;
+        }
+
+        .notes-textarea {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 90px;
+            font-family: inherit;
+            transition: all var(--transition-fast);
+        }
+
+        .notes-textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Status Toggle */
+        .status-toggle {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .status-btn {
+            padding: 14px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-align: center;
+        }
+
+        .status-btn:hover {
+            border-color: var(--text-primary);
+        }
+
+        .status-btn.pending.active {
+            background: var(--text-muted);
+            border-color: var(--text-muted);
+            color: white;
+        }
+
+        .status-btn.active-status.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .status-btn.done.active {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        /* ============================================
+           CHART SECTION
+           ============================================ */
+        .chart-section {
+            background: var(--bg-secondary);
+            margin: 18px;
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+
+        /* ============================================
+           BOTTOM BAR
+           ============================================ */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 14px 16px 28px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .bottom-bar .btn {
+            flex: 1;
+        }
+
+        /* ============================================
+           MODALS
+           ============================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--overlay-bg);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            width: 100%;
+            max-width: 450px;
+            max-height: 85vh;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 25px 60px var(--shadow-color);
+            animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes modalSlideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-header {
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            font-weight: 700;
+            font-size: 1.15rem;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-fast);
+        }
+
+        .modal-close:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 18px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        /* List Items in Modal */
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .list-item:hover {
+            border-color: var(--accent-blue);
+            transform: translateX(4px);
+        }
+
+        .list-item.selected {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .list-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .list-item-name {
+            font-weight: 700;
+            font-size: 0.96rem;
+            margin-bottom: 3px;
+        }
+
+        .list-item-meta {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        .delete-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: var(--accent-red);
+            color: white;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-fast);
+            flex-shrink: 0;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        /* ============================================
+           TOAST NOTIFICATION
+           ============================================ */
+        .toast-container {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 14px 28px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            max-width: 400px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: auto;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success { border-left: 4px solid var(--accent-green); }
+        .toast.error { border-left: 4px solid var(--accent-red); }
+        .toast.warning { border-left: 4px solid var(--accent-yellow); }
+        .toast.info { border-left: 4px solid var(--accent-blue); }
+
+        /* ============================================
+           IMAGE VIEWER
+           ============================================ */
+        .image-viewer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.97);
+            z-index: 1500;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .image-viewer.show {
+            display: flex;
+        }
+
+        .image-viewer img {
+            max-width: 95%;
+            max-height: 95%;
+            object-fit: contain;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .viewer-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-fast);
+        }
+
+        .viewer-close:hover {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+        }
+
+        /* ============================================
+           QR CODE MODAL
+           ============================================ */
+        .qr-container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .qr-code {
+            background: white;
+            padding: 20px;
+            border-radius: var(--radius-md);
+            display: inline-block;
+            margin: 16px 0;
+        }
+
+        .qr-code canvas {
+            display: block;
+        }
+
+        .qr-info {
+            margin-top: 16px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* ============================================
+           SETTINGS PANEL
+           ============================================ */
+        .settings-section {
+            margin-bottom: 24px;
+        }
+
+        .settings-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .setting-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            background: var(--border-color);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-blue);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            transition: all var(--transition-fast);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after {
+            left: 27px;
+        }
+
+        /* Language Selector */
+        .lang-selector {
+            display: flex;
+            gap: 8px;
+        }
+
+        .lang-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+        }
+
+        .lang-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        /* ============================================
+           EMPTY STATE
+           ============================================ */
+        .empty-state {
+            text-align: center;
+            padding: 70px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            margin-bottom: 18px;
+            opacity: 0.4;
+        }
+
+        .empty-text {
+            font-size: 1.15rem;
+            margin-bottom: 26px;
+            font-weight: 600;
+        }
+
+        /* ============================================
+           PRINT STYLES
+           ============================================ */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            
+            .header, .bottom-bar, .modal-overlay, .toast-container, 
+            .image-viewer, .splash, .login-screen {
+                display: none !important;
+            }
+            
+            .app {
+                max-width: 100% !important;
+            }
+            
+            .progress-section, .info-card, .process-item {
+                break-inside: avoid;
+                border: 1px solid #ddd !important;
+                background: white !important;
+            }
+        }
+
+        /* ============================================
+           RESPONSIVE ADJUSTMENTS
+           ============================================ */
+        @media (max-width: 480px) {
+            .splash h1 {
+                font-size: 1.8rem;
+            }
+            
+            .login-card {
+                padding: 28px;
+            }
+            
+            .modal {
+                max-width: 100%;
+                margin: 10px;
+            }
+        }
+
+        /* Notification Badge Animation */
+        @keyframes badgeBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .badge.animate {
+            animation: badgeBounce 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================================
+     SPLASH SCREEN
+     ============================================ -->
+<div class="splash" id="splashScreen">
+    <div class="splash-logo">🏭</div>
+    <h1>Production Manager</h1>
+    <p id="splashSubtitle">Sistem tracking produksi panel ultimate</p>
+    <div class="splash-loader" id="splashLoader"></div>
+</div>
+
+<!-- ============================================
+     LOGIN SCREEN
+     ============================================ -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-card" onclick="event.stopPropagation()">
+        <div class="login-header">
+            <div class="logo">🏭</div>
+            <h2 id="loginTitle">Selamat Datang</h2>
+            <p id="loginDesc">Login untuk melanjutkan</p>
+        </div>
+        
+        <div id="loginForm">
+            <div class="form-group">
+                <label id="emailLabel">Email</label>
+                <input type="email" class="form-input" id="loginEmail" placeholder="nama@email.com">
+            </div>
+            <div class="form-group">
+                <label id="passwordLabel">Password</label>
+                <input type="password" class="form-input" id="loginPassword" placeholder="••••••••">
+            </div>
+            <button class="btn btn-primary" onclick="handleLogin()" id="loginBtn">
+                🔓 Masuk
+            </button>
+        </div>
+
+        <div id="registerForm" style="display:none;">
+            <div class="form-group">
+                <label id="nameLabel">Nama Lengkap</label>
+                <input type="text" class="form-input" id="regName" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label id="regEmailLabel">Email</label>
+                <input type="email" class="form-input" id="regEmail" placeholder="nama@email.com">
+            </div>
+            <div class="form-group">
+                <label id="regPasswordLabel">Password</label>
+                <input type="password" class="form-input" id="regPassword" placeholder="Min. 6 karakter">
+            </div>
+            <button class="btn btn-primary" onclick="handleRegister()" id="registerBtn">
+                ✨ Buat Akun
+            </button>
+        </div>
+
+        <div class="login-divider" id="loginDivider">atau</div>
+        
+        <button class="btn btn-secondary" onclick="toggleAuthMode()" id="toggleAuthBtn">
+            Belum punya akun? Daftar
+        </button>
+
+        <div class="login-footer">
+            <span id="demoLoginText">Demo: demo@test.com / demo123</span>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MAIN APPLICATION
+     ============================================ -->
+<div class="app" id="app" style="display:none;">
+    
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-top">
+            <div class="header-title">
+                <h1>🏭 Production</h1>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="openModal('notificationModal')" title="Notifikasi">
+                    🔔
+                    <span class="badge" id="notifBadge" style="display:none;">0</span>
+                </button>
+                <button class="icon-btn" onclick="openModal('settingsModal')" title="Pengaturan">
+                    ⚙️
+                </button>
+                <div class="user-avatar" id="userAvatar" onclick="openModal('profileModal')" title="Profil">
+                    U
+                </div>
+            </div>
+        </div>
+        
+        <!-- PROJECT TABS -->
+        <nav class="tabs" id="projectTabs"></nav>
+    </header>
+
+    <!-- EMPTY STATE -->
+    <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon">📁</div>
+        <p class="empty-text" id="emptyText">Belum ada proyek</p>
+        <button class="btn btn-primary" onclick="openModal('newProjectModal')">
+            + Buat Proyek Pertama
+        </button>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="mainContent" style="display:none;">
+        
+        <!-- PROGRESS SECTION -->
+        <section class="progress-section">
+            <div class="progress-header">
+                <span class="progress-label" id="progressLabel">Progress</span>
+                <span class="progress-value" id="progressValue">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card stat-done">
+                    <span class="stat-value" id="statDone">0</span>
+                    <span class="stat-label" id="statDoneLabel">Selesai</span>
+                </div>
+                <div class="stat-card stat-active">
+                    <span class="stat-value" id="statActive">0</span>
+                    <span class="stat-label" id="statActiveLabel">Aktif</span>
+                </div>
+                <div class="stat-card stat-pending">
+                    <span class="stat-value" id="statPending">0</span>
+                    <span class="stat-label" id="statPendingLabel">Menunggu</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHART SECTION -->
+        <section class="chart-section">
+            <div class="chart-header">
+                <span class="chart-title" id="chartTitle">📊 Visualisasi Progress</span>
+                <button class="icon-btn" onclick="refreshChart()" title="Refresh">🔄</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="progressChart"></canvas>
+            </div>
+        </section>
+
+        <!-- INFO CARD -->
+        <div class="info-card" onclick="openModal('editProjectModal')">
+            <div class="info-row">
+                <span class="info-key" id="orderKey">Order</span>
+                <span class="info-value" id="displayOrder">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-key" id="customerKey">Pelanggan</span>
+                <span class="info-value" id="displayCustomer">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-key" id="panelKey">Panel</span>
+                <span class="info-value" id="displayPanel">-</span>
+            </div>
+        </div>
+
+        <!-- SECTION TITLE -->
+        <h2 class="section-title" id="processSectionTitle">
+            ☰ Tahapan Produksi (Drag untuk urutkan)
+        </h2>
+
+        <!-- PROCESS LIST (SORTABLE) -->
+        <div class="process-list" id="processList"></div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="bottom-bar" id="bottomBar" style="display:none;">
+        <button class="btn btn-secondary" onclick="exportJSON()">📥 JSON</button>
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
+        <button class="btn btn-primary" onclick="generatePDF()">📄 PDF Report</button>
+        <button class="btn btn-success" onclick="sendEmailReport()">📧 Email</button>
+    </div>
+</div>
+
+<!-- ============================================
+     MODALS
+     ============================================ -->
+
+<!-- New Project Modal -->
+<div class="modal-overlay" id="newProjectModal">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title" id="newProjectTitle">Proyek Baru</span>
+            <button class="modal-close" onclick="closeModal('newProjectModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label id="projectOrderLabel">Nomor Order *</label>
+                <input type="text" class="form-input" id="inputOrder" placeholder="PO-2024-001">
+            </div>
+            <div class="form-group">
+                <label id="projectCustomerLabel">Pelanggan</label>
+                <input type="text" class="form-input" id="inputCustomer" placeholder="Nama pelanggan">
+            </div>
+            <div class="form-group">
+                <label id="projectDescLabel">Deskripsi</label>
+                <textarea class="form-input" id="inputDescription" rows="3" placeholder="Deskripsi proyek..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('newProjectModal')">Batal</button>
+            <button class="btn btn-primary" onclick="createProject()">✨ Buat Proyek</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Project Modal -->
+<div class="modal-overlay" id="editProjectModal">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title" id="editProjectTitle">Edit Proyek</span>
+            <button class="modal-close" onclick="closeModal('editProjectModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Nomor Order</label>
+                <input type="text" class="form-input" id="editOrder">
+            </div>
+            <div class="form-group">
+                <label>Pelanggan</label>
+                <input type="text" class="form-input" id="editCustomer">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('editProjectModal')">Batal</button>
+            <button class="btn btn-primary" onclick="saveEditProject()">💾 Simpan</button>
+        </div>
+    </div>
+</div>
+
+<!-- All Projects Modal -->
+<div class="modal-overlay" id="projectsModal">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title" id="allProjectsTitle">Semua Proyek</span>
+            <button class="modal-close" onclick="closeModal('projectsModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="projectsListBody"></div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title" id="settingsTitle">⚙️ Pengaturan</span>
+            <button class="modal-close" onclick="closeModal('settingsModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Theme Toggle -->
+            <div class="settings-section">
+                <div class="settings-title" id="appearanceTitle">Tampilan</div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name" id="darkModeLabel">Mode Gelap</div>
+                        <div class="setting-desc" id="darkModeDesc">Ganti tema tampilan</div>
+                    </div>
+                    <div class="toggle-switch active" id="themeToggle" onclick="toggleTheme()"></div>
+                </div>
+            </div>
+
+            <!-- Language Selection -->
+            <div class="settings-section">
+                <div class="settings-title" id="languageTitle">Bahasa / Language</div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name" id="languageLabel">Bahasa</div>
+                        <div class="setting-desc" id="languageDesc">Pilih bahasa antarmuka</div>
+                    </div>
+                    <div class="lang-selector">
+                        <button class="lang-btn active" id="langIdBtn" onclick="setLanguage('id')">ID</button>
+                        <button class="lang-btn" id="langEnBtn" onclick="setLanguage('en')">EN</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="settings-section">
+                <div class="settings-title" id="notifSettingsTitle">Notifikasi</div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name" id="pushNotifLabel">Push Notifikasi</div>
+                        <div class="setting-desc" id="pushNotifDesc">Terima notifikasi browser</div>
+                    </div>
+                    <div class="toggle-switch" id="pushNotifToggle" onclick="togglePushNotifications()"></div>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name" id="emailNotifLabel">Email Notifikasi</div>
+                        <div class="setting-desc" id="emailNotifDesc">Kirim laporan via email</div>
+                    </div>
+                    <div class="toggle-switch" id="emailNotifToggle" onclick="toggleEmailNotifications()"></div>
+                </div>
+            </div>
+
+            <!-- Data & Sync -->
+            <div class="settings-section">
+                <div class="settings-title" id="dataTitle">Data & Sinkronisasi</div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name" id="cloudSyncLabel">Cloud Sync</div>
+                        <div class="setting-desc" id="cloudSyncDesc">Sinkronkan ke cloud</div>
+                    </div>
+                    <div class="toggle-switch active" id="cloudSyncToggle" onclick="toggleCloudSync()"></div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="settings-section">
+                <div class="settings-title" id="dangerZoneTitle">⚠️ Zona Bahaya</div>
+                <button class="btn btn-danger" style="width:100%" onclick="clearAllData()" id="clearDataBtn">
+                    🗑️ Hapus Semua Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profileModal">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title" id="profileTitle">👤 Profil Pengguna</span>
+            <button class="modal-close" onclick="closeModal('profileModal')">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align:center;">
+            <div class="user-avatar" id="profileAvatar" style="width:80px;height:80px;font-size:2rem;margin:0 auto 16px;">U</div>
+            <h3 id="profileName" style="margin-bottom:4px;">User</h3>
+            <p id="profileEmail" style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:24px;">user@email.com</p>
+            <div style="text-align:left;">
+                <div class="info-row">
+                    <span class="info-key" id="totalProjectsLabel">Total Proyek</span>
+                    <span class="info-value" id="totalProjectsValue">0</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key" id="lastLoginLabel">Terakhir Login</span>
+                    <span class="info-value" id="lastLoginValue">-</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-danger" onclick="handleLogout()" id="logoutBtn">
+                🚪 Keluar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Modal -->
+<div class="modal-overlay" id="notificationModal">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title" id="notifModalTitle">🔔 Notifikasi</span>
+            <button class="modal-close" onclick="closeModal('notificationModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="notificationsList">
+            <p style="text-align:center;color:var(--text-secondary);padding:30px;" id="noNotifText">Belum ada notifikasi</p>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal-overlay" id="qrModal">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title" id="qrModalTitle">QR Code Panel</span>
+            <button class="modal-close" onclick="closeModal('qrModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="qr-container">
+                <div id="qrCodeDisplay" class="qr-code"></div>
+                <p class="qr-info" id="qrInfoText">Scan QR code ini untuk melihat detail panel</p>
+                <button class="btn btn-secondary" onclick="downloadQR()" id="downloadQRBtn" style="margin-top:12px;">
+                    📥 Download QR
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Email Modal -->
+<div class="modal-overlay" id="emailModal">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title" id="emailModalTitle">📧 Kirim Laporan via Email</span>
+            <button class="modal-close" onclick="closeModal('emailModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label id="emailToLabel">Kirim Ke</label>
+                <input type="email" class="form-input" id="emailToInput" placeholder="recipient@email.com">
+            </div>
+            <div class="form-group">
+                <label id="emailSubjectLabel">Subjek</label>
+                <input type="text" class="form-input" id="emailSubjectInput" value="Laporan Produksi">
+            </div>
+            <div class="form-group">
+                <label id="emailMessageLabel">Pesan</label>
+                <textarea class="form-input" id="emailMessageInput" rows="4" placeholder="Tambahkan pesan..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('emailModal')">Batal</button>
+            <button class="btn btn-primary" onclick="confirmSendEmail()">✈️ Kirim Email</button>
+        </div>
+    </div>
+</div>
+
+<!-- Image Viewer -->
+<div class="image-viewer" id="imageViewer">
+    <button class="viewer-close" onclick="closeImageViewer()">×</button>
+    <img id="viewerImage" src="" alt="">
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Hidden PDF Container -->
+<div id="pdfContainer" style="display:none;"></div>
+
 <script>
 // ============================================
-// CONFIG
+// CONFIGURATION & CONSTANTS
 // ============================================
-const STEPS = [
-    {id:'drawing', name:'Drawing', icon:'📐'},
-    {id:'prepare', name:'Preparation', icon:'📦'},
-    {id:'assembly', name:'Assembly', icon:'🔧'},
-    {id:'wiring', name:'Wiring', icon:'🔌'},
-    {id:'finishing', name:'Finishing', icon:'✨'},
-    {id:'qc', name:'Quality Control', icon:'✅'}
+
+// Firebase Configuration (Replace with your own config)
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
+// EmailJS Configuration (Replace with your own)
+const emailJsConfig = {
+    serviceId: 'YOUR_SERVICE_ID',
+    templateId: 'YOUR_TEMPLATE_ID',
+    publicKey: 'YOUR_PUBLIC_KEY'
+};
+
+// Process Steps Definition
+const PROCESS_STEPS = [
+    { id: 'drawing', name: 'Drawing', icon: '📐' },
+    { id: 'preparation', name: 'Preparation', icon: '📦' },
+    { id: 'assembly', name: 'Assembly', icon: '🔧' },
+    { id: 'wiring', name: 'Wiring', icon: '🔌' },
+    { id: 'finishing', name: 'Finishing', icon: '✨' },
+    { id: 'qc', name: 'Quality Control', icon: '✅' }
 ];
 
-let projects = [];
-let currentProj = null;
+// Translations
+const translations = {
+    id: {
+        // Splash
+        splashSubtitle: 'Sistem tracking produksi panel ultimate',
+        // Login
+        loginTitle: 'Selamat Datang',
+        loginDesc: 'Login untuk melanjutkan',
+        emailLabel: 'Email',
+        passwordLabel: 'Password',
+        loginBtn: '🔓 Masuk',
+        nameLabel: 'Nama Lengkap',
+        regEmailLabel: 'Email',
+        regPasswordLabel: 'Password',
+        registerBtn: '✨ Buat Akun',
+        loginDivider: 'atau',
+        toggleAuthBtn: 'Belum punya akun? Daftar',
+        toggleAuthBtnBack: 'Sudah punya akun? Masuk',
+        demoLoginText: 'Demo: demo@test.com / demo123',
+        // Header
+        progressLabel: 'Progress',
+        statDoneLabel: 'Selesai',
+        statActiveLabel: 'Aktif',
+        statPendingLabel: 'Menunggu',
+        chartTitle: '📊 Visualisasi Progress',
+        orderKey: 'Order',
+        customerKey: 'Pelanggan',
+        panelKey: 'Panel',
+        processSectionTitle: '☰ Tahapan Produksi (Drag untuk urutkan)',
+        // Empty State
+        emptyText: 'Belum ada proyek',
+        // Modals
+        newProjectTitle: 'Proyek Baru',
+        projectOrderLabel: 'Nomor Order *',
+        projectCustomerLabel: 'Pelanggan',
+        projectDescLabel: 'Deskripsi',
+        editProjectTitle: 'Edit Proyek',
+        allProjectsTitle: 'Semua Proyek',
+        settingsTitle: '⚙️ Pengaturan',
+        appearanceTitle: 'Tampilan',
+        darkModeLabel: 'Mode Gelap',
+        darkModeDesc: 'Ganti tema tampilan',
+        languageTitle: 'Bahasa / Language',
+        languageLabel: 'Bahasa',
+        languageDesc: 'Pilih bahasa antarmuka',
+        notifSettingsTitle: 'Notifikasi',
+        pushNotifLabel: 'Push Notifikasi',
+        pushNotifDesc: 'Terima notifikasi browser',
+        emailNotifLabel: 'Email Notifikasi',
+        emailNotifDesc: 'Kirim laporan via email',
+        dataTitle: 'Data & Sinkronisasi',
+        cloudSyncLabel: 'Cloud Sync',
+        cloudSyncDesc: 'Sinkronkan ke cloud',
+        dangerZoneTitle: '⚠️ Zona Bahaya',
+        clearDataBtn: '🗑️ Hapus Semua Data',
+        profileTitle: '👤 Profil Pengguna',
+        totalProjectsLabel: 'Total Proyek',
+        lastLoginLabel: 'Terakhir Login',
+        logoutBtn: '🚪 Keluar',
+        notifModalTitle: '🔔 Notifikasi',
+        noNotifText: 'Belum ada notifikasi',
+        qrModalTitle: 'QR Code Panel',
+        qrInfoText: 'Scan QR code ini untuk melihat detail panel',
+        downloadQRBtn: '📥 Download QR',
+        emailModalTitle: '📧 Kirim Laporan via Email',
+        emailToLabel: 'Kirim Ke',
+        emailSubjectLabel: 'Subjek',
+        emailMessageLabel: 'Pesan',
+        // Toast Messages
+        loginSuccess: '✅ Login berhasil!',
+        registerSuccess: '✅ Akun berhasil dibuat!',
+        logoutSuccess: '👋 Sampai jumpa!',
+        projectCreated: '✅ Proyek berhasil dibuat!',
+        projectDeleted: '🗑️ Proyek dihapus',
+        fileUploaded: '✅ File ditambahkan!',
+        fileDeleted: '🗑️ File dihapus',
+        statusUpdated: 'Status diperbarui!',
+        saved: '💾 Disimpan!',
+        exported: '📥 Diekspor!',
+        pdfGenerated: '📄 PDF didownload!',
+        emailSent: '✈️ Email terkirim!',
+        errorGeneric: '❌ Terjadi kesalahan',
+        // Others
+        menunggu: '⏳ Menunggu',
+        aktif: '▶️ Aktif',
+        selesai: '✅ Selesai',
+        tambahFile: '+ Tambah File',
+        catatanPlaceholder: 'Catatan untuk tahapan ini...',
+        confirmDelete: 'Hapus item ini?',
+        confirmClearData: 'Hapus SEMUA data? Tidak bisa dikembalikan!'
+    },
+    en: {
+        // Splash
+        splashSubtitle: 'Ultimate panel production tracking system',
+        // Login
+        loginTitle: 'Welcome',
+        loginDesc: 'Sign in to continue',
+        emailLabel: 'Email',
+        passwordLabel: 'Password',
+        loginBtn: '🔓 Sign In',
+        nameLabel: 'Full Name',
+        regEmailLabel: 'Email',
+        regPasswordLabel: 'Password',
+        registerBtn: '✨ Create Account',
+        loginDivider: 'or',
+        toggleAuthBtn: "Don't have an account? Sign Up",
+        toggleAuthBtnBack: 'Already have an account? Sign In',
+        demoLoginText: 'Demo: demo@test.com / demo123',
+        // Header
+        progressLabel: 'Progress',
+        statDoneLabel: 'Done',
+        statActiveLabel: 'Active',
+        statPendingLabel: 'Pending',
+        chartTitle: '📊 Progress Visualization',
+        orderKey: 'Order',
+        customerKey: 'Customer',
+        panelKey: 'Panel',
+        processSectionTitle: '☰ Production Steps (Drag to reorder)',
+        // Empty State
+        emptyText: 'No projects yet',
+        // Modals
+        newProjectTitle: 'New Project',
+        projectOrderLabel: 'Order Number *',
+        projectCustomerLabel: 'Customer',
+        projectDescLabel: 'Description',
+        editProjectTitle: 'Edit Project',
+        allProjectsTitle: 'All Projects',
+        settingsTitle: '⚙️ Settings',
+        appearanceTitle: 'Appearance',
+        darkModeLabel: 'Dark Mode',
+        darkModeDesc: 'Switch display theme',
+        languageTitle: 'Language / Bahasa',
+        languageLabel: 'Language',
+        languageDesc: 'Choose interface language',
+        notifSettingsTitle: 'Notifications',
+        pushNotifLabel: 'Push Notifications',
+        pushNotifDesc: 'Receive browser notifications',
+        emailNotifLabel: 'Email Notifications',
+        emailNotifDesc: 'Send reports via email',
+        dataTitle: 'Data & Sync',
+        cloudSyncLabel: 'Cloud Sync',
+        cloudSyncDesc: 'Synchronize to cloud',
+        dangerZoneTitle: '⚠️ Danger Zone',
+        clearDataBtn: '🗑️ Clear All Data',
+        profileTitle: '👤 User Profile',
+        totalProjectsLabel: 'Total Projects',
+        lastLoginLabel: 'Last Login',
+        logoutBtn: '🚪 Logout',
+        notifModalTitle: '🔔 Notifications',
+        noNotifText: 'No notifications yet',
+        qrModalTitle: 'Panel QR Code',
+        qrInfoText: 'Scan this QR code to view panel details',
+        downloadQRBtn: '📥 Download QR',
+        emailModalTitle: '📧 Send Report via Email',
+        emailToLabel: 'To',
+        emailSubjectLabel: 'Subject',
+        emailMessageLabel: 'Message',
+        // Toast Messages
+        loginSuccess: '✅ Login successful!',
+        registerSuccess: '✅ Account created successfully!',
+        logoutSuccess: '👋 See you later!',
+        projectCreated: '✅ Project created successfully!',
+        projectDeleted: '🗑️ Project deleted',
+        fileUploaded: '✅ File added!',
+        fileDeleted: '🗑️ File deleted',
+        statusUpdated: 'Status updated!',
+        saved: '💾 Saved!',
+        exported: '📥 Exported!',
+        pdfGenerated: '📄 PDF downloaded!',
+        emailSent: '✈️ Email sent!',
+        errorGeneric: '❌ An error occurred',
+        // Others
+        menunggu: '⏳ Pending',
+        aktif: '▶️ Active',
+        selesai: '✅ Done',
+        tambahFile: '+ Add File',
+        catatanPlaceholder: 'Notes for this step...',
+        confirmDelete: 'Delete this item?',
+        confirmClearData: 'Delete ALL data? This cannot be undone!'
+    }
+};
 
 // ============================================
-// INIT
+// GLOBAL STATE
 // ============================================
-document.addEventListener('DOMContentLoaded', () => {
-    load();
-    render();
-});
 
-function startApp(){
-    document.getElementById('splash').classList.add('hidden');
+let state = {
+    user: null,
+    projects: [],
+    currentProjectId: null,
+    currentLang: 'id',
+    theme: 'dark',
+    notifications: [],
+    settings: {
+        pushNotifications: false,
+        emailNotifications: false,
+        cloudSync: true
+    },
+    chartInstance: null,
+    sortableInstance: null
+};
+
+// Initialize Firebase (if configured)
+let firebaseApp = null;
+let firebaseAuth = null;
+let firebaseDb = null;
+
+try {
+    if (firebaseConfig.apiKey !== 'YOUR_API_KEY') {
+        firebaseApp = firebase.initializeApp(firebaseConfig);
+        firebaseAuth = firebase.auth();
+        firebaseDb = firebase.firestore();
+    }
+} catch (e) {
+    console.log('Firebase not configured, using local storage');
+}
+
+// Initialize EmailJS (if configured)
+try {
+    if (emailJsConfig.publicKey !== 'YOUR_PUBLIC_KEY') {
+        emailjs.init(emailJsConfig.publicKey);
+    }
+} catch (e) {
+    console.log('EmailJS not configured');
 }
 
 // ============================================
-// STORAGE
+// INITIALIZATION
 // ============================================
-function load(){
-    try{
-        const s = localStorage.getItem('ppm_clean');
-        if(s) projects = JSON.parse(s);
-    }catch{
-        projects = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Show splash screen
+    await showSplash();
+    
+    // Load saved preferences
+    loadPreferences();
+    
+    // Apply theme
+    applyTheme();
+    
+    // Apply language
+    applyLanguage();
+    
+    // Check authentication status
+    await checkAuthState();
+});
+
+async function showSplash() {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            document.getElementById('splashScreen').classList.add('hidden');
+            resolve();
+        }, 2000);
+    });
+}
+
+function loadPreferences() {
+    const savedPrefs = localStorage.getItem('pm_preferences');
+    if (savedPrefs) {
+        const prefs = JSON.parse(savedPrefs);
+        state.currentLang = prefs.lang || 'id';
+        state.theme = prefs.theme || 'dark';
+        state.settings = { ...state.settings, ...prefs.settings };
     }
 }
 
-function save(){
-    localStorage.setItem('ppm_clean', JSON.stringify(projects));
+function savePreferences() {
+    localStorage.setItem('pm_preferences', JSON.stringify({
+        lang: state.currentLang,
+        theme: state.theme,
+        settings: state.settings
+    }));
 }
 
 // ============================================
-// UI HELPERS
+// AUTHENTICATION SYSTEM
 // ============================================
-function showToast(msg){
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'), 2500);
-}
 
-function openModal(id){
-    document.getElementById(id).classList.add('show');
-}
-
-function closeModal(id){
-    document.getElementById(id).classList.remove('show');
-}
-
-// ============================================
-// RENDER
-// ============================================
-function render(){
-    renderTabs();
-
-    if(projects.length === 0){
-        empty.style.display='block';
-        content.style.display='none';
-        bot.style.display='none';
+async function checkAuthState() {
+    if (!firebaseAuth) {
+        // No Firebase, show login screen with demo mode
+        document.getElementById('loginScreen').classList.add('active');
         return;
     }
 
-    empty.style.display='none';
-    content.style.display='block';
-    bot.style.display='flex';
-
-    if(!currentProj) currentProj = projects[0].id;
-
-    const proj = projects.find(p => p.id === currentProj);
-    updateProgress(proj);
-    renderInfo(proj);
-    renderProcs(proj);
-}
-
-function renderTabs(){
-    let html = '';
-
-    projects.forEach(p=>{
-        html += `<button class="tab ${p.id===currentProj?'active':''}" onclick="switchProj('${p.id}')">${p.order}</button>`;
+    return new Promise((resolve) => {
+        const unsubscribe = firebaseAuth.onAuth(async (user) => {
+            unsubscribe();
+            
+            if (user) {
+                state.user = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || user.email.split('@')[0]
+                };
+                await loadUserData();
+                showMainApp();
+            } else {
+                document.getElementById('loginScreen').classList.add('active');
+            }
+            resolve();
+        });
     });
+}
 
-    html += `<button class="tab add" onclick="openModal('newProjModal')">+</button>`;
-    projTabs.innerHTML = html;
+async function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    if (!email || !password) {
+        showToast(translations[state.currentLang].errorGeneric, 'error');
+        return;
+    }
+
+    try {
+        if (firebaseAuth) {
+            // Firebase Auth
+            await firebaseAuth.signInWithEmailAndPassword(email, password);
+        } else {
+            // Demo mode
+            if (email === 'demo@test.com' && password === 'demo123') {
+                state.user = {
+                    uid: 'demo_user',
+                    email: email,
+                    displayName: 'Demo User'
+                };
+                loadFromLocalStorage();
+                showMainApp();
+                showToast(translations[state.currentLang].loginSuccess, 'success');
+            } else {
+                throw new Error('Invalid credentials');
+            }
+        }
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+async function handleRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+
+    if (!name || !email || !password) {
+        showToast(translations[state.currentLang].errorGeneric, 'error');
+        return;
+    }
+
+    try {
+        if (firebaseAuth) {
+            const result = await firebaseAuth.createUserWithEmailAndPassword(email, password);
+            await result.user.updateProfile({ displayName: name });
+            state.user = {
+                uid: result.user.uid,
+                email: email,
+                displayName: name
+            };
+            await saveUserData();
+        } else {
+            state.user = {
+                uid: 'local_' + Date.now(),
+                email: email,
+                displayName: name
+            };
+            state.projects = [];
+            saveToLocalStorage();
+        }
+        
+        showMainApp();
+        showToast(translations[state.currentLang].registerSuccess, 'success');
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+async function handleLogout() {
+    if (firebaseAuth) {
+        await firebaseAuth.signOut();
+    }
+    
+    state.user = null;
+    state.projects = [];
+    state.currentProjectId = null;
+    
+    closeModal('profileModal');
+    document.getElementById('loginScreen').classList.add('active');
+    document.getElementById('app').style.display = 'none';
+    
+    showToast(translations[state.currentLang].logoutSuccess, 'info');
+}
+
+function toggleAuthMode() {
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const toggleBtn = document.getElementById('toggleAuthBtn');
+    const divider = document.getElementById('loginDivider');
+    
+    if (loginForm.style.display === 'none') {
+        loginForm.style.display = 'block';
+        registerForm.style.display = 'none';
+        toggleBtn.textContent = translations[state.currentLang].toggleAuthBtn;
+    } else {
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
+        toggleBtn.textContent = translations[state.currentLang].toggleAuthBtnBack;
+    }
 }
 
 // ============================================
-// PROJECT
+// DATA MANAGEMENT (Local + Cloud)
 // ============================================
-function createProj(){
-    const order = inpOrder.value.trim();
-    if(!order) return showToast('Nomor order wajib');
 
-    const proj = {
-        id: 'p_'+Date.now(),
-        order,
-        customer: inpCust.value,
-        steps:{}
-    };
-
-    STEPS.forEach(s=>{
-        proj.steps[s.id] = {status:'pending',files:[],note:'',expanded:false};
-    });
-
-    projects.push(proj);
-    currentProj = proj.id;
-
-    save();
-    render();
-    closeModal('newProjModal');
+async function loadUserData() {
+    if (firebaseDb && state.settings.cloudSync) {
+        try {
+            const docRef = firebaseDb.collection('users').doc(state.user.uid);
+            const docSnap = await docRef.get();
+            
+            if (docSnap.exists) {
+                state.projects = docSnap.data().projects || [];
+            } else {
+                state.projects = [];
+            }
+        } catch (error) {
+            console.error('Error loading from Firestore:', error);
+            loadFromLocalStorage();
+        }
+    } else {
+        loadFromLocalStorage();
+    }
 }
 
-function switchProj(id){
-    currentProj = id;
-    render();
+async function saveUserData() {
+    if (firebaseDb && state.settings.cloudSync) {
+        try {
+            await firebaseDb.collection('users').doc(state.user.uid).set({
+                projects: state.projects,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+        } catch (error) {
+            console.error('Error saving to Firestore:', error);
+            saveToLocalStorage();
+        }
+    } else {
+        saveToLocalStorage();
+    }
 }
 
-// ============================================
-// PROGRESS
-// ============================================
-function updateProgress(proj){
-    const steps = Object.values(proj.steps);
-    const done = steps.filter(s=>s.status==='done').length;
-    const active = steps.filter(s=>s.status==='active').length;
-
-    const pct = Math.round((done/STEPS.length)*100);
-
-    pctVal.textContent = pct+'%';
-    pctBar.style.width = pct+'%';
-
-    sDone.textContent = done;
-    sActive.textContent = active;
-    sPending.textContent = STEPS.length-done-active;
+function loadFromLocalStorage() {
+    const data = localStorage.getItem('pm_data_' + (state.user?.uid || 'local'));
+    if (data) {
+        state.projects = JSON.parse(data);
+    }
 }
 
-// ============================================
-// INFO
-// ============================================
-function renderInfo(proj){
-    dispOrder.textContent = proj.order;
-    dispCust.textContent = proj.customer || '-';
-    dispPanel.textContent = '-';
+function saveToLocalStorage() {
+    localStorage.setItem('pm_data_' + (state.user?.uid || 'local'), JSON.stringify(state.projects));
 }
 
 // ============================================
-// PROCESS LIST
+// MAIN APP FUNCTIONS
 // ============================================
-function renderProcs(proj){
+
+function showMainApp() {
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('app').style.display = 'block';
+    
+    updateUserAvatar();
+    renderApp();
+}
+
+function updateUserAvatar() {
+    if (state.user) {
+        const initial = state.user.displayName.charAt(0).toUpperCase();
+        document.getElementById('userAvatar').textContent = initial;
+        document.getElementById('profileAvatar').textContent = initial;
+        document.getElementById('profileName').textContent = state.user.displayName;
+        document.getElementById('profileEmail').textContent = state.user.email;
+        document.getElementById('totalProjectsValue').textContent = state.projects.length;
+        document.getElementById('lastLoginValue').textContent = new Date().toLocaleString(state.currentLang === 'id' ? 'id-ID' : 'en-US');
+    }
+}
+
+function renderApp() {
+    renderTabs();
+    
+    if (state.projects.length === 0) {
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('mainContent').style.display = 'none';
+        document.getElementById('bottomBar').style.display = 'none';
+    } else {
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        document.getElementById('bottomBar').style.display = 'flex';
+        
+        if (!state.currentProjectId || !state.projects.find(p => p.id === state.currentProjectId)) {
+            state.currentProjectId = state.projects[0].id;
+        }
+        
+        const project = getCurrentProject();
+        updateProgress(project);
+        renderInfo(project);
+        renderProcessList(project);
+        renderChart(project);
+    }
+}
+
+function getCurrentProject() {
+    return state.projects.find(p => p.id === state.currentProjectId);
+}
+
+// ============================================
+// TABS RENDERING
+// ============================================
+
+function renderTabs() {
+    const container = document.getElementById('projectTabs');
     let html = '';
+    
+    state.projects.forEach(p => {
+        const isActive = p.id === state.currentProjectId ? ' active' : '';
+        html += `<button class="tab${isActive}" onclick="switchProject('${p.id}')">${escapeHtml(p.order)}</button>`;
+    });
+    
+    html += `<button class="tab tab-add" onclick="openModal('newProjectModal')">+</button>`;
+    
+    container.innerHTML = html;
+}
 
-    STEPS.forEach(proc=>{
-        const step = proj.steps[proc.id];
+function switchProject(id) {
+    state.currentProjectId = id;
+    renderApp();
+    showToast(translations[state.currentLang].saved, 'success');
+}
 
+// ============================================
+// PROGRESS CALCULATION
+// ============================================
+
+function updateProgress(project) {
+    if (!project || !project.steps) return;
+    
+    const steps = Object.values(project.steps);
+    const done = steps.filter(s => s.status === 'done').length;
+    const active = steps.filter(s => s.status === 'active').length;
+    const total = PROCESS_STEPS.length;
+    const pct = Math.round((done / total) * 100);
+    
+    document.getElementById('progressValue').textContent = pct + '%';
+    document.getElementById('progressBarFill').style.width = pct + '%';
+    document.getElementById('statDone').textContent = done;
+    document.getElementById('statActive').textContent = active;
+    document.getElementById('statPending').textContent = total - done - active;
+}
+
+// ============================================
+// INFO CARD
+// ============================================
+
+function renderInfo(project) {
+    if (!project) return;
+    
+    document.getElementById('displayOrder').textContent = project.order || '-';
+    document.getElementById('displayCustomer').textContent = project.customer || '-';
+    document.getElementById('displayPanel').textContent = getPanelCount(project);
+}
+
+function getPanelCount(project) {
+    if (!project.panels || project.panels.length === 0) {
+        return translations[state.currentLang].emptyText.replace('Belum ada proyek', 'No panels').replace('No projects yet', 'No panels');
+    }
+    return project.panels.length + ' ' + (state.currentLang === 'id' ? 'panel' : 'panel(s)');
+}
+
+// ============================================
+// PROCESS LIST WITH DRAG & DROP
+// ============================================
+
+function renderProcessList(project) {
+    const container = document.getElementById('processList');
+    
+    if (!project || !project.steps) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-secondary);">No steps found</p>';
+        return;
+    }
+    
+    let html = '';
+    
+    // Get step order or use default
+    const stepOrder = project.stepOrder || PROCESS_STEPS.map(s => s.id);
+    
+    stepOrder.forEach((stepId, index) => {
+        const stepDef = PROCESS_STEPS.find(s => s.id === stepId);
+        const step = project.steps[stepId];
+        
+        if (!stepDef || !step) return;
+        
+        const isExpanded = step.expanded;
+        const fileCount = step.files ? step.files.length : 0;
+        const hasNote = step.note && step.note.trim() !== '';
+        
         html += `
-        <div class="item" data-status="${step.status}">
-            <div class="item-h" onclick="toggle('${proc.id}')">
-                <div class="icon">${proc.icon}</div>
-                <div class="info">
-                    <div class="name">${proc.name}</div>
-                    <div class="meta">${step.files.length} file</div>
+            <div class="process-item" data-status="${step.status}${isExpanded ? ' expanded' : ''}" data-id="${stepId}">
+                <div class="process-header" onclick="toggleStep('${stepId}')">
+                    <span class="drag-handle">☰</span>
+                    <div class="process-icon">${stepDef.icon}</div>
+                    <div class="process-info">
+                        <div class="process-name">${stepDef.name}</div>
+                        <div class="process-meta">${fileCount} file${hasNote ? ' • 📝' : ''}</div>
+                    </div>
+                    <div class="status-dot ${step.status}"></div>
                 </div>
-                <div class="dot ${step.status}"></div>
+                ${renderStepContent(stepId, step, isExpanded)}
             </div>
         `;
-
-        if(step.expanded){
-            html += `<div class="content"><div class="body">`;
-
-            // FILE LIST
-            step.files.forEach((f,i)=>{
-                html += `
-                <div class="fit">
-                    <div class="thumb">${f.type.startsWith('image/') ? `<img src="${f.data}" onclick="viewImg('${f.data}')">` : '📎'}</div>
-                    <div class="fi">
-                        <div>${f.name}</div>
-                    </div>
-                    <button onclick="delFile('${proc.id}',${i})">❌</button>
-                </div>`;
-            });
-
-            html += `
-            <button onclick="triggerUpload('${proc.id}')">+ Upload</button>
-            <input type="file" id="file-${proc.id}" style="display:none" onchange="handleFile('${proc.id}',this)">
-            
-            <textarea onchange="saveNote('${proc.id}',this.value)">${step.note||''}</textarea>
-
-            <div class="st-wrap">
-                <button onclick="setStatus('${proc.id}','pending')">Menunggu</button>
-                <button onclick="setStatus('${proc.id}','active')">Aktif</button>
-                <button onclick="setStatus('${proc.id}','done')">Selesai</button>
-            </div>
-            `;
-
-            html += `</div></div>`;
-        }
-
-        html += `</div>`;
     });
-
-    procList.innerHTML = html;
+    
+    container.innerHTML = html;
+    
+    // Initialize Sortable
+    initSortable();
 }
 
-function toggle(id){
-    const proj = projects.find(p=>p.id===currentProj);
-    proj.steps[id].expanded = !proj.steps[id].expanded;
-    save(); render();
+function renderStepContent(stepId, step, isExpanded) {
+    if (!isExpanded) return '';
+    
+    const fileCount = step.files ? step.files.length : 0;
+    
+    return `
+        <div class="process-content">
+            <div class="process-body">
+                <!-- Files Section -->
+                <div class="file-section">
+                    <span class="file-label">📎 ${translations[state.currentLang].fileLabel || 'Files'} (${fileCount})</span>
+                    <div class="file-list">
+                        ${renderFileList(stepId, step.files)}
+                    </div>
+                    <button class="upload-btn" onclick="triggerUpload('${stepId}')">
+                        ${translations[state.currentLang].tambahFile}
+                    </button>
+                    <input type="file" id="file-${stepId}" style="display:none" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" onchange="handleFileUpload('${stepId}', this)">
+                </div>
+                
+                <!-- Notes Section -->
+                <div class="notes-section">
+                    <span class="file-label">📝 Catatan / Notes</span>
+                    <textarea class="notes-textarea" placeholder="${translations[state.currentLang].catatanPlaceholder}" onblur="saveNote('${stepId}', this.value)">${escapeHtml(step.note || '')}</textarea>
+                </div>
+                
+                <!-- Status Toggle -->
+                <div class="status-toggle">
+                    <button class="status-btn pending${step.status === 'pending' ? ' active' : ''}" onclick="setStatus('${stepId}', 'pending')">${translations[state.currentLang].menunggu}</button>
+                    <button class="status-btn active-status${step.status === 'active' ? ' active' : ''}" onclick="setStatus('${stepId}', 'active')">${translations[state.currentLang].aktif}</button>
+                    <button class="status-btn done${step.status === 'done' ? ' active' : ''}" onclick="setStatus('${stepId}', 'done')">${translations[state.currentLang].selesai}</button>
+                </div>
+                
+                <!-- QR Code Button -->
+                <button class="btn btn-secondary" style="width:100%;margin-top:16px;" onclick="showQRCode('${stepId}')">
+                    📱 Generate QR Code
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function renderFileList(stepId, files) {
+    if (!files || files.length === 0) return '';
+    
+    return files.map((file, idx) => {
+        const isImage = file.type && file.type.startsWith('image/');
+        return `
+            <div class="file-item">
+                <div class="file-thumbnail" ${isImage ? `onclick="viewImage('${file.data}')"` : ''}>
+                    ${isImage ? `<img src="${file.data}" alt="${escapeHtml(file.name)}">` : getFileIcon(file.type)}
+                </div>
+                <div class="file-info">
+                    <div class="file-name">${escapeHtml(file.name)}</div>
+                    <div class="file-size">${formatFileSize(file.size)}</div>
+                </div>
+                <div class="file-actions">
+                    ${isImage ? `<button class="file-btn" onclick="viewImage('${file.data}')" title="View">👁</button>` : ''}
+                    <button class="file-btn delete" onclick="deleteFile('${stepId}', ${idx})" title="Delete">×</button>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 // ============================================
-// FILE
+// SORTABLE (DRAG & DROP)
 // ============================================
-function triggerUpload(id){
-    document.getElementById('file-'+id).click();
+
+function initSortable() {
+    const listEl = document.getElementById('processList');
+    
+    if (state.sortableInstance) {
+        state.sortableInstance.destroy();
+    }
+    
+    state.sortableInstance = new Sortable(listEl, {
+        animation: 150,
+        ghostClass: 'dragging',
+        dragClass: 'drag-over',
+        handle: '.drag-handle',
+        onEnd: function(evt) {
+            const project = getCurrentProject();
+            if (!project) return;
+            
+            // Update step order
+            const items = listEl.querySelectorAll('.process-item');
+            const newOrder = Array.from(items).map(item => item.dataset.id);
+            
+            project.stepOrder = newOrder;
+            saveData();
+            
+            showToast('✨ Urutan diperbarui!', 'info');
+        }
+    });
 }
 
-function handleFile(id,input){
-    const file = input.files[0];
-    if(!file) return;
+// ============================================
+// FILE OPERATIONS
+// ============================================
 
+function triggerUpload(stepId) {
+    const input = document.getElementById(`file-${stepId}`);
+    if (input) {
+        input.value = '';
+        input.click();
+    }
+}
+
+function handleFileUpload(stepId, inputElement) {
+    const file = inputElement.files[0];
+    if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+        showToast('❌ File too large! Max 10MB', 'error');
+        return;
+    }
+    
+    const project = getCurrentProject();
+    if (!project) return;
+    
     const reader = new FileReader();
-    reader.onload = e=>{
-        const proj = projects.find(p=>p.id===currentProj);
-        proj.steps[id].files.push({
-            name:file.name,
-            type:file.type,
-            data:e.target.result
-        });
-        save(); render();
+    
+    reader.onload = (e) => {
+        const fileData = {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: e.target.result,
+            uploadedAt: new Date().toISOString()
+        };
+        
+        if (!project.steps[stepId].files) {
+            project.steps[stepId].files = [];
+        }
+        
+        project.steps[stepId].files.push(fileData);
+        saveData();
+        renderApp();
+        
+        addNotification(`File uploaded: ${file.name}`, 'info');
+        showToast(translations[state.currentLang].fileUploaded, 'success');
     };
+    
     reader.readAsDataURL(file);
 }
 
-function delFile(id,i){
-    const proj = projects.find(p=>p.id===currentProj);
-    proj.steps[id].files.splice(i,1);
-    save(); render();
+function deleteFile(stepId, idx) {
+    if (!confirm(translations[state.currentLang].confirmDelete)) return;
+    
+    const project = getCurrentProject();
+    if (!project || !project.steps[stepId]?.files) return;
+    
+    const fileName = project.steps[stepId].files[idx]?.name || 'file';
+    project.steps[stepId].files.splice(idx, 1);
+    
+    saveData();
+    renderApp();
+    showToast(`${translations[state.currentLang].fileDeleted} "${fileName}"`, 'info');
+}
+
+function getFileIcon(type) {
+    if (!type) return '📎';
+    if (type === 'application/pdf') return '📄';
+    if (type.includes('word')) return '📝';
+    if (type.includes('excel') || type.includes('sheet')) return '📊';
+    return '📎';
+}
+
+function formatFileSize(bytes) {
+    if (!bytes) return '0 B';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
 }
 
 // ============================================
-// NOTE
+// IMAGE VIEWER
 // ============================================
-function saveNote(id,val){
-    const proj = projects.find(p=>p.id===currentProj);
-    proj.steps[id].note = val;
-    save();
+
+function viewImage(src) {
+    if (!src) return;
+    document.getElementById('viewerImage').src = src;
+    document.getElementById('imageViewer').classList.add('show');
+}
+
+function closeImageViewer() {
+    document.getElementById('imageViewer').classList.remove('show');
+    document.getElementById('viewerImage').src = '';
 }
 
 // ============================================
-// STATUS
+// STEP ACTIONS
 // ============================================
-function setStatus(id,status){
-    const proj = projects.find(p=>p.id===currentProj);
-    proj.steps[id].status = status;
-    save(); render();
+
+function toggleStep(stepId) {
+    const project = getCurrentProject();
+    if (!project || !project.steps[stepId]) return;
+    
+    project.steps[stepId].expanded = !project.steps[stepId].expanded;
+    saveData();
+    renderApp();
+}
+
+function setStatus(stepId, status) {
+    const project = getCurrentProject();
+    if (!project || !project.steps[stepId]) return;
+    
+    project.steps[stepId].status = status;
+    saveData();
+    renderApp();
+    
+    addNotification(`Status updated: ${stepId} → ${status}`, 'success');
+    showToast(translations[state.currentLang].statusUpdated, 'success');
+    
+    // Send push notification if enabled
+    if (state.settings.pushNotifications) {
+        sendPushNotification(status === 'done' ? '✅ Step Completed!' : `Step status: ${status}`);
+    }
+}
+
+function saveNote(stepId, value) {
+    const project = getCurrentProject();
+    if (!project || !project.steps[stepId]) return;
+    
+    project.steps[stepId].note = value;
+    saveData();
 }
 
 // ============================================
-// VIEWER
+// PROJECT CRUD
 // ============================================
-function viewImg(src){
-    viewImg.src = src;
-    imgViewer.classList.add('show');
-}
 
-function closeViewer(){
-    imgViewer.classList.remove('show');
-}
-
-// ============================================
-// EXPORT
-// ============================================
-function exportJSON(){
-    const proj = projects.find(p=>p.id===currentProj);
-    const blob = new Blob([JSON.stringify(proj,null,2)]);
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = proj.order+'.json';
-    a.click();
-}
-
-// ============================================
-// PDF (SIMPLE)
-// ============================================
-function genPDF(){
-    const proj = projects.find(p=>p.id===currentProj);
-    const el = document.getElementById('pdf');
-
-    let html = `<h1>${proj.order}</h1>`;
-
-    Object.entries(proj.steps).forEach(([k,v])=>{
-        html += `<p>${k} - ${v.status}</p>`;
+function createProject() {
+    const order = document.getElementById('inputOrder').value.trim();
+    const customer = document.getElementById('inputCustomer').value.trim();
+    const description = document.getElementById('inputDescription').value.trim();
+    
+    if (!order) {
+        showToast(translations[state.currentLang].errorGeneric, 'error');
+        return;
+    }
+    
+    const project = {
+        id: 'proj_' + Date.now(),
+        order: order,
+        customer: customer,
+        description: description,
+        panels: [],
+        steps: {},
+        stepOrder: PROCESS_STEPS.map(s => s.id),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    
+    // Initialize steps
+    PROCESS_STEPS.forEach(step => {
+        project.steps[step.id] = {
+            status: 'pending',
+            files: [],
+            note: '',
+            expanded: false
+        };
     });
+    
+    state.projects.push(project);
+    state.currentProjectId = project.id;
+    
+    saveData();
+    closeModal('newProjectModal');
+    renderApp();
+    
+    // Clear form
+    document.getElementById('inputOrder').value = '';
+    document.getElementById('inputCustomer').value = '';
+    document.getElementById('inputDescription').value = '';
+    
+    addNotification(`Project created: ${order}`, 'success');
+    showToast(translations[state.currentLang].projectCreated, 'success');
+}
 
-    el.innerHTML = html;
-    el.style.display='block';
+function saveEditProject() {
+    const project = getCurrentProject();
+    if (!project) return;
+    
+    project.order = document.getElementById('editOrder').value.trim() || project.order;
+    project.customer = document.getElementById('editCustomer').value.trim();
+    project.updatedAt = new Date().toISOString();
+    
+    saveData();
+    closeModal('editProjectModal');
+    renderApp();
+    showToast(translations[state.currentLang].saved, 'success');
+}
 
-    html2pdf().from(el).save().then(()=>{
-        el.style.display='none';
+function deleteProject(id, event) {
+    event.stopPropagation();
+    if (!confirm(translations[state.currentLang].confirmDelete)) return;
+    
+    state.projects = state.projects.filter(p => p.id !== id);
+    
+    if (state.currentProjectId === id) {
+        state.currentProjectId = state.projects[0]?.id || null;
+    }
+    
+    saveData();
+    renderApp();
+    closeModal('projectsModal');
+    showToast(translations[state.currentLang].projectDeleted, 'info');
+}
+
+function renderProjectsList() {
+    const container = document.getElementById('projectsListBody');
+    
+    if (state.projects.length === 0) {
+        container.innerHTML = `<p style="text-align:center;padding:30px;color:var(--text-secondary);">${translations[state.currentLang].emptyText}</p>`;
+        return;
+    }
+    
+    let html = '';
+    state.projects.forEach(p => {
+        const isSelected = p.id === state.currentProjectId;
+        const pct = calculateProjectProgress(p);
+        
+        html += `
+            <div class="list-item${isSelected ? ' selected' : ''}" onclick="selectProject('${p.id}')">
+                <div class="list-item-info">
+                    <div class="list-item-name">📋 ${escapeHtml(p.order)}</div>
+                    <div class="list-item-meta">${escapeHtml(p.customer || '-')} • ${pct}% • ${(p.panels||[]).length} panels</div>
+                </div>
+                <button class="delete-btn" onclick="deleteProject('${p.id}', event)">🗑</button>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function selectProject(id) {
+    switchProject(id);
+    closeModal('projectsModal');
+}
+
+// ============================================
+// CHART VISUALIZATION
+// ============================================
+
+function renderChart(project) {
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    
+    if (state.chartInstance) {
+        state.chartInstance.destroy();
+    }
+    
+    if (!project || !project.steps) return;
+    
+    const labels = [];
+    const data = [];
+    const colors = [];
+    
+    PROCESS_STEPS.forEach(step => {
+        const stepData = project.steps[step.id];
+        if (stepData) {
+            labels.push(step.icon + ' ' + step.name);
+            
+            let value = 0;
+            if (stepData.status === 'pending') value = 0;
+            else if (stepData.status === 'active') value = 50;
+            else if (stepData.status === 'done') value = 100;
+            
+            data.push(value);
+            
+            if (stepData.status === 'done') colors.push('#22c55e');
+            else if (stepData.status === 'active') colors.push('#3b82f6');
+            else colors.push('#6b7280');
+        }
+    });
+    
+    state.chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Progress %',
+                data: data,
+                backgroundColor: colors,
+                borderRadius: 8,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: value => value + '%'
+                    },
+                    grid: {
+                        color: 'rgba(128, 128, 128, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function refreshChart() {
+    const project = getCurrentProject();
+    renderChart(project);
+    showToast('📊 Chart refreshed!', 'info');
+}
+
+function calculateProjectProgress(project) {
+    if (!project || !project.steps) return 0;
+    const steps = Object.values(project.steps);
+    const done = steps.filter(s => s.status === 'done').length;
+    return Math.round((done / steps.length) * 100);
+}
+
+// ============================================
+// QR CODE GENERATOR
+// ============================================
+
+function showQRCode(stepId) {
+    const project = getCurrentProject();
+    if (!project) return;
+    
+    const qrData = {
+        projectId: project.id,
+        order: project.order,
+        stepId: stepId,
+        generatedAt: new Date().toISOString()
+    };
+    
+    const container = document.getElementById('qrCodeDisplay');
+    container.innerHTML = '';
+    
+    QRCode.toCanvas(JSON.stringify(qrData), { width: 200, margin: 2 }, (error, canvas) => {
+        if (error) {
+            console.error(error);
+            return;
+        }
+        container.appendChild(canvas);
+    });
+    
+    openModal('qrModal');
+}
+
+function downloadQR() {
+    const canvas = document.querySelector('#qrCodeDisplay canvas');
+    if (canvas) {
+        const link = document.createElement('a');
+        link.download = 'qrcode-' + Date.now() + '.png';
+        link.href = canvas.toDataURL();
+        link.click();
+        showToast('📥 QR Code downloaded!', 'success');
+    }
+}
+
+// ============================================
+// EXPORT FUNCTIONS
+// ============================================
+
+function exportJSON() {
+    const project = getCurrentProject();
+    if (!project) return;
+    
+    const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${project.order || 'export'}_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast(translations[state.currentLang].exported, 'success');
+}
+
+function generatePDF() {
+    const project = getCurrentProject();
+    if (!project) return;
+    
+    showToast('⏳ Generating PDF...', 'info');
+    
+    const pct = calculateProjectProgress(project);
+    
+    let content = `
+        <div style="font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:auto;background:white;color:#1a1a1a;">
+            <h1 style="text-align:center;color:#1a1a1a;margin-bottom:8px;">📋 PRODUCTION REPORT</h1>
+            <p style="text-align:center;color:#64748b;margin-bottom:30px;">Generated: ${new Date().toLocaleString()}</p>
+            
+            <div style="background:#f8fafc;border-radius:12px;padding:24px;margin-bottom:24px;border-left:4px solid #3b82f6;">
+                <h2 style="color:#1e293b;margin-bottom:12px;">${escapeHtml(project.order)}</h2>
+                <p><strong>Customer:</strong> ${escapeHtml(project.customer || '-')}</p>
+                <p><strong>Total Panels:</strong> ${project.panels?.length || 0}</p>
+                <p><strong>Overall Progress:</strong> ${pct}%</p>
+            </div>
+            
+            <div style="background:#e0f2fe;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
+                <div style="font-size:3rem;font-weight:800;color:#0369a1;">${pct}%</div>
+                <div style="color:#0369a1;font-weight:600;">Total Progress</div>
+            </div>
+            
+            <h3 style="color:#1e293b;margin-bottom:16px;">Production Steps Detail:</h3>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+                <tr style="background:#f1f5f9;">
+                    <th style="padding:12px;text-align:left;border:1px solid #e2e8f0;">Step</th>
+                    <th style="padding:12px;text-align:center;border:1px solid #e2e8f0;">Status</th>
+                    <th style="padding:12px;text-align:center;border:1px solid #e2e8f0;">Files</th>
+                </tr>
+    `;
+    
+    PROCESS_STEPS.forEach(step => {
+        const stepData = project.steps[step.id];
+        if (stepData) {
+            const statusMap = {
+                'done': '✅ Done',
+                'active': '▶️ Active',
+                'pending': '⏳ Pending'
+            };
+            const fileCount = stepData.files?.length || 0;
+            content += `
+                <tr>
+                    <td style="padding:12px;border:1px solid #e2e8f0;">${step.icon} ${step.name}</td>
+                    <td style="padding:12px;text-align:center;border:1px solid #e2e8f0;">${statusMap[stepData.status]}</td>
+                    <td style="padding:12px;text-align:center;border:1px solid #e2e8f0;">${fileCount}</td>
+                </tr>
+            `;
+        }
+    });
+    
+    content += '</table>';
+    
+    // Notes section
+    content += '<h3 style="color:#1e293b;margin-bottom:16px;">Notes:</h3>';
+    content += '<div style="background:#fefce8;padding:20px;border-radius:8px;border-left:4px solid #eab308;">';
+    
+    let hasNotes = false;
+    PROCESS_STEPS.forEach(step => {
+        const stepData = project.steps[step.id];
+        if (stepData?.note?.trim()) {
+            hasNotes = true;
+            content += `<p style="margin:8px 0;color:#854d0e;"><strong>${step.icon} ${step.name}:</strong> ${escapeHtml(stepData.note)}</p>`;
+        }
+    });
+    
+    if (!hasNotes) {
+        content += '<p style="color:#92400e;">No notes</p>';
+    }
+    
+    content += '</div></div>';
+    
+    const pdfContainer = document.getElementById('pdfContainer');
+    pdfContainer.style.display = 'block';
+    pdfContainer.innerHTML = content;
+    
+    html2pdf().set({
+        margin: [10, 10],
+        filename: `Report_${project.order}_${Date.now()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(pdfContainer).save().then(() => {
+        pdfContainer.style.display = 'none';
+        showToast(translations[state.currentLang].pdfGenerated, 'success');
+    }).catch(err => {
+        console.error('PDF Error:', err);
+        pdfContainer.style.display = 'none';
+        showToast(translations[state.currentLang].errorGeneric, 'error');
+    });
+}
+
+// ============================================
+// EMAIL INTEGRATION
+// ============================================
+
+function sendEmailReport() {
+    openModal('emailModal');
+    
+    // Pre-fill with current project info
+    const project = getCurrentProject();
+    if (project) {
+        document.getElementById('emailSubjectInput').value = `Production Report - ${project.order}`;
+    }
+}
+
+async function confirmSendEmail() {
+    const to = document.getElementById('emailToInput').value.trim();
+    const subject = document.getElementById('emailSubjectInput').value.trim();
+    const message = document.getElementById('emailMessageInput').value.trim();
+    
+    if (!to) {
+        showToast('❌ Please enter recipient email', 'error');
+        return;
+    }
+    
+    const project = getCurrentProject();
+    if (!project) return;
+    
+    try {
+        if (emailjs.config.publicKey !== 'YOUR_PUBLIC_KEY') {
+            // Use EmailJS
+            await emailjs.send(emailjs.config.serviceId, emailjs.config.templateId, {
+                to_email: to,
+                subject: subject,
+                message: message,
+                project_order: project.order,
+                project_customer: project.customer,
+                progress: calculateProjectProgress(project) + '%'
+            });
+        } else {
+            // Fallback: Open mailto
+            const body = `${message}\n\n---\nProject: ${project.order}\nCustomer: ${project.customer}\nProgress: ${calculateProjectProgress(project)}%`;
+            window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+        
+        closeModal('emailModal');
+        showToast(translations[state.currentLang].emailSent, 'success');
+        addNotification(`Email sent to ${to}`, 'success');
+    } catch (error) {
+        console.error('Email Error:', error);
+        showToast(translations[state.currentLang].errorGeneric, 'error');
+    }
+}
+
+// ============================================
+// NOTIFICATION SYSTEM
+// ============================================
+
+function addNotification(message, type = 'info') {
+    const notification = {
+        id: Date.now(),
+        message: message,
+        type: type,
+        timestamp: new Date().toISOString(),
+        read: false
+    };
+    
+    state.notifications.unshift(notification);
+    
+    // Keep only last 50 notifications
+    if (state.notifications.length > 50) {
+        state.notifications = state.notifications.slice(0, 50);
+    }
+    
+    updateNotificationBadge();
+    renderNotifications();
+}
+
+function updateNotificationBadge() {
+    const unreadCount = state.notifications.filter(n => !n.read).length;
+    const badge = document.getElementById('notifBadge');
+    
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        badge.style.display = 'flex';
+        badge.classList.add('animate');
+        setTimeout(() => badge.classList.remove('animate'), 500);
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function renderNotifications() {
+    const container = document.getElementById('notificationsList');
+    
+    if (state.notifications.length === 0) {
+        container.innerHTML = `<p style="text-align:center;padding:30px;color:var(--text-secondary);">${translations[state.currentLang].noNotifText}</p>`;
+        return;
+    }
+    
+    let html = '';
+    state.notifications.forEach(notif => {
+        const typeIcon = notif.type === 'success' ? '✅' : notif.type === 'error' ? '❌' : notif.type === 'warning' ? '⚠️' : 'ℹ️';
+        const timeAgo = getTimeAgo(notif.timestamp);
+        
+        html += `
+            <div class="list-item" style="${!notif.read ? 'border-left:3px solid var(--accent-blue)' : ''}" onclick="markAsRead(${notif.id})">
+                <div class="list-item-info">
+                    <div class="list-item-name">${typeIcon} ${escapeHtml(notif.message)}</div>
+                    <div class="list-item-meta">${timeAgo}</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function markAsRead(id) {
+    const notif = state.notifications.find(n => n.id === id);
+    if (notif) {
+        notif.read = true;
+        updateNotificationBadge();
+        renderNotifications();
+    }
+}
+
+function getTimeAgo(timestamp) {
+    const now = new Date();
+    const then = new Date(timestamp);
+    const diffMs = now - then;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+}
+
+// Push Notifications (Service Worker registration would be needed for full implementation)
+async function sendPushNotification(title, body) {
+    try {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(title, {
+                body: body,
+                icon: '🏭',
+                badge: '🏭'
+            });
+        } else if ('Notification' in window && Notification.permission !== 'denied') {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                new Notification(title, { body: body, icon: '🏭' });
+            }
+        }
+    } catch (error) {
+        console.log('Push notification not supported:', error);
+    }
+}
+
+// ============================================
+// THEME SYSTEM
+// ============================================
+
+function toggleTheme() {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    applyTheme();
+    savePreferences();
+    
+    const toggle = document.getElementById('themeToggle');
+    toggle.classList.toggle('active', state.theme === 'dark');
+}
+
+function applyTheme() {
+    document.documentElement.setAttribute('data-theme', state.theme);
+    const toggle = document.getElementById('themeToggle');
+    if (toggle) {
+        toggle.classList.toggle('active', state.theme === 'dark');
+    }
+}
+
+// ============================================
+// LANGUAGE SYSTEM
+// ============================================
+
+function setLanguage(lang) {
+    state.currentLang = lang;
+    applyLanguage();
+    savePreferences();
+    
+    // Update language buttons
+    document.getElementById('langIdBtn').classList.toggle('active', lang === 'id');
+    document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
+}
+
+function applyLanguage() {
+    const t = translations[state.currentLang];
+    
+    // Update all translatable elements
+    const elements = {
+        'splashSubtitle': t.splashSubtitle,
+        'loginTitle': t.loginTitle,
+        'loginDesc': t.loginDesc,
+        'emailLabel': t.emailLabel,
+        'passwordLabel': t.passwordLabel,
+        'loginBtn': t.loginBtn,
+        'nameLabel': t.nameLabel,
+        'regEmailLabel': t.regEmailLabel,
+        'regPasswordLabel': t.regPasswordLabel,
+        'registerBtn': t.registerBtn,
+        'loginDivider': t.loginDivider,
+        'toggleAuthBtn': t.toggleAuthBtn,
+        'demoLoginText': t.demoLoginText,
+        'progressLabel': t.progressLabel,
+        'statDoneLabel': t.statDoneLabel,
+        'statActiveLabel': t.statActiveLabel,
+        'statPendingLabel': t.statPendingLabel,
+        'chartTitle': t.chartTitle,
+        'orderKey': t.orderKey,
+        'customerKey': t.customerKey,
+        'panelKey': t.panelKey,
+        'processSectionTitle': t.processSectionTitle,
+        'emptyText': t.emptyText,
+        'newProjectTitle': t.newProjectTitle,
+        'projectOrderLabel': t.projectOrderLabel,
+        'projectCustomerLabel': t.projectCustomerLabel,
+        'projectDescLabel': t.projectDescLabel,
+        'editProjectTitle': t.editProjectTitle,
+        'allProjectsTitle': t.allProjectsTitle,
+        'settingsTitle': t.settingsTitle,
+        'appearanceTitle': t.appearanceTitle,
+        'darkModeLabel': t.darkModeLabel,
+        'darkModeDesc': t.darkModeDesc,
+        'languageTitle': t.languageTitle,
+        'languageLabel': t.languageLabel,
+        'languageDesc': t.languageDesc,
+        'notifSettingsTitle': t.notifSettingsTitle,
+        'pushNotifLabel': t.pushNotifLabel,
+        'pushNotifDesc': t.pushNotifDesc,
+        'emailNotifLabel': t.emailNotifLabel,
+        'emailNotifDesc': t.emailNotifDesc,
+        'dataTitle': t.dataTitle,
+        'cloudSyncLabel': t.cloudSyncLabel,
+        'cloudSyncDesc': t.cloudSyncDesc,
+        'dangerZoneTitle': t.dangerZoneTitle,
+        'clearDataBtn': t.clearDataBtn,
+        'profileTitle': t.profileTitle,
+        'totalProjectsLabel': t.totalProjectsLabel,
+        'lastLoginLabel': t.lastLoginLabel,
+        'logoutBtn': t.logoutBtn,
+        'notifModalTitle': t.notifModalTitle,
+        'noNotifText': t.noNotifText,
+        'qrModalTitle': t.qrModalTitle,
+        'qrInfoText': t.qrInfoText,
+        'downloadQRBtn': t.downloadQRBtn,
+        'emailModalTitle': t.emailModalTitle,
+        'emailToLabel': t.emailToLabel,
+        'emailSubjectLabel': t.emailSubjectLabel,
+        'emailMessageLabel': t.emailMessageLabel
+    };
+    
+    Object.keys(elements).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = elements[id];
+    });
+    
+    // Re-render app with new language
+    if (document.getElementById('app').style.display !== 'none') {
+        renderApp();
+    }
+}
+
+// ============================================
+// TOGGLE SETTINGS
+// ============================================
+
+function togglePushNotifications() {
+    state.settings.pushNotifications = !state.settings.pushNotifications;
+    const toggle = document.getElementById('pushNotifToggle');
+    toggle.classList.toggle('active', state.settings.pushNotifications);
+    savePreferences();
+    
+    if (state.settings.pushNotifications) {
+        requestNotificationPermission();
+    }
+}
+
+async function requestNotificationPermission() {
+    if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            showToast('✅ Notifications enabled!', 'success');
+        } else {
+            state.settings.pushNotifications = false;
+            document.getElementById('pushNotifToggle').classList.remove('active');
+            showToast('❌ Notification permission denied', 'error');
+        }
+    }
+}
+
+function toggleEmailNotifications() {
+    state.settings.emailNotifications = !state.settings.emailNotifications;
+    const toggle = document.getElementById('emailNotifToggle');
+    toggle.classList.toggle('active', state.settings.emailNotifications);
+    savePreferences();
+}
+
+function toggleCloudSync() {
+    state.settings.cloudSync = !state.settings.cloudSync;
+    const toggle = document.getElementById('cloudSyncToggle');
+    toggle.classList.toggle('active', state.settings.cloudSync);
+    savePreferences();
+    
+    if (state.settings.cloudSync && firebaseDb) {
+        saveUserData();
+        showToast('☁️ Syncing to cloud...', 'info');
+    }
+}
+
+// ============================================
+// CLEAR DATA
+// ============================================
+
+function clearAllData() {
+    if (!confirm(translations[state.currentLang].confirmClearData)) return;
+    
+    state.projects = [];
+    state.currentProjectId = null;
+    state.notifications = [];
+    
+    localStorage.removeItem('pm_data_' + (state.user?.uid || 'local'));
+    
+    if (firebaseDb && state.user) {
+        firebaseDb.collection('users').doc(state.user.uid).delete().catch(console.error);
+    }
+    
+    closeModal('settingsModal');
+    renderApp();
+    updateUserAvatar();
+    updateNotificationBadge();
+    
+    showToast('🗑️ All data cleared', 'warning');
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function saveData() {
+    const project = getCurrentProject();
+    if (project) {
+        project.updatedAt = new Date().toISOString();
+    }
+    saveUserData();
+}
+
+// ============================================
+// MODAL MANAGEMENT
+// ============================================
+
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.add('show');
+        
+        // Populate edit forms
+        if (id === 'editProjectModal') {
+            const project = getCurrentProject();
+            if (project) {
+                document.getElementById('editOrder').value = project.order || '';
+                document.getElementById('editCustomer').value = project.customer || '';
+            }
+        }
+        
+        if (id === 'projectsModal') {
+            renderProjectsList();
+        }
+        
+        if (id === 'notificationModal') {
+            renderNotifications();
+        }
+    }
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+// Close modals on outside click
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+        }
+    });
+});
+
+// ============================================
+// TOAST NOTIFICATION SYSTEM
+// ============================================
+
+let toastTimeout;
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    
+    container.appendChild(toast);
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+    
+    // Auto remove
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// ============================================
+// KEYBOARD SHORTCUTS
+// ============================================
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeImageViewer();
+        document.querySelectorAll('.modal-overlay.show').forEach(modal => {
+            modal.classList.remove('show');
+        });
+    }
+    
+    // Ctrl/Cmd + S to save
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveData();
+        showToast(translations[state.currentLang].saved, 'success');
+    }
+    
+    // Ctrl/Cmd + P to print
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        window.print();
+    }
+});
+
+// ============================================
+// SERVICE WORKER FOR PWA (Optional)
+// ============================================
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        // Uncomment and create sw.js for PWA support
+        // navigator.serviceWorker.register('/sw.js')
+        //     .then(reg => console.log('SW registered'))
+        //     .catch(err => console.log('SW registration failed:', err));
     });
 }
 </script>
+</body>
+</html>
