@@ -9,12 +9,7 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     
     <style>
         :root {
@@ -23,6 +18,15 @@
             --text-muted: #666666; --accent-blue: #3b82f6; --accent-green: #22c55e;
             --accent-red: #ef4444; --accent-yellow: #eab308; --accent-purple: #8b5cf6;
         }
+
+        /* PERBAIKAN: Menambahkan palet warna Light Mode */
+        [data-theme="light"] {
+            --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-tertiary: #f1f5f9;
+            --border-color: #e2e8f0; --text-primary: #0f172a; --text-secondary: #475569;
+            --text-muted: #94a3b8; --accent-blue: #2563eb; --accent-green: #16a34a;
+            --accent-red: #dc2626; --accent-yellow: #ca8a04; --accent-purple: #7c3aed;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; min-height: 100vh; }
         
@@ -199,7 +203,6 @@
 <body>
 
 <div class="app-container" id="appContainer" style="display:flex;">
-    <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo">🏭</div>
@@ -221,7 +224,6 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="main-content" id="mainContent">
         <header class="top-header">
             <div class="header-left">
@@ -233,7 +235,6 @@
             </div>
         </header>
 
-        <!-- DASHBOARD PAGE -->
         <div class="page active" id="page-dashboard">
             <div class="dashboard-grid">
                 <div class="stat-card"><div class="stat-card-header"><span class="stat-card-icon">📋</span><span class="stat-card-value" id="totalProjectsStat">0</span></div><div class="stat-card-label">Total Projects</div></div>
@@ -253,7 +254,6 @@
             </div>
         </div>
 
-        <!-- PROJECTS PAGE -->
         <div class="page" id="page-projects">
             <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
                 <button class="btn btn-primary" onclick="openModal('newProjectModal')">+ New Project</button>
@@ -263,7 +263,6 @@
             
             <div class="project-list" id="projectListContainer"></div>
             
-            <!-- Project Detail with Panels -->
             <div class="card" id="projectDetailCard" style="display:none;margin-top:24px;">
                 <div class="card-header">
                     <span class="card-title" id="detailProjectTitle">Project Detail</span>
@@ -273,7 +272,6 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <!-- Project Stats -->
                     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;text-align:center;">
                         <div style="padding:16px;background:var(--bg-tertiary);border-radius:10px;">
                             <div style="font-size:1.6rem;font-weight:800;color:var(--accent-purple);" id="detailPanelsCount">0</div>
@@ -293,21 +291,18 @@
                         </div>
                     </div>
                     
-                    <!-- Panels List -->
                     <h3 style="margin-bottom:16px;font-size:1rem;display:flex;align-items:center;gap:8px;">
                         📦 Panels in this Project
                         <span style="font-size:.85rem;color:var(--text-muted);font-weight:400;">(Click panel to expand steps)</span>
                     </h3>
                     <div class="panel-list" id="panelListContainer">
-                        <!-- Panels rendered here -->
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>
     </main>
 </div>
 
-<!-- MODALS -->
 <div class="modal-overlay" id="newProjectModal">
     <div class="modal">
         <div class="modal-header"><span class="modal-title">New Project</span><button class="modal-close" onclick="closeModal('newProjectModal')">&times;</button></div>
@@ -357,13 +352,11 @@
     </div>
 </div>
 
-<!-- Image Viewer -->
 <div class="image-viewer" id="imageViewer">
     <button class="viewer-close" onclick="document.getElementById('imageViewer').classList.remove('show')">×</button>
     <img id="viewerImage" src="" alt="">
 </div>
 
-<!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
@@ -522,7 +515,6 @@ function renderChart() {
     if (!ctx) return;
     if (state.chartInstance) state.chartInstance.destroy();
     
-    // Data for chart
     const labels = [], data = [];
     for (let i = 6; i >= 0; i--) {
         const d = new Date(); d.setDate(d.getDate() - i);
@@ -581,7 +573,6 @@ function selectProject(projId) {
     document.getElementById('projectDetailCard').style.display = 'block';
     document.getElementById('detailProjectTitle').textContent = proj.order;
     
-    // Update stats
     const panels = proj.panels || [];
     let completed = 0, active = 0;
     panels.forEach(p => {
@@ -692,7 +683,6 @@ function renderPanelSteps(project, panel) {
                         </button>
                     </div>
                     
-                    <!-- Step Detail Expandable -->
                     <div class="step-detail" id="detail-${panel.id}-${stepDef.id}">
                         <div class="detail-upload-zone" onclick="triggerFileUpload('${panel.id}','${stepDef.id}')"
                              ondragover="e=>e.preventDefault();this.classList.add('dragover')"
@@ -744,7 +734,6 @@ function setStepStatus(panelId, stepId, status) {
     const panel = project?.panels?.find(p => p.id === panelId);
     if (!panel?.steps?.[stepId]) return;
     
-    // Validation: Need at least 1 file for "Done" status
     if (status === 'done') {
         const fileCount = panel.steps[stepId].files?.length || 0;
         if (fileCount === 0) {
@@ -756,7 +745,7 @@ function setStepStatus(panelId, stepId, status) {
     panel.steps[stepId].status = status;
     saveProject(project, () => {
         renderPanelsList(project);
-        selectProject(project.id); // Refresh project stats
+        selectProject(project.id);
         showToast(`Step updated to "${status}" ✅`, 'success');
     });
 }
@@ -810,12 +799,14 @@ function handleFiles(panelId, stepId, inputElement) {
     });
 }
 
+// PERBAIKAN BUG DRAG AND DROP
 function handleDrop(e, panelId, stepId) {
     e.preventDefault();
     const dt = new DataTransfer();
     if (e.dataTransfer.items) {
         Array.from(e.dataTransfer.items).forEach(item => {
-            if (item.kind === 'file') items.add(item.getAsFile());
+            // BUG FIX: Sebelumnya menggunakan "items.add" yang tidak ada (undefined error)
+            if (item.kind === 'file') dt.items.add(item.getAsFile());
         });
     }
     const files = dt.files;
@@ -886,7 +877,6 @@ function createNewPanel() {
         steps: {}
     };
     
-    // Initialize steps for this panel
     PROCESS_STEPS.forEach(s => {
         panel.steps[s.id] = { status: 'pending', files: [], note: '' };
     });
