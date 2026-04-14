@@ -184,9 +184,14 @@
         }
         .notification-dot { position:absolute; top:8px; right:8px; width:10px; height:10px; background:var(--accent-red); border-radius:50%; }
 
-        /* Page Content */
-        .page { display:none; padding:24px; animation:fadeIn .3s ease; }
-        .page.active { display:block; }
+        /* Page Content - PASTIKAN SELALU TERLIHAT */
+        .page { 
+            display:none; 
+            padding:24px; 
+            animation:fadeIn .3s ease;
+            min-height: calc(100vh - 80px);
+        }
+        .page.active { display:block !important; } /* Force display */
         @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
         /* Dashboard Grid */
@@ -357,7 +362,6 @@
         .badge-worker { background:rgba(34,197,94,.15); color:var(--accent-green); }
         .badge-active { background:rgba(34,197,94,.15); color:var(--accent-green); }
         .badge-inactive { background:rgba(107,114,128,.15); color:var(--text-muted); }
-        /* ✅ PERBAIKAN: Tambah badge-danger untuk API endpoints */
         .badge-danger { background:rgba(239,68,68,.15); color:var(--accent-red); }
 
         /* Action Buttons Row */
@@ -369,7 +373,7 @@
             display:none; position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,.9); z-index:2000; align-items:center; justify-content:center; padding:20px;
         }
-        .modal-overlay.show { display:flex; animation:fadeIn .2s; }
+        .modal-overlay.show { display:flex !important; animation:fadeIn .2s; }
         .modal {
             background:var(--bg-secondary); border-radius:20px; width:100%; max-width:520px;
             max-height:90vh; border:1px solid var(--border-color);
@@ -397,7 +401,7 @@
 
         /* Image Viewer */
         .image-viewer { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.97); z-index:2500; align-items:center; justify-content:center; padding:20px; }
-        .image-viewer.show { display:flex; }
+        .image-viewer.show { display:flex !important; }
         .image-viewer img { max-width:95%; max-height:95%; object-fit:contain; border-radius:12px; }
         .viewer-close { position:absolute; top:20px; right:20px; background:var(--bg-secondary); border:2px solid var(--border-color); color:#fff; width:48px; height:48px; border-radius:50%; font-size:1.8rem; cursor:pointer; }
 
@@ -424,10 +428,10 @@
             border-radius:16px; padding:20px; display:none; align-items:center; gap:16px;
             box-shadow:0 10px 40px rgba(0,0,0,.5); z-index:1500; animation:slideUp .5s ease;
         }
-        .install-prompt.show { display:flex; }
+        .install-prompt.show { display:flex !important; }
         @keyframes slideUp { from{transform:translateY(100px)} to{transform:translateY(0)} }
 
-        /* ✅ PERBAIKAN: Toggle Switch yang Berfungsi dengan Benar */
+        /* Toggle Switch */
         .toggle-label {
             display: flex;
             align-items: center;
@@ -464,7 +468,7 @@
             background: var(--accent-blue);
         }
         .toggle-input:checked + .toggle-slider::after {
-            left: 27px; /* ✅ Bergerak saat active */
+            left: 27px;
         }
         .toggle-input:focus + .toggle-slider {
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
@@ -482,16 +486,26 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Loading Overlay */
-        .loading-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            border-radius: inherit;
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        .empty-state-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .empty-state-text {
+            font-size: 0.9rem;
+            margin-bottom: 20px;
         }
 
         /* Responsive */
@@ -865,7 +879,6 @@
                         <label>Auto-save Interval (seconds)</label>
                         <input type="number" class="form-input" id="settingAutoSave" value="30">
                     </div>
-                    <!-- ✅ PERBAIKAN: Toggle Switch dengan fungsi yang benar -->
                     <div class="form-group">
                         <label class="toggle-label">
                             <input type="checkbox" class="toggle-input" checked id="settingCollab">
@@ -1030,12 +1043,11 @@
 <script>
 // ============================================
 // PRODUCTION MANAGER v10 - ENTERPRISE EDITION
-// Complete Single-File Application
-// ✅ VERSION: 10.0.1 (FIXED)
+// ✅ VERSION: 10.0.2 (FIXED EMPTY STATE)
 // ============================================
 
 // ==================== CONSTANTS & CONFIG ====================
-const APP_VERSION = '10.0.1';
+const APP_VERSION = '10.0.2';
 const DB_NAME = 'ProductionManagerDB';
 const DB_VERSION = 1;
 
@@ -1089,18 +1101,20 @@ let state = {
     recognition: null,
     isRecording: false,
     codeReader: null,
-    scannerStream: null
+    scannerStream: null,
+    isInitialized: false // ✅ Tambah flag untuk mencegah double init
 };
 
 // ==================== INITIALIZATION ====================
 function initApp() {
+    // ✅ Cek sudah diinisialisasi belum
+    if (state.isInitialized) return;
+    state.isInitialized = true;
+    
     document.getElementById('splashScreen').classList.add('hidden');
     
     // Initialize IndexedDB
     initDatabase();
-    
-    // Check authentication
-    checkAuth();
     
     // Setup service worker
     registerServiceWorker();
@@ -1118,37 +1132,31 @@ function initDatabase() {
     request.onerror = () => console.error('Failed to open database');
     request.onsuccess = (event) => {
         state.db = event.target.result;
-        // ✅ PERBAIKAN: Hapus console.log di production
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.log('[DEBUG] Database opened successfully');
-        }
+        
+        // ✅ Setelah DB siap, cek auth
+        checkAuth();
     };
     
     request.onupgradeneeded = (event) => {
         const db = event.target.result;
         
-        // Users store
         if (!db.objectStoreNames.contains('users')) {
             db.createObjectStore('users', { keyPath: 'uid' });
         }
         
-        // Projects store
         if (!db.objectStoreNames.contains('projects')) {
             const projectStore = db.createObjectStore('projects', { keyPath: 'id' });
             projectStore.createIndex('userId', 'userId', { unique: false });
         }
         
-        // Events store (calendar)
         if (!db.objectStoreNames.contains('events')) {
             db.createObjectStore('events', { keyPath: 'id' });
         }
         
-        // Activity log
         if (!db.objectStoreNames.contains('activity')) {
             db.createObjectStore('activity', { keyPath: 'id', autoIncrement: true });
         }
         
-        // Sync queue (for offline)
         if (!db.objectStoreNames.contains('syncQueue')) {
             db.createObjectStore('syncQueue', { keyPath: 'id', autoIncrement: true });
         }
@@ -1159,7 +1167,6 @@ function initDatabase() {
 async function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         try {
-            // Create service worker blob
             const swCode = `
                 const CACHE_NAME = 'pm-v${APP_VERSION}';
                 const urlsToCache = ['/'];
@@ -1196,11 +1203,7 @@ async function registerServiceWorker() {
             const blob = new Blob([swCode], { type: 'application/javascript' });
             const swUrl = URL.createObjectURL(blob);
             
-            const registration = await navigator.serviceWorker.register(swUrl, { scope: '/' });
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                console.log('[DEBUG] ServiceWorker registered:', registration.scope);
-            }
-            
+            await navigator.serviceWorker.register(swUrl, { scope: '/' });
             URL.revokeObjectURL(swUrl);
         } catch (error) {
             console.warn('ServiceWorker registration failed:', error);
@@ -1212,12 +1215,25 @@ async function registerServiceWorker() {
 function checkAuth() {
     const savedUser = localStorage.getItem('pm_user_v10');
     if (savedUser) {
-        state.user = JSON.parse(savedUser);
-        loadAllData();
-        showMainApp();
+        try {
+            state.user = JSON.parse(savedUser);
+            
+            // ✅ Load semua data dulu, baru show main app
+            loadAllData(() => {
+                showMainApp();
+            });
+        } catch (e) {
+            console.error('Error parsing saved user:', e);
+            localStorage.removeItem('pm_user_v10');
+            showLoginScreen();
+        }
     } else {
-        document.getElementById('loginScreen').classList.add('active');
+        showLoginScreen();
     }
+}
+
+function showLoginScreen() {
+    document.getElementById('loginScreen').classList.add('active');
 }
 
 function toggleAuthMode() {
@@ -1240,6 +1256,11 @@ function handleLogin() {
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     
+    if (!email || !password) {
+        showToast('Please enter email and password ⚠️', 'warning');
+        return;
+    }
+    
     // Demo accounts
     const demoAccounts = {
         'admin@test.com': { password: 'admin123', role: 'admin', name: 'Administrator' },
@@ -1258,21 +1279,26 @@ function handleLogin() {
         };
         
         localStorage.setItem('pm_user_v10', JSON.stringify(state.user));
-        loadAllData();
-        showMainApp();
-        showToast('Welcome back, ' + state.user.name + '! ✅', 'success');
+        
+        // ✅ Load data dulu, baru show app
+        loadAllData(() => {
+            showMainApp();
+            showToast('Welcome back, ' + state.user.name + '! ✅', 'success');
+        });
         return;
     }
     
-    // Check registered users
+    // Check registered users in DB
     getUsersFromDB((users) => {
         const user = users.find(u => u.email === email && u.password === password);
         if (user) {
             state.user = user;
             localStorage.setItem('pm_user_v10', JSON.stringify(user));
-            loadAllData();
-            showMainApp();
-            showToast('Login successful! ✅', 'success');
+            
+            loadAllData(() => {
+                showMainApp();
+                showToast('Login successful! ✅', 'success');
+            });
         } else {
             showToast('Invalid credentials ❌', 'error');
         }
@@ -1309,9 +1335,11 @@ function handleRegister() {
     saveUserToDB(newUser, () => {
         state.user = newUser;
         localStorage.setItem('pm_user_v10', JSON.stringify(newUser));
-        loadAllData();
-        showMainApp();
-        showToast('Account created successfully! ✅', 'success');
+        
+        loadAllData(() => {
+            showMainApp();
+            showToast('Account created successfully! ✅', 'success');
+        });
     });
 }
 
@@ -1322,17 +1350,68 @@ function handleLogout() {
     state.user = null;
     localStorage.removeItem('pm_user_v10');
     closeModal('settingsModal');
+    
+    // Hide main app
     document.getElementById('appContainer').style.display = 'none';
-    document.getElementById('loginScreen').classList.add('active');
+    
+    // Show login screen
+    showLoginScreen();
     showToast('Logged out successfully 👋', 'info');
 }
 
+// ✅ FUNGSI UTAMA: Show Main App
 function showMainApp() {
+    // Hide login screen
     document.getElementById('loginScreen').classList.remove('active');
-    document.getElementById('appContainer').style.display = 'flex';
+    
+    // Show main container
+    const appContainer = document.getElementById('appContainer');
+    appContainer.style.display = 'flex';
+    
+    // Update UI untuk role
     updateUIForRole();
+    
+    // ✅ FORCE RENDER: Pastikan dashboard aktif dan ter-render
+    forceShowPage('dashboard');
+    
+    // Render dashboard
     renderDashboard();
-    navigateTo('dashboard');
+    
+    showToast('Application loaded successfully! 🚀', 'success');
+}
+
+// ✅ FUNGSI BARU: Force show page
+function forceShowPage(pageId) {
+    // Hide ALL pages first
+    document.querySelectorAll('.page').forEach(p => {
+        p.classList.remove('active');
+        p.style.display = 'none';
+    });
+    
+    // Show target page with FORCE
+    const targetPage = document.getElementById('page-' + pageId);
+    if (targetPage) {
+        targetPage.classList.add('active');
+        targetPage.style.display = 'block'; // Force display
+    }
+    
+    // Update nav items
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    document.querySelector(`.nav-item[data-page="${pageId}"]`)?.classList.add('active');
+    
+    // Update title
+    const titles = {
+        dashboard: 'Dashboard',
+        projects: 'Projects',
+        calendar: 'Calendar / Gantt Chart',
+        scanner: 'Barcode Scanner',
+        'admin-users': 'User Management',
+        'admin-api': 'API Documentation',
+        'admin-settings': 'System Settings'
+    };
+    document.getElementById('pageTitle').textContent = titles[pageId] || 'Page';
+    
+    state.currentPage = pageId;
 }
 
 function updateUIForRole() {
@@ -1354,6 +1433,11 @@ function updateUIForRole() {
 
 // ==================== DATABASE OPERATIONS ====================
 function saveUserToDB(user, callback) {
+    if (!state.db) {
+        console.warn('Database not ready');
+        if (callback) callback();
+        return;
+    }
     const transaction = state.db.transaction(['users'], 'readwrite');
     const store = transaction.objectStore('users');
     store.put(user);
@@ -1361,13 +1445,31 @@ function saveUserToDB(user, callback) {
 }
 
 function getUsersFromDB(callback) {
-    const transaction = state.db.transaction(['users'], 'readonly');
-    const store = transaction.objectStore('users');
-    const request = store.getAll();
-    request.onsuccess = () => callback(request.result);
+    if (!state.db) {
+        console.warn('Database not ready');
+        if (callback) callback([]);
+        return;
+    }
+    try {
+        const transaction = state.db.transaction(['users'], 'readonly');
+        const store = transaction.objectStore('users');
+        const request = store.getAll();
+        request.onsuccess = () => callback(request.result);
+        request.onerror = () => {
+            console.error('Error getting users:', request.error);
+            callback([]);
+        };
+    } catch (e) {
+        console.error('Transaction error:', e);
+        callback([]);
+    }
 }
 
 function saveProjectToDB(project, callback) {
+    if (!state.db) {
+        if (callback) callback();
+        return;
+    }
     const transaction = state.db.transaction(['projects'], 'readwrite');
     const store = transaction.objectStore('projects');
     store.put(project);
@@ -1375,13 +1477,30 @@ function saveProjectToDB(project, callback) {
 }
 
 function getProjectsFromDB(callback) {
-    const transaction = state.db.transaction(['projects'], 'readonly');
-    const store = transaction.objectStore('projects');
-    const request = store.getAll();
-    request.onsuccess = () => callback(request.result);
+    if (!state.db) {
+        if (callback) callback([]);
+        return;
+    }
+    try {
+        const transaction = state.db.transaction(['projects'], 'readonly');
+        const store = transaction.objectStore('projects');
+        const request = store.getAll();
+        request.onsuccess = () => callback(request.result);
+        request.onerror = () => {
+            console.error('Error getting projects:', request.error);
+            callback([]);
+        };
+    } catch (e) {
+        console.error('Transaction error:', e);
+        callback([]);
+    }
 }
 
 function deleteProjectFromDB(id, callback) {
+    if (!state.db) {
+        if (callback) callback();
+        return;
+    }
     const transaction = state.db.transaction(['projects'], 'readwrite');
     const store = transaction.objectStore('projects');
     store.delete(id);
@@ -1389,6 +1508,10 @@ function deleteProjectFromDB(id, callback) {
 }
 
 function saveEventToDB(event, callback) {
+    if (!state.db) {
+        if (callback) callback();
+        return;
+    }
     const transaction = state.db.transaction(['events'], 'readwrite');
     const store = transaction.objectStore('events');
     store.put(event);
@@ -1396,13 +1519,23 @@ function saveEventToDB(event, callback) {
 }
 
 function getEventsFromDB(callback) {
-    const transaction = state.db.transaction(['events'], 'readonly');
-    const store = transaction.objectStore('events');
-    const request = store.getAll();
-    request.onsuccess = () => callback(request.result);
+    if (!state.db) {
+        if (callback) callback([]);
+        return;
+    }
+    try {
+        const transaction = state.db.transaction(['events'], 'readonly');
+        const store = transaction.objectStore('events');
+        const request = store.getAll();
+        request.onsuccess = () => callback(request.result);
+        request.onerror = () => callback([]);
+    } catch (e) {
+        callback([]);
+    }
 }
 
 function addActivityLog(activity) {
+    if (!state.db) return;
     const transaction = state.db.transaction(['activity'], 'readwrite');
     const store = transaction.objectStore('activity');
     store.add({
@@ -1413,8 +1546,7 @@ function addActivityLog(activity) {
 }
 
 function addToSyncQueue(action) {
-    if (state.isOnline) return;
-    
+    if (state.isOnline || !state.db) return;
     const transaction = state.db.transaction(['syncQueue'], 'readwrite');
     const store = transaction.objectStore('syncQueue');
     store.add({
@@ -1425,8 +1557,7 @@ function addToSyncQueue(action) {
 }
 
 function processSyncQueue() {
-    if (!state.isOnline) return;
-    
+    if (!state.isOnline || !state.db) return;
     const transaction = state.db.transaction(['syncQueue'], 'readwrite');
     const store = transaction.objectStore('syncQueue');
     const request = store.getAll();
@@ -1434,17 +1565,17 @@ function processSyncQueue() {
     request.onsuccess = () => {
         const items = request.result.filter(item => !item.synced);
         items.forEach(item => {
-            // Process each pending action
             item.synced = true;
             store.put(item);
         });
         if (items.length > 0) {
-            showToast(`Synced ${items.length} items 🔄`, 'info');
+            showToast(`Synced ${items.items} items 🔄`, 'info');
         }
     };
 }
 
 function updateUserLastActive(uid) {
+    if (!state.db || !uid) return;
     const transaction = state.db.transaction(['users'], 'readwrite');
     const store = transaction.objectStore('users');
     const request = store.get(uid);
@@ -1458,45 +1589,44 @@ function updateUserLastActive(uid) {
 }
 
 // ==================== DATA LOADING ====================
-function loadAllData() {
+// ✅ PERBAIKAN: Callback untuk memastikan data selesai dimuat
+function loadAllData(callback) {
+    if (!state.db) {
+        console.warn('Database not ready when loading data');
+        if (callback) callback();
+        return;
+    }
+    
+    let completed = 0;
+    const total = 3;
+    
+    function checkComplete() {
+        completed++;
+        if (completed >= total && callback) {
+            callback();
+        }
+    }
+    
     getProjectsFromDB((projects) => {
-        state.projects = projects;
-        getUsersFromDB((users) => {
-            state.users = users;
-            getEventsFromDB((events) => {
-                state.events = events;
-                updateStats();
-            });
-        });
+        state.projects = projects || [];
+        checkComplete();
+    });
+    
+    getUsersFromDB((users) => {
+        state.users = users || [];
+        checkComplete();
+    });
+    
+    getEventsFromDB((events) => {
+        state.events = events || [];
+        checkComplete();
     });
 }
 
 // ==================== NAVIGATION ====================
 function navigateTo(page) {
-    // Hide all pages
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    
-    // Show selected page
-    const targetPage = document.getElementById('page-' + page);
-    if (targetPage) targetPage.classList.add('active');
-    
-    // Update nav items
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
-    
-    // Update title
-    const titles = {
-        dashboard: 'Dashboard',
-        projects: 'Projects',
-        calendar: 'Calendar / Gantt Chart',
-        scanner: 'Barcode Scanner',
-        'admin-users': 'User Management',
-        'admin-api': 'API Documentation',
-        'admin-settings': 'System Settings'
-    };
-    document.getElementById('pageTitle').textContent = titles[page] || 'Page';
-    
-    state.currentPage = page;
+    // ✅ Gunakan force show page
+    forceShowPage(page);
     
     // Page-specific initialization
     switch(page) {
@@ -1507,7 +1637,7 @@ function navigateTo(page) {
             renderProjectsPage();
             break;
         case 'calendar':
-            initCalendar();
+            setTimeout(() => initCalendar(), 100); // Delay sedikit untuk memastikan DOM ready
             break;
         case 'scanner':
             // Scanner initialized on demand
@@ -1517,6 +1647,9 @@ function navigateTo(page) {
             break;
         case 'admin-api':
             renderAPIEndpoints();
+            break;
+        case 'admin-settings':
+            loadSystemSettings();
             break;
     }
     
@@ -1533,27 +1666,35 @@ function toggleSidebar() {
 
 // ==================== DASHBOARD ====================
 function renderDashboard() {
+    // ✅ Pastikan kita di page dashboard
+    if (state.currentPage !== 'dashboard') {
+        forceShowPage('dashboard');
+    }
+    
     updateStats();
     renderDashboardChart();
     renderActivityFeed();
 }
 
 function updateStats() {
-    const totalProjects = state.projects.length;
-    const completedProjects = state.projects.filter(p => calculateProjectProgress(p) === 100).length;
-    const activeProjects = state.projects.filter(p => calculateProjectProgress(p) > 0 && calculateProjectProgress(p) < 100).length;
-    const totalUsers = state.users.length;
+    const totalProjects = state.projects ? state.projects.length : 0;
+    const completedProjects = state.projects ? state.projects.filter(p => calculateProjectProgress(p) === 100).length : 0;
+    const activeProjects = state.projects ? state.projects.filter(p => calculateProjectProgress(p) > 0 && calculateProjectProgress(p) < 100).length : 0;
+    const totalUsers = state.users ? state.users.length : 0;
     
     animateValue('totalProjectsStat', totalProjects);
     animateValue('completedProjectsStat', completedProjects);
     animateValue('activeProjectsStat', activeProjects);
     animateValue('totalUsersStat', totalUsers);
     
-    document.getElementById('projectBadge').textContent = totalProjects;
+    const badgeEl = document.getElementById('projectBadge');
+    if (badgeEl) badgeEl.textContent = totalProjects;
 }
 
 function animateValue(elementId, endValue) {
     const element = document.getElementById(elementId);
+    if (!element) return;
+    
     const startValue = parseInt(element.textContent) || 0;
     const duration = 500;
     const startTime = performance.now();
@@ -1575,14 +1716,13 @@ function renderDashboardChart() {
         state.chartInstances.dashboard.destroy();
     }
     
-    // Generate last 7 days data
     const labels = [];
     const data = [];
     for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
-        data.push(Math.floor(Math.random() * 10)); // Simulated data
+        data.push(Math.floor(Math.random() * 10));
     }
     
     state.chartInstances.dashboard = new Chart(ctx, {
@@ -1612,8 +1752,8 @@ function renderDashboardChart() {
 
 function renderActivityFeed() {
     const container = document.getElementById('activityFeed');
+    if (!container) return;
     
-    // Get recent activities from DB or generate sample
     const activities = [
         { icon: '✅', text: 'Assembly step completed for PO-2024-001', time: '5 minutes ago', color: 'green' },
         { icon: '📁', text: 'New file uploaded: wiring_diagram.pdf', time: '15 minutes ago', color: 'blue' },
@@ -1640,13 +1780,15 @@ function refreshActivity() {
 // ==================== PROJECTS PAGE ====================
 function renderProjectsPage() {
     const container = document.getElementById('projectListContainer');
+    if (!container) return;
     
-    if (state.projects.length === 0) {
+    if (!state.projects || state.projects.length === 0) {
         container.innerHTML = `
-            <div style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
-                <div style="font-size:4rem;margin-bottom:16px;">📋</div>
-                <p style="font-size:1.1rem;margin-bottom:20px;">No projects yet</p>
-                <button class="btn btn-primary" onclick="openModal('newProjectModal')">Create Your First Project</button>
+            <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <div class="empty-state-title">No Projects Yet</div>
+                <div class="empty-state-text">Create your first project to get started!</div>
+                <button class="btn btn-primary" style="max-width:300px;margin:0 auto;" onclick="openModal('newProjectModal')">+ Create Project</button>
             </div>
         `;
         return;
@@ -1685,11 +1827,9 @@ function selectProject(projectId) {
     
     if (!project) return;
     
-    // Show detail card
     document.getElementById('projectDetailCard').style.display = 'block';
     document.getElementById('detailProjectTitle').textContent = project.order;
     
-    // Update stats
     const steps = Object.values(project.steps || {});
     const done = steps.filter(s => s.status === 'done').length;
     const active = steps.filter(s => s.status === 'active').length;
@@ -1699,10 +1839,7 @@ function selectProject(projectId) {
     document.getElementById('detailActiveCount').textContent = active;
     document.getElementById('detailPendingCount').textContent = pending;
     
-    // Render process list
     renderProcessSteps(project);
-    
-    // Scroll to detail
     document.getElementById('projectDetailCard').scrollIntoView({ behavior: 'smooth' });
     
     addActivityLog({ type: 'view_project', projectId: project.id, order: project.order });
@@ -1710,6 +1847,7 @@ function selectProject(projectId) {
 
 function renderProcessSteps(project) {
     const container = document.getElementById('detailProcessList');
+    if (!container) return;
     
     if (!project.steps) {
         container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">No steps defined</p>';
@@ -1822,7 +1960,6 @@ function handleFiles(stepId, inputElement) {
     let processedCount = 0;
     const totalCount = files.length;
     
-    // Show loading indicator
     showToast(`Uploading ${totalCount} file(s)... ⏳`, 'info');
     
     files.forEach(file => {
@@ -1903,7 +2040,6 @@ function toggleVoiceRecording(stepId) {
     state.recognition = new SpeechRecognition();
     state.recognition.continuous = true;
     state.recognition.interimResults = true;
-    // ✅ PERBAIKAN: Adaptif ke bahasa setting sistem atau default Indonesia
     const langSetting = document.getElementById('settingLanguage')?.value || 'id';
     state.recognition.lang = langSetting === 'en' ? 'en-US' : 'id-ID';
     
@@ -2017,7 +2153,6 @@ function createNewProject() {
         steps: {}
     };
     
-    // Initialize steps
     PROCESS_STEPS.forEach(step => {
         project.steps[step.id] = {
             status: 'pending',
@@ -2035,7 +2170,6 @@ function createNewProject() {
         showToast(`Project "${order}" created ✅`, 'success');
         addActivityLog({ type: 'create_project', projectId: project.id, order: order });
         
-        // Clear form
         document.getElementById('newProjOrder').value = '';
         document.getElementById('newProjCustomer').value = '';
         document.getElementById('newProjDesc').value = '';
@@ -2151,18 +2285,16 @@ function initCalendar() {
         state.calendarInstance.destroy();
     }
     
-    // Convert events to FullCalendar format
     const events = (state.events || []).map(e => ({
         id: e.id,
         title: e.title,
         start: e.start,
         end: e.end,
         backgroundColor: e.color || '#3b82f6',
-        textColor: '#ffffff', // ✅ PERBAIKAN: Pastikan teks terbaca
+        textColor: '#ffffff',
         extendedProps: { description: e.description, projectId: e.projectId }
     }));
     
-    // Also add project deadlines as events
     state.projects.forEach(p => {
         if (p.dueDate) {
             events.push({
@@ -2170,7 +2302,7 @@ function initCalendar() {
                 title: '📌 Due: ' + p.order,
                 start: p.dueDate,
                 backgroundColor: '#ef4444',
-                textColor: '#ffffff', // ✅ PERBAIKAN: Pastikan teks terbaca di background merah
+                textColor: '#ffffff',
                 allDay: true
             });
         }
@@ -2190,7 +2322,6 @@ function initCalendar() {
             alert('Event: ' + info.event.title + '\n\n' + (info.event.extendedProps.description || ''));
         },
         eventDrop: function(info) {
-            // Update event in DB
             const event = state.events.find(e => e.id === info.event.id);
             if (event) {
                 event.start = info.event.start.toISOString();
@@ -2242,7 +2373,6 @@ function createNewEvent() {
         initCalendar();
         showToast('Event created 📅', 'success');
         
-        // Clear form
         document.getElementById('eventTitle').value = '';
         document.getElementById('eventStart').value = '';
         document.getElementById('eventEnd').value = '';
@@ -2266,7 +2396,6 @@ async function startScanner() {
         document.getElementById('startScannerBtn').style.display = 'none';
         document.getElementById('stopScannerBtn').style.display = 'inline-flex';
         
-        // Initialize ZXing code reader
         if (typeof ZXing !== 'undefined') {
             const codeReader = new ZXing.BrowserMultiFormatReader();
             codeReader.decodeFromVideoDevice(undefined, video, (result, error) => {
@@ -2308,7 +2437,6 @@ function onScanSuccess(text) {
     document.getElementById('scanResultText').textContent = text;
     document.getElementById('scanResult').style.display = 'block';
     
-    // Vibrate if supported
     if (navigator.vibrate) {
         navigator.vibrate(200);
     }
@@ -2327,7 +2455,6 @@ function submitManualBarcode() {
 function useScannedData() {
     const scannedValue = document.getElementById('scanResultText').textContent;
     showToast('Using scanned data: ' + scannedValue, 'info');
-    // Implement logic to use the scanned barcode data
 }
 
 // ==================== EXPORT FUNCTIONS ====================
@@ -2359,7 +2486,6 @@ function exportJSON(data = state.projects) {
 }
 
 function exportToSpreadsheet(data, format) {
-    // Flatten data for spreadsheet
     const flatData = data.flatMap(project => 
         (project.panels || [{}]).map(panel => ({
             'Project Order': project.order,
@@ -2415,7 +2541,6 @@ function generatePDF() {
     
     showToast('Generating PDF... ⏳', 'info');
     
-    // Simplified PDF generation using html2pdf
     const content = `
         <div style="font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:auto;background:white;color:#1a1a1a;">
             <h1 style="text-align:center;margin-bottom:8px;">📋 PRODUCTION REPORT</h1>
@@ -2443,7 +2568,7 @@ function generatePDF() {
         margin: 10,
         filename: `Report-${project.order}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale:2 },
+        html2canvas: { scale: 2 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     }).from(container).save().then(() => {
         document.body.removeChild(container);
@@ -2454,6 +2579,12 @@ function generatePDF() {
 // ==================== USER MANAGEMENT (ADMIN) ====================
 function renderUsersTable() {
     const tbody = document.getElementById('usersTableBody');
+    if (!tbody) return;
+    
+    if (!state.users || state.users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:40px;">No users found</td></tr>`;
+        return;
+    }
     
     tbody.innerHTML = state.users.map(user => `
         <tr>
@@ -2532,6 +2663,7 @@ function editUser(uid) {
 // ==================== API ENDPOINTS DOCUMENTATION ====================
 function renderAPIEndpoints() {
     const container = document.getElementById('apiEndpointsList');
+    if (!container) return;
     
     container.innerHTML = `
         <div style="background:var(--bg-tertiary);padding:16px;border-radius:12px;margin-bottom:16px;">
@@ -2579,12 +2711,6 @@ fetch('https://api.production-manager.local/v1/projects', {
 
 // ==================== REAL-TIME COLLABORATION ====================
 function broadcastChange(changeData) {
-    // In a real implementation, this would use:
-    // - WebSocket connection to server
-    // - Firebase Realtime Database
-    // - Server-Sent Events (SSE)
-    
-    // For now, we'll simulate with localStorage events for same-browser tabs
     const channel = new BroadcastChannel('pm_collaboration');
     channel.postMessage({
         ...changeData,
@@ -2592,7 +2718,6 @@ function broadcastChange(changeData) {
         userId: state.user?.uid
     });
     
-    // Show collaborator avatars (simulated)
     showCollaboratorActivity(changeData.user);
 }
 
@@ -2601,9 +2726,8 @@ function listenForChanges() {
     
     channel.onmessage = (event) => {
         const change = event.data;
-        if (change.userId === state.user?.uid) return; // Ignore own changes
+        if (change.userId === state.user?.uid) return;
         
-        // Handle different change types
         switch (change.type) {
             case 'status_update':
                 showToast(`${change.user} updated ${change.stepId} status`, 'info');
@@ -2615,7 +2739,6 @@ function listenForChanges() {
                 showToast(`${change.user} made changes`, 'info');
         }
         
-        // Refresh current view
         if (state.currentPage === 'projects') {
             renderProjectsPage();
         }
@@ -2625,7 +2748,6 @@ function listenForChanges() {
 function showCollaboratorActivity(userName) {
     const container = document.getElementById('collaboratorsAvatars');
     
-    // Simulate showing active collaborator
     const existingAvatar = container.querySelector(`[data-user="${userName}"]`);
     if (!existingAvatar) {
         const avatar = document.createElement('div');
@@ -2635,7 +2757,6 @@ function showCollaboratorActivity(userName) {
         avatar.title = `${userName} is editing`;
         container.appendChild(avatar);
         
-        // Remove after 5 seconds
         setTimeout(() => avatar.remove(), 5000);
     }
 }
@@ -2660,12 +2781,14 @@ function updateOnlineStatus() {
     const dot = document.getElementById('onlineDot');
     const status = document.getElementById('onlineStatus');
     
-    if (state.isOnline) {
-        dot.classList.remove('offline');
-        status.textContent = 'Online';
-    } else {
-        dot.classList.add('offline');
-        status.textContent = 'Offline';
+    if (dot && status) {
+        if (state.isOnline) {
+            dot.classList.remove('offline');
+            status.textContent = 'Online';
+        } else {
+            dot.classList.add('offline');
+            status.textContent = 'Offline';
+        }
     }
 }
 
@@ -2706,7 +2829,7 @@ function setTheme(theme) {
     showToast(`Theme changed to ${theme} mode 🎨`, 'info');
 }
 
-// ==================== ✅ PERBAIKAN: QR CODE GENERATOR YANG BENAR ====================
+// ==================== QR CODE GENERATOR ====================
 function generateQRCode(stepId) {
     const project = getCurrentProject();
     if (!project) {
@@ -2722,7 +2845,6 @@ function generateQRCode(stepId) {
         generatedAt: new Date().toISOString()
     };
     
-    // ✅ PERBAIKAN: Buat modal untuk menampilkan QR Code
     const modal = document.createElement('div');
     modal.className = 'modal-overlay show';
     modal.id = 'qrCodeModal';
@@ -2740,12 +2862,10 @@ function generateQRCode(stepId) {
     `;
     document.body.appendChild(modal);
     
-    // Close on outside click
     modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.remove();
     });
     
-    // ✅ PERBAIKAN: Generate QR Code ke container yang benar
     const qrContainer = document.getElementById('qrContainer');
     
     QRCode.toCanvas(qrContainer, JSON.stringify(qrData), { 
@@ -2762,11 +2882,9 @@ function generateQRCode(stepId) {
             modal.remove();
             return;
         }
-        // ✅ Canvas sudah otomatis ditambahkan ke container oleh library
         showToast('QR Code generated! 📱', 'success');
     });
     
-    // Function to download QR code
     window.downloadQRCode = function() {
         const canvas = qrContainer.querySelector('canvas');
         if (canvas) {
@@ -2790,7 +2908,6 @@ function saveSystemSettings() {
         emailNotifications: document.getElementById('settingEmailNotif').checked
     };
     
-    // Save to localStorage (in production, would save to DB or API)
     localStorage.setItem('pm_settings_v10', JSON.stringify(settings));
     
     showToast('Settings saved 💾', 'success');
@@ -2799,13 +2916,24 @@ function saveSystemSettings() {
 function loadSystemSettings() {
     const saved = localStorage.getItem('pm_settings_v10');
     if (saved) {
-        const settings = JSON.parse(saved);
-        document.getElementById('settingAppName').value = settings.appName || 'Production Manager';
-        document.getElementById('settingLanguage').value = settings.language || 'id';
-        document.getElementById('settingMaxFileSize').value = settings.maxFileSize || 10;
-        document.getElementById('settingAutoSave').value = settings.autoSave || 30;
-        document.getElementById('settingCollab').checked = settings.collaboration !== false;
-        document.getElementById('settingEmailNotif').checked = settings.emailNotifications !== false;
+        try {
+            const settings = JSON.parse(saved);
+            const appNameEl = document.getElementById('settingAppName');
+            const langEl = document.getElementById('settingLanguage');
+            const fileSizeEl = document.getElementById('settingMaxFileSize');
+            const autoSaveEl = document.getElementById('settingAutoSave');
+            const collabEl = document.getElementById('settingCollab');
+            const emailNotifEl = document.getElementById('settingEmailNotif');
+            
+            if (appNameEl) appNameEl.value = settings.appName || 'Production Manager';
+            if (langEl) langEl.value = settings.language || 'id';
+            if (fileSizeEl) fileSizeEl.value = settings.maxFileSize || 10;
+            if (autoSaveEl) autoSaveEl.value = settings.autoSave || 30;
+            if (collabEl) collabEl.checked = settings.collaboration !== false;
+            if (emailNotifEl) emailNotifEl.checked = settings.emailNotifications !== false;
+        } catch (e) {
+            console.error('Error loading settings:', e);
+        }
     }
 }
 
@@ -2839,15 +2967,12 @@ function openModal(modalId) {
     if (modal) {
         modal.classList.add('show');
         
-        // Populate dropdowns
         if (modalId === 'newProjectModal' || modalId === 'newEventModal') {
             populateProjectSelect();
         }
         if (modalId === 'newProjectModal') {
             populateUserSelect();
         }
-        
-        // Load settings if opening settings modal
         if (modalId === 'admin-settings') {
             loadSystemSettings();
         }
@@ -2859,21 +2984,19 @@ function closeModal(modalId) {
     if (modal) modal.classList.remove('show');
 }
 
-// Close modals on outside click
 document.querySelectorAll('.modal-overlay').forEach(modal => {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.classList.remove('show');
     });
 });
 
-// Populate selects
 function populateProjectSelect() {
     const selects = [document.getElementById('eventProject')];
     selects.forEach(select => {
         if (select) {
             const currentValue = select.value;
             select.innerHTML = '<option value="">No Project</option>' +
-                state.projects.map(p => `<option value="${p.id}">${p.order}</option>`).join('');
+                (state.projects || []).map(p => `<option value="${p.id}">${p.order}</option>`).join('');
             select.value = currentValue;
         }
     });
@@ -2883,13 +3006,15 @@ function populateUserSelect() {
     const select = document.getElementById('newProjAssign');
     if (select) {
         select.innerHTML = '<option value="">Unassigned</option>' +
-            state.users.map(u => `<option value="${u.uid}">${u.name}</option>`).join('');
+            (state.users || []).map(u => `<option value="${u.uid}">${u.name}</option>`).join('');
     }
 }
 
 // ==================== TOAST NOTIFICATIONS ====================
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `<span>${message}</span>`;
@@ -2906,7 +3031,6 @@ function clearAllData() {
     if (!confirm('⚠️ This will delete ALL data including users, projects, and settings. Continue?')) return;
     if (!confirm('Are you absolutely sure? This cannot be undone!')) return;
     
-    // Clear IndexedDB
     if (state.db) {
         const transaction = state.db.transaction(['users', 'projects', 'events', 'activity', 'syncQueue'], 'readwrite');
         [...transaction.objectStoreNames].forEach(name => {
@@ -2914,11 +3038,9 @@ function clearAllData() {
         });
     }
     
-    // Clear localStorage
     localStorage.removeItem('pm_user_v10');
     localStorage.removeItem('pm_settings_v10');
     
-    // Reset state
     state.projects = [];
     state.events = [];
     state.users = [];
@@ -2934,7 +3056,6 @@ function clearAllData() {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         closeImageViewer();
-        // Close QR modal if open
         const qrModal = document.getElementById('qrCodeModal');
         if (qrModal) qrModal.remove();
         document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
@@ -2955,16 +3076,12 @@ document.addEventListener('keydown', (e) => {
 
 // ==================== INITIALIZATION ON LOAD ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Load saved theme
     const savedTheme = localStorage.getItem('pm_theme');
     if (savedTheme) {
         document.documentElement.setAttribute('data-theme', savedTheme);
     }
     
-    // Start collaboration listener
     listenForChanges();
-    
-    // Update online status initially
     updateOnlineStatus();
 });
 </script>
