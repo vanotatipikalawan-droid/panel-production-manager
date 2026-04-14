@@ -26,7 +26,7 @@ Upload semua file ini ke repository GitHub kamu
 Settings → Pages → Source: main branch → Save
 Tunggu 2 menit, website jadi!
 Opsi 2: Git Command Line
-git clone https://github.com/KAMU/panel-production-manager.gitcd panel-production-manager# Copy file-file ke sinigit add .git commit -m "Initial release"git push origin main
+git clone [https://github.com/KAMU/panel-production-manager.gitcd panel-production-manager](https://vanotatipikalawan-droid.github.io/panel-production-manager/)# Copy file-file ke sinigit add .git commit -m "Initial release"git push origin main
 📱 Cara Pakai
 Buka website
 Klik "+" buat proyek baru
