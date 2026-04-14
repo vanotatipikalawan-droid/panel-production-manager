@@ -405,21 +405,26 @@ function initDB() {
         if (!db.objectStoreNames.contains('projects')) db.createObjectStore('projects', { keyPath: 'id' });
     };
 }
-
+    
 // ==================== DATABASE ====================
 function saveProject(p, cb) {
     if (!state.db) { if(cb)cb(); return; }
-    state.db.transaction(['projects'], 'readwrite').objectStore('projects').put(p).oncomplete = cb || (()=>{});
+    const tx = state.db.transaction(['projects'], 'readwrite');
+    tx.objectStore('projects').put(p);
+    tx.oncomplete = cb || (()=>{}); // Perbaikan: Event dipasang pada transaction
 }
 
 function getProjects(cb) {
     if (!state.db) { if(cb)cb([]); return; }
-    state.db.transaction(['projects'], 'readonly').objectStore('projects').getAll().onsuccess = (e) => cb(e.target.result || []);
+    const req = state.db.transaction(['projects'], 'readonly').objectStore('projects').getAll();
+    req.onsuccess = (e) => cb(e.target.result || []);
 }
 
 function deleteProject(id, cb) {
     if (!state.db) { if(cb)cb(); return; }
-    state.db.transaction(['projects'], 'readwrite').objectStore('projects').delete(id).oncomplete = cb || (()=>{});
+    const tx = state.db.transaction(['projects'], 'readwrite');
+    tx.objectStore('projects').delete(id);
+    tx.oncomplete = cb || (()=>{}); // Perbaikan: Event dipasang pada transaction
 }
 
 function loadProjects(cb) {
@@ -428,6 +433,7 @@ function loadProjects(cb) {
         if (cb) cb();
     });
 }
+
 
 // ==================== NAVIGATION ====================
 function forceShowPage(page) {
