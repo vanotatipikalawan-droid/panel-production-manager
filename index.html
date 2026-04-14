@@ -953,31 +953,186 @@ function exportExcel() {
     XLSX.writeFile(wb, 'production-report.xlsx');
     showToast('Exported Excel! 📥', 'success');
 }
-
+// ==================== EXPORT PDF ADVANCED ====================
 function generatePDF() {
     const p = getCurrentProject();
-    if (!p) { showToast('Select a project!', 'warning'); return; }
-    showToast('Generating PDF...', 'info');
+    if (!p) { showToast('Select a project first!', 'warning'); return; }
+    showToast('Memproses Laporan PDF...', 'info');
     
-    const html = `
-    <div style="font-family:Arial;padding:40px;max-width:800px;background:#fff;color:#000;">
-        <h1 style="text-align:center;margin-bottom:8px;">📋 PRODUCTION REPORT</h1>
-        <p style="text-align:center;color:#666;margin-bottom:30px;">${p.order} - Generated: ${new Date().toLocaleString()}</p>
-        <h2>Overall Progress: ${calculateProjectProgress(p)}%</h2>
-        <table style="width:100%;border-collapse:collapse;margin-top:20px;">
-            <tr style="background:#f0f0f0;"><th style="padding:10px;border:1px solid #ddd;">Panel</th><th style="padding:10px;border:1px solid #ddd;">Spec</th><th style="padding:10px;border:1px solid #ddd;">Progress</th></tr>
-            ${(p.panels||[]).map(panel => `<tr>
-                <td style="padding:10px;border:1px solid #ddd;">${panel.name}</td>
-                <td style="padding:10px;border:1px solid #ddd;">${panel.spec||'-'}</td>
-                <td style="padding:10px;border:1px solid #ddd;text-align:center;font-weight:bold;color:${calculatePanelProgress(panel)===100?'green':'blue'}">${calculatePanelProgress(panel)}%</td>
-            </tr>`).join('')}
-        </table>
-    </div>`;
-    
-    const div = document.createElement('div'); div.innerHTML = html; document.body.appendChild(div);
-    html2pdf().set({margin:10,filename:`Report-${p.order}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4'}}).from(div).save().then(()=>{document.body.removeChild(div);showToast('PDF downloaded! 📄','success');});
-}
+    // CSS Styling khusus untuk PDF (Terinspirasi format Schneider)
+    let html = `
+    <style>
+        .pdf-wrap { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #222; }
+        .page { padding: 40px; box-sizing: border-box; background: #fff; }
+        .cover-title { font-size: 32px; font-weight: 800; color: #009e4d; margin-bottom: 10px; text-transform: uppercase; }
+        .cover-sub { font-size: 18px; color: #555; margin-bottom: 40px; font-weight: 600; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 30px; font-size: 12px; }
+        .table th { background: #009e4d; color: #fff; padding: 10px; text-align: left; border: 1px solid #007a3b; }
+        .table td { padding: 10px; border: 1px solid #ddd; }
+        .section-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; border-bottom: 3px solid #009e4d; padding-bottom: 5px; color: #222; display: flex; justify-content: space-between; align-items: flex-end;}
+        .step-block { margin-bottom: 25px; page-break-inside: avoid; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; }
+        .step-header { font-weight: bold; background: #f8f9fa; padding: 10px 15px; border-bottom: 1px solid #e0e0e0; font-size: 14px; display: flex; justify-content: space-between; }
+        .step-content { display: flex; gap: 20px; padding: 15px; }
+        .step-note { flex: 1; font-size: 12px; line-height: 1.6; background: #fafafa; padding: 10px; border-radius: 4px; border: 1px solid #eee; }
+        .step-photos { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; justify-content: flex-end; }
+        .step-photos img { max-width: 200px; max-height: 180px; object-fit: contain; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .page-break { page-break-before: always; }
+        .signature-box { display: flex; justify-content: space-between; margin-top: 80px; }
+        .sig-line { border-bottom: 1px solid #000; width: 220px; margin-top: 60px; }
+        .footer-bar { height: 15px; background: #009e4d; width: 100%; margin-top: 40px; }
+    </style>
+    <div class="pdf-wrap">
+    `;
 
+    // HALAMAN 1: COVER & TANDA TANGAN
+    html += `
+        <div class="page" style="min-height: 1000px; display: flex; flex-direction: column;">
+            <div style="text-align: right; font-size: 12px; color: #888;">Generated Date: ${new Date().toLocaleString('id-ID')}</div>
+            <div style="flex: 1; margin-top: 120px;">
+                <div style="font-size: 24px; color: #888; margin-bottom: 10px;">PROJECT REPORT</div>
+                <div class="cover-title">${escapeHtml(p.order)}</div>
+                <div class="cover-sub">Customer: ${escapeHtml(p.customer || '-')}</div>
+                
+                <div style="margin-top: 50px; font-size: 14px; background: #f0fdf4; padding: 20px; border-left: 4px solid #009e4d;">
+                    <p style="margin-bottom: 10px;"><strong>Project Description:</strong><br>${escapeHtml(p.description || 'Tidak ada deskripsi')}</p>
+                    <p style="margin-bottom: 10px;"><strong>Due Date:</strong> ${p.dueDate ? new Date(p.dueDate).toLocaleDateString('id-ID') : '-'}</p>
+                    <p style="font-size: 18px; color: #009e4d;"><strong>Overall Progress: ${calculateProjectProgress(p)}%</strong></p>
+                </div>
+            </div>
+
+            <div class="signature-box">
+                <div>
+                    <p style="color:#666; font-size:14px;"><strong>Prepared By</strong></p>
+                    <div class="sig-line"></div>
+                    <p style="font-size:12px; margin-top:8px;">Name & Signature</p>
+                </div>
+                <div>
+                    <p style="color:#666; font-size:14px;"><strong>Accepted By</strong></p>
+                    <div class="sig-line"></div>
+                    <p style="font-size:12px; margin-top:8px;">Name & Signature</p>
+                </div>
+            </div>
+            <div class="footer-bar"></div>
+        </div>
+        <div class="page-break"></div>
+    `;
+
+    // HALAMAN 2: SUMMARY PANELS (TABLE OF CONTENTS)
+    html += `
+        <div class="page">
+            <div class="section-title"><span>📋 Switchboards / Panels Summary</span></div>
+            <table class="table">
+                <tr>
+                    <th style="width: 5%;">No</th>
+                    <th style="width: 35%;">Panel Name</th>
+                    <th style="width: 30%;">Specification</th>
+                    <th style="width: 10%;">Qty</th>
+                    <th style="width: 20%;">Progress</th>
+                </tr>
+                ${(p.panels||[]).map((panel, i) => `
+                    <tr>
+                        <td style="text-align: center;">${i+1}</td>
+                        <td style="font-weight: bold;">${escapeHtml(panel.name)}</td>
+                        <td>${escapeHtml(panel.spec || '-')}</td>
+                        <td style="text-align: center;">${panel.quantity}</td>
+                        <td style="font-weight:bold; color:${calculatePanelProgress(panel)===100?'#009e4d':'#3b82f6'};">${calculatePanelProgress(panel)}%</td>
+                    </tr>
+                `).join('')}
+            </table>
+        </div>
+        <div class="page-break"></div>
+    `;
+
+    // HALAMAN 3+: DETAIL SETIAP PANEL (FOTO & CATATAN)
+    (p.panels||[]).forEach((panel, idx) => {
+        html += `
+        <div class="page">
+            <div class="section-title">
+                <span>📦 Panel Detail: ${escapeHtml(panel.name)}</span>
+                <span style="font-size: 14px; font-weight: normal; color: #666;">Panel ${idx + 1} of ${p.panels.length}</span>
+            </div>
+            
+            <table class="table" style="margin-bottom: 20px;">
+                <tr>
+                    <td style="background:#f0f0f0; font-weight:bold; width:20%;">Specification</td>
+                    <td style="width:30%;">${escapeHtml(panel.spec || '-')}</td>
+                    <td style="background:#f0f0f0; font-weight:bold; width:20%;">Quantity</td>
+                    <td style="width:30%;">${panel.quantity} Unit(s)</td>
+                </tr>
+            </table>
+        `;
+
+        let hasActiveSteps = false;
+
+        PROCESS_STEPS.forEach(stepDef => {
+            const step = panel.steps[stepDef.id];
+            // Hanya tampilkan step jika sudah aktif/selesai, ADA CATATAN, atau ADA FOTO
+            if (step && (step.status !== 'pending' || step.note || (step.files && step.files.length > 0))) {
+                hasActiveSteps = true;
+                const photos = (step.files || []).filter(f => f.type && f.type.startsWith('image/'));
+                
+                let statusColor = '#666';
+                if (step.status === 'done') statusColor = '#009e4d';
+                else if (step.status === 'active') statusColor = '#3b82f6';
+
+                html += `
+                <div class="step-block">
+                    <div class="step-header">
+                        <span>${stepDef.icon} <strong>${stepDef.name}</strong></span>
+                        <span style="text-transform:uppercase; color:${statusColor}; font-size: 12px; border: 1px solid ${statusColor}; padding: 2px 8px; border-radius: 12px;">${step.status}</span>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-note">
+                            <strong style="color:#555; margin-bottom:5px; display:block;">📝 Explanations / Notes:</strong>
+                            ${step.note ? escapeHtml(step.note).replace(/\n/g, '<br>') : '<i style="color:#aaa;">No description provided.</i>'}
+                        </div>
+                        
+                        ${photos.length > 0 ? `
+                        <div class="step-photos">
+                            ${photos.map(f => `<img src="${f.data}" alt="Evidence Photo">`).join('')}
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                `;
+            }
+        });
+
+        if (!hasActiveSteps) {
+            html += `<p style="text-align:center; color:#999; margin-top:50px; font-style:italic;">No progress or documentation recorded for this panel yet.</p>`;
+        }
+
+        html += `</div><div class="page-break"></div>`;
+    });
+
+    html += `</div>`; // Tutup pdf-wrap
+
+    // Render ke element tersembunyi
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    div.style.position = 'absolute';
+    div.style.left = '-9999px';
+    document.body.appendChild(div);
+
+    // Konfigurasi html2pdf
+    const opt = {
+        margin:       0, // Margin diatur lewat CSS padding .page
+        filename:     `Report_${p.order}_${p.customer.replace(/\s+/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.95 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'px', format: [1000, 1414], orientation: 'portrait' }, // Custom A4 scaling
+        pagebreak:    { mode: ['css', 'legacy'] }
+    };
+
+    html2pdf().set(opt).from(div).save().then(() => {
+        document.body.removeChild(div);
+        showToast('Laporan PDF Berhasil Diunduh! 📄', 'success');
+    }).catch(err => {
+        console.error(err);
+        document.body.removeChild(div);
+        showToast('Gagal memproses PDF. Ukuran foto mungkin terlalu besar.', 'error');
+    });
+}
 function downloadBlob(blob, name) {
     const url = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);
