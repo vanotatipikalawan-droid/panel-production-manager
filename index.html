@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a0a">
-    <title>🏭 Production Manager v12 - STABLE</title>
+    <title>🏭 Production Manager - Interactive Fix</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* DARK MODE - FORCE */
+        /* DARK MODE */
         :root {
             --bg-primary: #0a0a0a;
             --bg-secondary: #141414;
@@ -36,9 +35,9 @@
             min-height: 100vh;
         }
         
-        /* APP LAYOUT */
         .app-container { display: flex; min-height: 100vh; }
         
+        /* SIDEBAR */
         .sidebar {
             width: 260px;
             background: var(--bg-secondary);
@@ -53,16 +52,9 @@
         }
         .sidebar.open { transform: translateX(0); }
         
-        .sidebar-header {
-            padding: 24px 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
+        .sidebar-header { padding: 24px 20px; border-bottom: 1px solid var(--border-color); }
         .sidebar-logo { font-size: 2.5rem; }
-        .sidebar-title { 
-            font-size: 1.15rem; 
-            font-weight: 800; 
-            color: var(--text-primary); 
-        }
+        .sidebar-title { font-size: 1.15rem; font-weight: 800; color: var(--text-primary); }
         
         .sidebar-nav { flex: 1; overflow-y: auto; padding: 20px 16px; }
         .nav-section { margin-bottom: 28px; }
@@ -87,14 +79,17 @@
             font-size: 0.95rem;
             margin-bottom: 6px;
             transition: all 0.2s;
+            border: 1px solid transparent;
         }
         .nav-item:hover { 
             background: var(--bg-tertiary); 
-            color: var(--text-primary); 
+            color: var(--text-primary);
+            border-color: var(--border-color);
         }
         .nav-item.active { 
-            background: rgba(59,130,246,0.12); 
+            background: rgba(59,130,246,0.15); 
             color: var(--accent-blue); 
+            border-color: rgba(59,130,246,0.3);
         }
         .nav-icon { font-size: 1.35rem; width: 26px; text-align: center; }
         .nav-badge {
@@ -107,6 +102,7 @@
             font-weight: 800;
         }
         
+        /* MAIN CONTENT */
         .main-content {
             flex: 1;
             margin-left: 0;
@@ -136,11 +132,7 @@
             cursor: pointer;
             font-size: 1.4rem;
         }
-        .header-title { 
-            font-size: 1.4rem; 
-            font-weight: 800; 
-            color: var(--text-primary); 
-        }
+        .header-title { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); }
         .header-right { display: flex; align-items: center; gap: 12px; }
         .header-action {
             width: 44px; height: 44px;
@@ -152,6 +144,7 @@
             font-size: 1.25rem;
         }
         
+        /* PAGES */
         .page {
             display: none;
             padding: 28px;
@@ -160,106 +153,6 @@
         }
         .page.active { display: block !important; }
         @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        
-        /* DASHBOARD */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 18px;
-            margin-bottom: 28px;
-        }
-        .stat-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 18px;
-            padding: 26px;
-            transition: all 0.25s;
-        }
-        .stat-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .stat-card-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 16px; 
-        }
-        .stat-card-icon { font-size: 2.4rem; }
-        .stat-card-value { 
-            font-size: 2.6rem; 
-            font-weight: 900; 
-            color: var(--text-primary); 
-        }
-        .stat-card-label { 
-            color: var(--text-secondary); 
-            font-size: 0.9rem; 
-            margin-top: 10px; 
-            font-weight: 600; 
-        }
-        
-        .card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 18px;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-        .card-header {
-            padding: 20px 26px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .card-title { 
-            font-size: 1.1rem; 
-            font-weight: 800; 
-            color: var(--text-primary); 
-        }
-        .card-body { padding: 26px; }
-        
-        /* PROJECT LIST */
-        .project-list { display: flex; flex-direction: column; gap: 14px; }
-        .project-item {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 22px;
-            cursor: pointer;
-            transition: all 0.25s;
-            display: flex;
-            align-items: center;
-            gap: 18px;
-        }
-        .project-item:hover {
-            border-color: var(--accent-blue);
-            transform: translateX(6px);
-        }
-        .project-icon { font-size: 2.5rem; }
-        .project-info { flex: 1; min-width: 0; }
-        .project-name { 
-            font-weight: 800; 
-            font-size: 1.1rem; 
-            color: var(--text-primary); 
-        }
-        .project-meta { 
-            font-size: 0.87rem; 
-            color: var(--text-secondary); 
-        }
-        
-        .progress-ring { position: relative; width: 76px; height: 76px; }
-        .progress-ring svg { transform: rotate(-90deg); }
-        .progress-ring-circle { fill: none; stroke: var(--border-color); stroke-width: 8; }
-        .progress-ring-progress { fill: none; stroke: var(--accent-blue); stroke-width: 8; stroke-linecap: round; }
-        .progress-ring-text {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%,-50%);
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: var(--text-primary);
-        }
         
         /* BUTTONS */
         .btn {
@@ -275,86 +168,218 @@
             gap: 9px;
             transition: all 0.2s;
         }
-        .btn-primary { 
-            background: linear-gradient(135deg, #3b82f6, #2563eb); 
-            color: #fff; 
-        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
         .btn-success { background: #22c55e; color: #fff; }
         .btn-danger { background: #ef4444; color: #fff; }
-        .btn-secondary { 
-            background: var(--bg-tertiary); 
-            color: var(--text-primary); 
-            border: 1px solid var(--border-color); 
-        }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); }
         .btn-sm { padding: 9px 16px; font-size: 0.84rem; }
         
-        /* MODALS */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .modal-overlay.show { display: flex !important; }
-        .modal {
+        /* CARDS */
+        .card {
             background: var(--bg-secondary);
-            border-radius: 22px;
-            width: 100%;
-            max-width: 540px;
-            max-height: 90vh;
             border: 1px solid var(--border-color);
-            box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+            border-radius: 18px;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            margin-bottom: 24px;
         }
-        .modal-header {
-            padding: 22px 26px;
+        .card-header {
+            padding: 20px 26px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .modal-title { font-size: 1.15rem; font-weight: 800; color: var(--text-primary); }
-        .modal-close {
-            width: 36px; height: 36px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
+        .card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
+        .card-body { padding: 26px; }
+        
+        /* PROJECT LIST - ENHANCED */
+        .project-list { display: flex; flex-direction: column; gap: 14px; }
+        .project-item {
             background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            font-size: 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 22px;
             cursor: pointer;
-        }
-        .modal-body { padding: 26px; overflow-y: auto; flex: 1; }
-        .modal-footer {
-            padding: 18px 26px;
-            border-top: 1px solid var(--border-color);
+            transition: all 0.25s ease;
             display: flex;
-            gap: 12px;
+            align-items: center;
+            gap: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+        .project-item::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 4px;
+            background: var(--accent-blue);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .project-item:hover {
+            border-color: var(--accent-blue) !important;
+            transform: translateX(8px);
+            box-shadow: 0 8px 24px rgba(59,130,246,0.2);
+        }
+        .project-item:hover::before { opacity: 1; }
+        .project-item.selected {
+            border-color: var(--accent-green) !important;
+            background: rgba(34,197,94,0.08);
+        }
+        .project-item.selected::before { background: var(--accent-green); opacity: 1; }
+        
+        .project-icon { font-size: 2.5rem; z-index: 1; }
+        .project-info { flex: 1; min-width: 0; z-index: 1; }
+        .project-name { 
+            font-weight: 800; 
+            font-size: 1.15rem; 
+            color: var(--text-primary); 
+            margin-bottom: 4px;
+        }
+        .project-meta { font-size: 0.87rem; color: var(--text-secondary); }
+        .project-arrow {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+            z-index: 1;
+        }
+        .project-item:hover .project-arrow { transform: translateX(4px); }
+        
+        .progress-ring { position: relative; width: 76px; height: 76px; z-index: 1; }
+        .progress-ring svg { transform: rotate(-90deg); }
+        .progress-ring-circle { fill: none; stroke: var(--border-color); stroke-width: 8; }
+        .progress-ring-progress { fill: none; stroke: var(--accent-blue); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.5s; }
+        .progress-ring-text {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-primary);
         }
         
-        .form-group { margin-bottom: 18px; }
-        .form-label {
-            display: block;
-            font-size: 0.87rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-            margin-bottom: 9px;
+        /* PROJECT DETAIL CARD */
+        .project-detail-card {
+            background: linear-gradient(135deg, rgba(34,197,94,0.05), transparent);
+            border: 2px solid var(--accent-green);
+            border-radius: 20px;
+            margin-top: 24px;
+            overflow: hidden;
+            animation: slideUp 0.4s ease;
+            box-shadow: 0 10px 40px rgba(34,197,94,0.15);
         }
-        .form-input {
-            width: 100%;
-            padding: 13px 16px;
+        @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+        
+        .detail-header {
+            background: var(--bg-secondary);
+            padding: 24px 28px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .detail-title {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .detail-actions { display: flex; gap: 10px; }
+        
+        .detail-body { padding: 28px; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .stat-box {
             background: var(--bg-tertiary);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            color: var(--text-primary);
-            font-size: 0.94rem;
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s;
         }
-        .form-input:focus { outline: none; border-color: var(--accent-blue); }
+        .stat-box:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-4px);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 6px;
+        }
+        .stat-label {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* PANEL LIST */
+        .panel-list { display: flex; flex-direction: column; gap: 14px; margin-top: 20px; }
+        .panel-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .panel-item:hover { border-color: var(--accent-purple); }
+        .panel-header {
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            background: linear-gradient(135deg, rgba(139,92,246,0.08), transparent);
+            transition: background 0.2s;
+        }
+        .panel-header:hover { background: linear-gradient(135deg, rgba(139,92,246,0.15), transparent); }
+        .panel-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .panel-info { flex: 1; min-width: 0; }
+        .panel-name { font-weight: 800; font-size: 1rem; color: var(--text-primary); margin-bottom: 4px; }
+        .panel-meta { font-size: 0.82rem; color: var(--text-secondary); display: flex; gap: 12px; flex-wrap: wrap; }
+        .panel-expand-icon {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            transition: transform 0.3s;
+        }
+        .panel-item.expanded .panel-expand-icon { transform: rotate(180deg); }
+        .panel-content {
+            display: none;
+            border-top: 1px solid var(--border-color);
+            background: rgba(255,255,255,0.02);
+            animation: fadeIn 0.3s;
+        }
+        .panel-item.expanded .panel-content { display: block; }
+        .panel-body { padding: 20px; }
+        
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--text-secondary);
+        }
+        .empty-state-icon { font-size: 4rem; margin-bottom: 16px; opacity: 0.45; }
+        .empty-state-title { font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; }
+        .empty-state-text { font-size: 0.94rem; color: var(--text-muted); }
         
         /* TOAST */
         .toast-container {
@@ -383,28 +408,88 @@
         .toast.success { border-left: 4px solid #22c55e; }
         .toast.error { border-left: 4px solid #ef4444; }
         .toast.warning { border-left: 4px solid #eab308; }
+        .toast.info { border-left: 4px solid #3b82f6; }
         @keyframes slideInRight { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
         
-        /* EMPTY STATE */
-        .empty-state {
-            text-align: center;
-            padding: 70px 24px;
-            color: var(--text-secondary);
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-        .empty-state-icon { font-size: 4.5rem; margin-bottom: 20px; opacity: 0.45; }
-        .empty-state-title { font-size: 1.2rem; font-weight: 800; color: var(--text-primary); }
-        .empty-state-text { font-size: 0.94rem; color: var(--text-muted); margin-top: 8px; }
+        .modal-overlay.show { display: flex !important; animation: fadeIn 0.2s; }
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 22px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            padding: 22px 26px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title { font-size: 1.15rem; font-weight: 800; color: var(--text-primary); }
+        .modal-close {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-close:hover { background: var(--accent-red); color: #fff; }
+        .modal-body { padding: 26px; overflow-y: auto; flex: 1; }
+        .modal-footer {
+            padding: 18px 26px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+        }
+        
+        .form-group { margin-bottom: 18px; }
+        .form-label {
+            display: block;
+            font-size: 0.87rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 9px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 13px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.94rem;
+        }
+        .form-input:focus { outline: none; border-color: var(--accent-blue); }
         
         @media(max-width:768px) {
             .sidebar { width: 100%; }
             .main-content.sidebar-open { margin-left: 0; }
-            .dashboard-grid { grid-template-columns: 1fr 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
 <body>
 
-<div class="app-container" id="appContainer" style="display:flex;">
+<div class="app-container" style="display:flex;">
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -414,27 +499,21 @@
         <nav class="sidebar-nav">
             <div class="nav-section">
                 <div class="nav-section-title">Menu</div>
-                <div class="nav-item active" onclick="navigateTo('dashboard')">
+                <div class="nav-item active" id="nav-dashboard" onclick="switchPage('dashboard')">
                     <span class="nav-icon">📊</span> Dashboard
                 </div>
-                <div class="nav-item" onclick="navigateTo('projects')">
+                <div class="nav-item" id="nav-projects" onclick="switchPage('projects')">
                     <span class="nav-icon">📋</span> Projects
                     <span class="nav-badge" id="projectBadge">0</span>
                 </div>
             </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Tools</div>
-                <div class="nav-item" onclick="testPDF()">
-                    <span class="nav-icon">📄</span> Test PDF
-                </div>
-            </div>
         </nav>
         <div style="padding:20px;border-top:1px solid var(--border-color);font-size:0.82rem;color:var(--text-muted);">
-            ⚡ Stable Version
+            ⚡ Interactive Fix
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN -->
     <main class="main-content" id="mainContent">
         <header class="top-header">
             <div class="header-left">
@@ -442,104 +521,133 @@
                 <h1 class="header-title" id="pageTitle">Dashboard</h1>
             </div>
             <div class="header-right">
-                <button class="header-action" onclick="showToast('Settings clicked','info')">⚙️</button>
+                <button class="header-action" onclick="showToast('Settings','info')">⚙️</button>
             </div>
         </header>
 
         <!-- DASHBOARD PAGE -->
         <div class="page active" id="page-dashboard">
-            <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:24px;color:var(--text-primary);">
-                📊 Dashboard Overview
-            </h2>
+            <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:24px;">📊 Dashboard</h2>
             
-            <div class="dashboard-grid">
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <span class="stat-card-icon">📋</span>
-                        <span class="stat-card-value" id="totalProjectsStat">0</span>
-                    </div>
-                    <div class="stat-card-label">Total Projects</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;">
+                <div class="card" style="padding:24px;text-align:center;">
+                    <div style="font-size:2.5rem;font-weight:900;color:var(--accent-blue);" id="statProjects">0</div>
+                    <div style="color:var(--text-secondary);font-weight:600;margin-top:8px;">Projects</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <span class="stat-card-icon">📦</span>
-                        <span class="stat-card-value" id="totalPanelsStat">0</span>
-                    </div>
-                    <div class="stat-card-label">Total Panels</div>
+                <div class="card" style="padding:24px;text-align:center;">
+                    <div style="font-size:2.5rem;font-weight:900;color:var(--accent-purple);" id="statPanels">0</div>
+                    <div style="color:var(--text-secondary);font-weight:600;margin-top:8px;">Panels</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <span class="stat-card-icon">✅</span>
-                        <span class="stat-card-value" id="completedPanelsStat">0</span>
-                    </div>
-                    <div class="stat-card-label">Completed</div>
+                <div class="card" style="padding:24px;text-align:center;">
+                    <div style="font-size:2.5rem;font-weight:900;color:var(--accent-green);" id="statCompleted">0</div>
+                    <div style="color:var(--text-secondary);font-weight:600;margin-top:8px;">Completed</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <span class="stat-card-icon">📈</span>
-                        <span class="stat-card-value" id="avgProgressStat">0%</span>
-                    </div>
-                    <div class="stat-card-label">Avg Progress</div>
+                <div class="card" style="padding:24px;text-align:center;">
+                    <div style="font-size:2.5rem;font-weight:900;color:var(--accent-yellow);" id="statProgress">0%</div>
+                    <div style="color:var(--text-secondary);font-weight:600;margin-top:8px;">Avg Progress</div>
                 </div>
             </div>
             
             <div class="card">
-                <div class="card-header">
-                    <span class="card-title">🔄 Quick Actions</span>
-                </div>
+                <div class="card-header"><span class="card-title">⚡ Quick Actions</span></div>
                 <div class="card-body">
-                    <p style="color:var(--text-secondary);margin-bottom:20px;">
-                        Mulai dengan membuat project baru atau test fitur PDF:
-                    </p>
+                    <p style="color:var(--text-secondary);margin-bottom:20px;">Click to test functionality:</p>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                        <button class="btn btn-primary" onclick="createSampleData()">
-                            ➕ Create Sample Data
-                        </button>
-                        <button class="btn btn-success" onclick="testPDF()">
-                            📄 Test PDF Generator
-                        </button>
-                        <button class="btn btn-secondary" onclick="clearAllData()">
-                            🗑 Clear All Data
-                        </button>
+                        <button class="btn btn-primary" onclick="createSampleProject()">➕ Create Sample Project</button>
+                        <button class="btn btn-success" onclick="testPDF()">📄 Test PDF</button>
+                        <button class="btn btn-danger" onclick="clearAllData()">🗑 Clear Data</button>
                     </div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">ℹ️ Debug Info</span>
-                </div>
-                <div class="card-body">
-                    <pre id="debugInfo" style="background:var(--bg-tertiary);padding:15px;border-radius:10px;font-size:0.85rem;color:var(--text-secondary);overflow:auto;">
-Loading debug info...
-                    </pre>
                 </div>
             </div>
         </div>
 
         <!-- PROJECTS PAGE -->
         <div class="page" id="page-projects">
-            <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:24px;">
-                📋 Project Management
-            </h2>
+            <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:24px;">📋 Projects</h2>
             
             <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
-                <button class="btn btn-primary" onclick="createSampleProject()">+ New Project</button>
-                <button class="btn btn-success" onclick="testPDF()">📄 Test PDF</button>
+                <button class="btn btn-primary" onclick="openModal('newProjectModal')">+ New Project</button>
             </div>
             
+            <!-- PROJECT LIST -->
             <div class="project-list" id="projectListContainer">
                 <div class="empty-state">
                     <div class="empty-state-icon">📋</div>
                     <div class="empty-state-title">No Projects Yet</div>
-                    <div class="empty-state-text">Click "Create Sample Data" to get started!</div>
+                    <div class="empty-state-text">Click "Create Sample Project" to get started!</div>
+                </div>
+            </div>
+            
+            <!-- PROJECT DETAIL (Hidden by default) -->
+            <div class="project-detail-card" id="projectDetailCard" style="display:none;">
+                <div class="detail-header">
+                    <div class="detail-title">
+                        📋 <span id="detailTitle">Project Name</span>
+                    </div>
+                    <div class="detail-actions">
+                        <button class="btn btn-sm btn-secondary" onclick="openModal('newPanelModal')">+ Add Panel</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()">Delete</button>
+                        <button class="btn btn-sm btn-secondary" onclick="closeProjectDetail()">✕ Close</button>
+                    </div>
+                </div>
+                <div class="detail-body">
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value" style="color:var(--accent-purple);" id="detailPanelsCount">0</div>
+                            <div class="stat-label">Total Panels</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" style="color:var(--accent-green);" id="detailCompletedCount">0</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" style="color:var(--accent-blue);" id="detailActiveCount">0</div>
+                            <div class="stat-label">In Progress</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="detailProgressCount">0%</div>
+                            <div class="stat-label">Overall Progress</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Panel List in Detail -->
+                    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+                        📦 Panels
+                        <span style="font-size:0.85rem;color:var(--text-muted);font-weight:normal;">(Click panel to expand)</span>
+                    </h3>
+                    <div class="panel-list" id="panelListContainer"></div>
                 </div>
             </div>
         </div>
     </main>
 </div>
 
-<!-- TOAST CONTAINER -->
+<!-- MODALS -->
+<div class="modal-overlay" id="newProjectModal">
+    <div class="modal">
+        <div class="modal-header"><span class="modal-title">➕ New Project</span><button class="modal-close" onclick="closeModal('newProjectModal')">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label class="form-label">Order Number *</label><input type="text" class="form-input" id="inputOrder" placeholder="PO-2024-001" value=""></div>
+            <div class="form-group"><label class="form-label">Customer</label><input type="text" class="form-input" id="inputCustomer" placeholder="PT. Example" value=""></div>
+            <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="inputDesc" placeholder="Description..." rows="3"></textarea></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('newProjectModal')">Cancel</button><button class="btn btn-primary" onclick="saveNewProject()">Create Project</button></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="newPanelModal">
+    <div class="modal">
+        <div class="modal-header"><span class="modal-title">📦 Add Panel</span><button class="modal-close" onclick="closeModal('newPanelModal')">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label class="form-label">Panel Name *</label><input type="text" class="form-input" id="inputPanelName" placeholder="MDP 1600A" value=""></div>
+            <div class="form-group"><label class="form-label">Specification</label><input type="text" class="form-input" id="inputPanelSpec" placeholder="3 Phase, 400V" value=""></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('newPanelModal')">Cancel</button><button class="btn btn-primary" onclick="saveNewPanel()">Add Panel</button></div>
+    </div>
+</div>
+
+<!-- TOAST -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
@@ -550,193 +658,123 @@ let state = {
     db: null
 };
 
-const DB_NAME = 'ProdManagerDB_v12';
+const DB_NAME = 'ProdManagerDB_Fix';
 const DB_VERSION = 1;
 
-// ==================== INITIALIZATION ====================
-console.log('🏭 [INIT] Starting Production Manager...');
+console.log('🚀 [APP] Starting...');
 
+// ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🏭 [INIT] DOM Content Loaded');
-    
-    // Force dark mode
-    document.documentElement.setAttribute('data-theme', 'dark');
-    console.log('🏭 [INIT] Dark mode activated');
-    
-    // Initialize database
+    console.log('✅ [APP] DOM Ready');
     initDB();
 });
 
 function initDB() {
-    console.log('🏭 [DB] Initializing IndexedDB...');
+    console.log('💾 [DB] Opening database...');
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
     
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
-    request.onerror = (event) => {
-        console.error('❌ [DB] Error:', event.target.error);
-        showToast('Database error! Check console.', 'error');
-        updateDebugInfo('ERROR: Database failed to open');
+    req.onerror = (e) => console.error('❌ [DB] Error:', e.target.error);
+    req.onsuccess = (e) => {
+        state.db = e.target.result;
+        console.log('✅ [DB] Connected!');
+        loadProjects(() => updateUI());
     };
-    
-    request.onsuccess = (event) => {
-        state.db = event.target.result;
-        console.log('✅ [DB] Database connected successfully!');
-        
-        // Load projects
-        loadProjects(() => {
-            console.log(`✅ [DATA] Loaded ${state.projects.length} projects`);
-            updateDashboard();
-            updateDebugInfo('SUCCESS: App initialized with ' + state.projects.length + ' projects');
-        });
-    };
-    
-    request.onupgradeneeded = (event) => {
-        console.log('🏭 [DB] Creating object store...');
-        const db = event.target.result;
+    req.onupgradeneeded = (e) => {
+        const db = e.target.result;
         if (!db.objectStoreNames.contains('projects')) {
             db.createObjectStore('projects', { keyPath: 'id' });
-            console.log('✅ [DB] Object store created');
         }
     };
 }
 
-// ==================== DATABASE OPERATIONS ====================
-function saveProject(project, callback) {
-    if (!state.db) {
-        console.warn('⚠️ [DB] No database connection');
-        if (callback) callback();
-        return;
-    }
-    
-    try {
-        const transaction = state.db.transaction(['projects'], 'readwrite');
-        const store = transaction.objectStore('projects');
-        const request = store.put(project);
-        
-        request.onsuccess = () => {
-            console.log('💾 [DB] Project saved:', project.id);
-            if (callback) callback();
-        };
-        
-        request.onerror = () => {
-            console.error('❌ [DB] Save error:', request.error);
-            if (callback) callback();
-        };
-    } catch (error) {
-        console.error('❌ [DB] Save exception:', error);
-        if (callback) callback();
-    }
+// ==================== DATABASE ====================
+function saveProject(proj, cb) {
+    if (!state.db) return cb && cb();
+    const tx = state.db.transaction(['projects'], 'readwrite');
+    tx.objectStore('projects').put(proj);
+    tx.oncomplete = () => { console.log('💾 Saved:', proj.id); if(cb) cb(); };
 }
 
-function getProjects(callback) {
-    if (!state.db) {
-        console.warn('⚠️ [DB] No database connection');
-        if (callback) callback([]);
-        return;
-    }
-    
-    try {
-        const transaction = state.db.transaction(['projects'], 'readonly');
-        const store = transaction.objectStore('projects');
-        const request = store.getAll();
-        
-        request.onsuccess = () => {
-            const projects = request.result || [];
-            console.log('📂 [DB] Retrieved', projects.length, 'projects');
-            if (callback) callback(projects);
-        };
-        
-        request.onerror = () => {
-            console.error('❌ [DB] Get error:', request.error);
-            if (callback) callback([]);
-        };
-    } catch (error) {
-        console.error('❌ [DB] Get exception:', error);
-        if (callback) callback([]);
-    }
+function getProjects(cb) {
+    if (!state.db) return cb && cb([]);
+    const req = state.db.transaction(['projects'], 'readonly').objectStore('projects').getAll();
+    req.onsuccess = (e) => cb(e.target.result || []);
 }
 
-function loadProjects(callback) {
-    getProjects((projects) => {
-        state.projects = projects || [];
-        console.log('📂 [STATE] State updated with', state.projects.length, 'projects');
-        if (callback) callback();
+function loadProjects(cb) {
+    getProjects((projs) => {
+        state.projects = projs || [];
+        console.log(`📂 Loaded ${state.projects.length} projects`);
+        if (cb) cb();
     });
 }
 
 // ==================== NAVIGATION ====================
-function navigateTo(page) {
-    console.log('📍 [NAV] Navigating to:', page);
+function switchPage(page) {
+    console.log(`📍 Switching to: ${page}`);
     
-    // Hide all pages
-    document.querySelectorAll('.page').forEach(p => {
-        p.classList.remove('active');
-        p.style.display = 'none';
-    });
+    // Update nav items
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const navEl = document.getElementById('nav-' + page);
+    if (navEl) navEl.classList.add('active');
     
-    // Show target page
-    const targetPage = document.getElementById('page-' + page);
-    if (targetPage) {
-        targetPage.classList.add('active');
-        targetPage.style.display = 'block';
-        console.log('✅ [NAV] Page shown:', page);
-    } else {
-        console.error('❌ [NAV] Page not found:', page);
-    }
+    // Show/hide pages
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const pageEl = document.getElementById('page-' + page);
+    if (pageEl) pageEl.classList.add('active');
     
     // Update title
-    const titles = { dashboard: 'Dashboard', projects: 'Projects' };
-    document.getElementById('pageTitle').textContent = titles[page] || page;
+    document.getElementById('pageTitle').textContent = page === 'dashboard' ? '📊 Dashboard' : '📋 Projects';
     
     // Render content
-    if (page === 'dashboard') {
-        updateDashboard();
-    } else if (page === 'projects') {
-        renderProjectsPage();
-    }
+    if (page === 'dashboard') renderDashboard();
+    else if (page === 'projects') renderProjectsPage();
 }
 
 function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('mainContent');
-    
-    sidebar.classList.toggle('open');
-    mainContent.classList.toggle('sidebar-open');
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('mainContent').classList.toggle('sidebar-open');
 }
 
-// ==================== DASHBOARD ====================
-function updateDashboard() {
-    console.log('📊 [DASH] Updating dashboard...');
+// ==================== RENDER FUNCTIONS ====================
+function updateUI() {
+    updateStats();
+    renderProjectsList();
+    console.log('🎨 UI Updated');
+}
+
+function updateStats() {
+    let totalP = state.projects.length, totalPan = 0, comp = 0, progSum = 0;
     
-    const totalProjects = state.projects.length;
-    let totalPanels = 0;
-    let completedPanels = 0;
-    let totalProgress = 0;
-    
-    state.projects.forEach(project => {
-        const panelCount = project.panels?.length || 0;
-        totalPanels += panelCount;
-        
-        (project.panels || []).forEach(panel => {
-            const progress = calculatePanelProgress(panel);
-            totalProgress += progress;
-            if (progress === 100) completedPanels++;
+    state.projects.forEach(p => {
+        totalPan += (p.panels?.length || 0);
+        (p.panels || []).forEach(pa => {
+            const pr = calcPanelProg(pa);
+            progSum += pr;
+            if (pr === 100) comp++;
         });
     });
     
-    // Update stats
-    document.getElementById('totalProjectsStat').textContent = totalProjects;
-    document.getElementById('totalPanelsStat').textContent = totalPanels;
-    document.getElementById('completedPanelsStat').textContent = completedPanels;
-    document.getElementById('avgProgressStat').textContent = totalPanels > 0 ? Math.round(totalProgress / totalPanels) + '%' : '0%';
-    document.getElementById('projectBadge').textContent = totalProjects;
-    
-    console.log('✅ [DASH] Stats updated:', { totalProjects, totalPanels, completedPanels });
+    document.getElementById('statProjects').textContent = totalP;
+    document.getElementById('statPanels').textContent = totalPan;
+    document.getElementById('statCompleted').textContent = comp;
+    document.getElementById('statProgress').textContent = totalPan > 0 ? Math.round(progSum/totalPan)+'%' : '0%';
+    document.getElementById('projectBadge').textContent = totalP;
+}
+
+function renderDashboard() {
+    updateStats();
 }
 
 function renderProjectsPage() {
-    console.log('📋 [PROJ] Rendering projects page...');
-    
+    renderProjectsList();
+    // Keep detail visible if a project is selected
+    if (state.currentProjectId) {
+        showProjectDetail(state.currentProjectId);
+    }
+}
+
+function renderProjectsList() {
     const container = document.getElementById('projectListContainer');
     
     if (!state.projects.length) {
@@ -744,239 +782,364 @@ function renderProjectsPage() {
             <div class="empty-state">
                 <div class="empty-state-icon">📋</div>
                 <div class="empty-state-title">No Projects Yet</div>
-                <div class="empty-state-text">Click "Create Sample Data" to get started!</div>
-            </div>
-        `;
+                <div class="empty-state-text">Click "Create Sample Project"!</div>
+            </div>`;
         return;
     }
     
-    container.innerHTML = state.projects.map((project, index) => `
-        <div class="project-item" onclick="selectProject('${project.id}')">
+    container.innerHTML = state.projects.map(p => {
+        const prog = calcProjProg(p);
+        const circ = 2 * Math.PI * 32;
+        const offset = circ - (prog/100)*circ;
+        const isSelected = p.id === state.currentProjectId;
+        
+        return `
+        <div class="project-item ${isSelected ? 'selected' : ''}" 
+             onclick="handleProjectClick('${p.id}', event)"
+             data-id="${p.id}">
             <div class="project-icon">📋</div>
             <div class="project-info">
-                <div class="project-name">${escapeHtml(project.order)}</div>
-                <div class="project-meta">${escapeHtml(project.customer || '-')} • ${(project.panels||[]).length} panels</div>
+                <div class="project-name">${escHtml(p.order)}</div>
+                <div class="project-meta">${escHtml(p.customer||'-')} • ${(p.panels||[]).length} panels</div>
             </div>
             <div class="progress-ring">
                 <svg width="76" height="76">
                     <circle class="progress-ring-circle" cx="38" cy="38" r="32"/>
                     <circle class="progress-ring-progress" cx="38" cy="38" r="32" 
-                            style="stroke-dasharray:${2*Math.PI*32};stroke-dashoffset:${2*Math.PI*32*(1-calculateProjectProgress(project)/100)};"/>
+                            style="stroke-dasharray:${circ};stroke-dashoffset:${offset};"/>
                 </svg>
-                <div class="progress-ring-text">${calculateProjectProgress(project)}%</div>
+                <div class="progress-ring-text">${prog}%</div>
             </div>
-        </div>
-    `).join('');
+            <div class="project-arrow">→</div>
+        </div>`;
+    }).join('');
     
-    console.log('✅ [PROJ] Rendered', state.projects.length, 'projects');
+    console.log(`🎨 Rendered ${state.projects.length} projects`);
 }
 
-function selectProject(projectId) {
-    console.log('📋 [PROJ] Selected project:', projectId);
+// ==================== PROJECT CLICK HANDLER ====================
+function handleProjectClick(projectId, event) {
+    console.log('🖱️ [CLICK] Project clicked:', projectId);
+    event.stopPropagation();
+    
+    // Visual feedback
+    document.querySelectorAll('.project-item').forEach(el => el.classList.remove('selected'));
+    const clickedEl = document.querySelector(`.project-item[data-id="${projectId}"]`);
+    if (clickedEl) clickedEl.classList.add('selected');
+    
+    // Show detail
+    showProjectDetail(projectId);
+}
+
+function showProjectDetail(projectId) {
+    console.log('📂 Showing detail for:', projectId);
+    
     state.currentProjectId = projectId;
-    navigateTo('projects');
+    const project = state.projects.find(p => p.id === projectId);
+    
+    if (!project) {
+        console.error('❌ Project not found:', projectId);
+        showToast('Project not found!', 'error');
+        return;
+    }
+    
+    // Update detail header
+    document.getElementById('detailTitle').textContent = project.order;
+    
+    // Calculate stats
+    const panels = project.panels || [];
+    let completed = 0, active = 0;
+    panels.forEach(p => {
+        const pr = calcPanelProg(p);
+        if (pr === 100) completed++;
+        else if (pr > 0) active++;
+    });
+    
+    // Update stat boxes
+    document.getElementById('detailPanelsCount').textContent = panels.length;
+    document.getElementById('detailCompletedCount').textContent = completed;
+    document.getElementById('detailActiveCount').textContent = active;
+    document.getElementById('detailProgressCount').textContent = calcProjProg(project) + '%';
+    
+    // Render panels
+    renderPanelsInDetail(project);
+    
+    // SHOW the detail card with animation
+    const detailCard = document.getElementById('projectDetailCard');
+    detailCard.style.display = 'block';
+    
+    // Scroll into view
+    setTimeout(() => {
+        detailCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+    
+    showToast(`Opened: ${project.order}`, 'success');
+    console.log('✅ Detail shown successfully');
+}
+
+function closeProjectDetail() {
+    console.log('✕ Closing project detail');
+    state.currentProjectId = null;
+    document.getElementById('projectDetailCard').style.display = 'none';
+    document.querySelectorAll('.project-item').forEach(el => el.classList.remove('selected'));
+    showToast('Detail closed', 'info');
+}
+
+function renderPanelsInDetail(project) {
+    const container = document.getElementById('panelListContainer');
+    const panels = project.panels || [];
+    
+    if (!panels.length) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📦</div><div class="empty-state-title">No Panels</div><div class="empty-state-text">Click "Add Panel"</div></div>`;
+        return;
+    }
+    
+    container.innerHTML = panels.map(panel => {
+        const prog = calcPanelProg(panel);
+        const circ = 2 * Math.PI * 24;
+        const off = circ - (prog/100)*circ;
+        
+        return `
+        <div class="panel-item" onclick="togglePanel(this)">
+            <div class="panel-header">
+                <div class="panel-icon">📦</div>
+                <div class="panel-info">
+                    <div class="panel-name">${escHtml(panel.name)}</div>
+                    <div class="panel-meta">
+                        <span>${escHtml(panel.spec||'-')}</span>
+                        <span>Progress: ${prog}%</span>
+                    </div>
+                </div>
+                <div class="panel-expand-icon">▼</div>
+            </div>
+            <div class="panel-content">
+                <div class="panel-body">
+                    <p style="color:var(--text-secondary);font-size:0.9rem;">
+                        Panel details would appear here...
+                    </p>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function togglePanel(panelEl) {
+    panelEl.classList.toggle('expanded');
+    console.log('🔄 Panel toggled');
 }
 
 // ==================== PROGRESS CALCULATIONS ====================
-function calculatePanelProgress(panel) {
+function calcPanelProg(panel) {
     if (!panel?.steps) return 0;
     const steps = Object.values(panel.steps);
     if (!steps.length) return 0;
-    return Math.round((steps.filter(s => s.status === 'done').length / steps.length) * 100);
+    return Math.round((steps.filter(s=>s.status==='done').length/steps.length)*100);
 }
 
-function calculateProjectProgress(project) {
+function calcProjProg(project) {
     if (!project?.panels?.length) return 0;
-    return Math.round(
-        project.panels.reduce((sum, p) => sum + calculatePanelProgress(p), 0) / project.panels.length
-    );
+    return Math.round(project.panels.reduce((s,p)=>s+calcPanelProg(p),0)/project.panels.length);
 }
 
-// ==================== SAMPLE DATA CREATION ====================
-function createSampleData() {
-    console.log('➕ [SAMPLE] Creating sample data...');
-    showToast('Creating sample data...', 'info');
+// ==================== CRUD OPERATIONS ====================
+function createSampleProject() {
+    console.log('➕ Creating sample project...');
     
-    const sampleProject = {
-        id: 'proj_sample_' + Date.now(),
-        order: 'PO-SAMPLE-001',
+    const sample = {
+        id: 'proj_' + Date.now(),
+        order: 'PO-SAMPLE-' + Math.floor(Math.random()*1000),
         customer: 'PT. Test Company',
-        description: 'This is a sample project for testing',
-        dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
+        description: 'Sample project for testing',
         createdAt: new Date().toISOString(),
         panels: [
             {
-                id: 'panel_sample_1',
+                id: 'pan_' + Date.now() + '_1',
                 name: 'MDP Main Distribution Panel',
                 spec: '3 Phase, 400V, 2500A',
                 quantity: 2,
                 steps: {
-                    drawing: { status: 'done', files: [], note: 'Drawing approved by client' },
-                    preparation: { status: 'done', files: [], note: 'Materials prepared' },
-                    assembly: { status: 'active', files: [], note: 'Assembly in progress' },
-                    wiring: { status: 'pending', files: [], note: '' },
-                    finishing: { status: 'pending', files: [], note: '' },
-                    qc: { status: 'pending', files: [], note: '' }
+                    drawing: {status:'done', files:[], note:'Approved'},
+                    preparation: {status:'done', files:[], note:'Ready'},
+                    assembly: {status:'active', files:[], note:'In progress'},
+                    wiring: {status:'pending', files:[], note:''},
+                    finishing: {status:'pending', files:[], note:''},
+                    qc: {status:'pending', files:[], note:''}
                 }
             },
             {
-                id: 'panel_sample_2',
+                id: 'pan_' + Date.now() + '_2',
                 name: 'MCC Motor Control Center',
                 spec: '3 Phase, 400V, 1600A',
                 quantity: 1,
                 steps: {
-                    drawing: { status: 'done', files: [], note: '' },
-                    preparation: { status: 'pending', files: [], note: '' },
-                    assembly: { status: 'pending', files: [], note: '' },
-                    wiring: { status: 'pending', files: [], note: '' },
-                    finishing: { status: 'pending', files: [], note: '' },
-                    qc: { status: 'pending', files: [], note: '' }
+                    drawing: {status:'done', files:[], note:''},
+                    preparation: {status:'pending', files:[], note:''},
+                    assembly: {status:'pending', files:[], note:''},
+                    wiring: {status:'pending', files:[], note:''},
+                    finishing: {status:'pending', files:[], note:''},
+                    qc: {status:'pending', files:[], note:''}
                 }
             }
         ]
     };
     
-    saveProject(sampleProject, () => {
+    saveProject(sample, () => {
         loadProjects(() => {
-            updateDashboard();
-            renderProjectsPage();
-            showToast('✅ Sample data created successfully!', 'success');
-            console.log('✅ [SAMPLE] Sample data created and saved');
+            updateUI();
+            showToast('✅ Sample project created!', 'success');
+            // Auto-switch to projects page and open it
+            switchPage('projects');
+            setTimeout(() => showProjectDetail(sample.id), 500);
         });
     });
 }
 
-function createSampleProject() {
-    createSampleData();
-}
-
-// ==================== PDF GENERATOR (TEST) ====================
-function testPDF() {
-    console.log('📄 [PDF] Testing PDF generation...');
-    showToast('Testing PDF...', 'info');
+function saveNewProject() {
+    const order = document.getElementById('inputOrder').value.trim();
+    if (!order) { showToast('Order number required!', 'warning'); return; }
     
-    const hasProjects = state.projects.length > 0;
-    const testData = hasProjects ? state.projects[0] : {
-        order: 'TEST-PROJECT',
-        customer: 'Test Customer',
-        description: 'Test PDF Generation',
-        panels: [{
-            name: 'Test Panel',
-            spec: 'Test Spec',
-            quantity: 1,
-            steps: {}
-        }]
+    const proj = {
+        id: 'proj_' + Date.now(),
+        order: order,
+        customer: document.getElementById('inputCustomer').value.trim(),
+        description: document.getElementById('inputDesc').value.trim(),
+        createdAt: new Date().toISOString(),
+        panels: []
     };
     
-    // Simple PDF using print
-    const printWindow = window.open('', '_blank');
-    
-    const pdfContent = `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>PDF Test</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 40px; color: #222; }
-        h1 { color: #009e4d; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-        th { background: #009e4d; color: white; }
-        .info-box { background: #f0fdf4; padding: 20px; margin: 20px 0; border-left: 4px solid #009e4d; }
-    </style>
-</head>
-<body>
-    <h1>📄 PDF TEST REPORT</h1>
-    <div class="info-box">
-        <strong>Project:</strong> ${testData.order}<br>
-        <strong>Customer:</strong> ${testData.customer}<br>
-        <strong>Date:</strong> ${new Date().toLocaleString('id-ID')}
-    </div>
-    <table>
-        <tr><th>Status</th><th>Value</th></tr>
-        <tr><td>Total Projects</td><td>${state.projects.length}</td></tr>
-        <tr><td>Has Data</td><td>${hasProjects ? 'YES ✓' : 'NO - Click "Create Sample Data"'}</td></tr>
-    </table>
-    <p style="text-align:center; color:#888; margin-top:40px;">Generated by Production Manager v12</p>
-</body>
-</html>`;
-    
-    printWindow.document.write(pdfContent);
-    printWindow.document.close();
-    
-    setTimeout(() => {
-        printWindow.print();
-        showToast('✅ PDF dialog opened!', 'success');
-        console.log('✅ [PDF] Print dialog opened');
-    }, 500);
+    saveProject(proj, () => {
+        closeModal('newProjectModal');
+        loadProjects(() => {
+            updateUI();
+            showToast(`✅ Project "${order}" created!`, 'success');
+            // Clear inputs
+            document.getElementById('inputOrder').value = '';
+            document.getElementById('inputCustomer').value = '';
+            document.getElementById('inputDesc').value = '';
+        });
+    });
 }
 
-// ==================== UTILITIES ====================
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+function saveNewPanel() {
+    const name = document.getElementById('inputPanelName').value.trim();
+    if (!name) { showToast('Panel name required!', 'warning'); return; }
+    if (!state.currentProjectId) { showToast('Select a project first!', 'warning'); return; }
+    
+    const project = state.projects.find(p => p.id === state.currentProjectId);
+    if (!project) return;
+    
+    const panel = {
+        id: 'pan_' + Date.now(),
+        name: name,
+        spec: document.getElementById('inputPanelSpec').value.trim(),
+        quantity: 1,
+        steps: {
+            drawing:{status:'pending',files:[],note:''},
+            preparation:{status:'pending',files:[],note:''},
+            assembly:{status:'pending',files:[],note:''},
+            wiring:{status:'pending',files:[],note:''},
+            finishing:{status:'pending',files:[],note:''},
+            qc:{status:'pending',files:[],note:''}
+        }
+    };
+    
+    if (!project.panels) project.panels = [];
+    project.panels.push(panel);
+    
+    saveProject(project, () => {
+        closeModal('newPanelModal');
+        loadProjects(() => {
+            updateUI();
+            showProjectDetail(project.id);
+            showToast(`✅ Panel "${name}" added!`, 'success');
+            document.getElementById('inputPanelName').value = '';
+            document.getElementById('inputPanelSpec').value = '';
+        });
+    });
 }
 
-function showToast(message, type = 'info') {
-    console.log(`💬 [TOAST] ${type}: ${message}`);
+function deleteCurrentProject() {
+    if (!confirm('Delete this project?')) return;
+    if (!state.currentProjectId) return;
     
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
+    const proj = state.projects.find(p => p.id === state.currentProjectId);
+    if (!proj) return;
     
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<span>${message}</span>`;
-    container.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s forwards';
-        setTimeout(() => toast.remove(), 300);
-    }, 3500);
-}
-
-function updateDebugInfo(info) {
-    const debugEl = document.getElementById('debugInfo');
-    if (debugEl) {
-        debugEl.textContent = info + '\n\n---\n' +
-            'State:\n' + JSON.stringify({
-                projectsCount: state.projects.length,
-                currentProject: state.currentProjectId,
-                dbConnected: !!state.db
-            }, null, 2);
+    if (state.db) {
+        const tx = state.db.transaction(['projects'], 'readwrite');
+        tx.objectStore('projects').delete(proj.id);
+        tx.oncomplete = () => {
+            state.projects = state.projects.filter(p => p.id !== proj.id);
+            state.currentProjectId = null;
+            document.getElementById('projectDetailCard').style.display = 'none';
+            updateUI();
+            showToast('🗑 Project deleted!', 'info');
+        };
     }
 }
 
 function clearAllData() {
     if (!confirm('Delete ALL data?')) return;
-    
     if (state.db) {
-        try {
-            const tx = state.db.transaction(['projects'], 'readwrite');
-            tx.objectStore('projects').clear();
-        } catch (e) {
-            console.error(e);
-        }
+        const tx = state.db.transaction(['projects'], 'readwrite');
+        tx.objectStore('projects').clear();
+        tx.oncomplete = () => {
+            state.projects = [];
+            state.currentProjectId = null;
+            document.getElementById('projectDetailCard').style.display = 'none';
+            updateUI();
+            showToast('🗑 All data cleared!', 'warning');
+        };
     }
-    
-    state.projects = [];
-    state.currentProjectId = null;
-    updateDashboard();
-    renderProjectsPage();
-    showToast('All data cleared!', 'warning');
 }
 
+// ==================== PDF TEST ====================
+function testPDF() {
+    showToast('Opening print dialog...', 'info');
+    const win = window.open('', '_blank');
+    win.document.write(`
+        <html><head><title>Test PDF</title></head>
+        <body style="font-family:Arial;padding:40px;text-align:center;">
+            <h1 style="color:#009e4d;">📄 PDF TEST</h1>
+            <p>This is a test to verify PDF generation works.</p>
+            <p>Total Projects: ${state.projects.length}</p>
+            <button onclick="window.print()" style="padding:15px 30px;background:#009e4d;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;margin-top:20px;">Print / Save as PDF</button>
+        </body></html>
+    `);
+    win.document.close();
+}
+
+// ==================== UTILITIES ====================
+function escHtml(t) { if(!t) return ''; const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function showToast(msg, type='info') {
+    console.log(`💬 [TOAST] ${msg}`);
+    const c = document.getElementById('toastContainer');
+    if (!c) return;
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.style.animation='slideOutRight .3s forwards'; setTimeout(()=>t.remove(),300); }, 3500);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('show'); });
+});
+
 // Keyboard shortcut
-document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
         document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
     }
 });
 
-// Console welcome
-console.log('%c🏭 Production Manager v12 - STABLE VERSION', 'color:#22c55e;font-size:20px;font-weight:bold;');
-console.log('%cIf you see this, the app is working!', 'color:#3b82f6;font-size:14px;');
+console.log('%c🏭 Production Manager - INTERACTIVE FIX READY', 'color:#22c55e;font-size:18px;font-weight:bold;');
+console.log('%c✅ Click on any project to open it!', 'color:#3b82f6;font-size:14px;');
 </script>
 
 </body>
