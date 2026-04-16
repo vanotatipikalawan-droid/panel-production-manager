@@ -1,192 +1,804 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Production Manager V15 (Full Power)</title>
-<style>
-body{font-family:sans-serif;background:#0a0a0a;color:#fff;margin:0}
-.card{background:#141414;border:1px solid #2a2a2a;border-radius:12px;padding:16px;margin:12px}
-.btn{padding:8px 12px;border:none;border-radius:6px;background:#3b82f6;color:#fff;cursor:pointer}
-.step{border:1px solid #2a2a2a;padding:10px;margin:8px 0;border-radius:8px}
-.files{display:flex;gap:6px;overflow-x:auto}
-.file{width:60px;height:60px;border:1px solid #333}
-.file img{width:100%;height:100%;object-fit:cover}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏭 Production Manager v12 - Full Version</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        /* ==================== RESET ==================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg0: #0a0a0a; --bg1: #141414; --bg2: #1e1e1e;
+            --bd: #2a2a2a; --text0: #fff; --text1: #aaa; --text2: #777;
+            --blue: #3b82f6; --green: #22c55e; --red: #ef4444; --yellow: #eab308; --purple: #8b5cf6;
+        }
+        body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background: var(--bg0); color: var(--text0); line-height:1.6; min-height: 100vh; padding-bottom:30px; }
+        
+        /* ==================== LAYOUT ==================== */
+        .app { display:flex; min-height:100vh; }
+        .sidebar { width:260px; background: var(--bg1); border-right:2px solid var(--bd); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; transition:transform .3s ease; overflow-y:auto; }
+        .sidebar.hidden { transform: translateX(-260px); }
+        .sidebar-hdr { padding:24px 20px; border-bottom:2px solid var(--bd); text-align:center; flex-shrink:0; }
+        .logo { font-size:2.5rem; } .title { font-size:1rem; font-weight:800; color: var(--text0); }
+        .nav { flex:1; padding:16px 12px; overflow-y:auto; }
+        .nav-sec { margin-bottom:20px; }
+        .nav-sec-title { font-size:.72rem;font-weight:800;color:var(--text2); text-transform:uppercase; letter-spacing:1.5px; padding:0 14px;margin-bottom:8px; }
+        .nav-item { display:block;width:100%; padding:13px 18px; margin-bottom:6px; background:transparent;border:2px solid transparent;border-radius:11px; color:var(--text1); font-size:.95rem;font-weight:600; cursor:pointer;text-align:left; transition:all .2s; }
+        .nav-item:hover { background:rgba(59,130,246,.15); color:#fff; transform:translateX(4px); }
+        .nav-item.active { background:rgba(59,130,246,.25); color:var(--blue); font-weight:700; }
+        .badge { float:right; background:var(--red); color:#fff; padding:2px 10px; border-radius:10px; font-size:.75rem;font-weight:800; }
+        
+        .main { flex:1; margin-left:260px; transition:margin-left .3s; }
+        .header { background:var(--bg1); border-bottom:2px solid var(--bd); padding:18px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50; }
+        .menu-btn { width:44px;height:44px;background:var(--bg2); border:2px solid var(--bd); border-radius:10px; color:var(--text0); font-size:1.4rem; cursor:pointer; }
+        .menu-btn:hover { background:var(--blue); }
+        .page-title { font-size:1.3rem;font-weight:800; }
+        .header-action { display:flex; gap:12px; }
+        .action-btn { width:44px;height:44px; background:var(--bg2); border:2px solid var(--bd); border-radius:10px; color:var(--text0); font-size:1.25rem; cursor:pointer; }
+        .action-btn:hover { background:var(--blue); }
+        
+        .page { display:none;padding:28px; animation:fadeIn .3s ease; }
+        .page.active{display:block!important;}
+        @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+        
+        /* ==================== BUTTONS ==================== */
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:14px 24px; border:none; border-radius:12px; font-size:1rem;font-weight:700;cursor:pointer;text-decoration:none;color:#fff;transition:all .2s ease; position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;outline:none; }
+        .btn:hover{ transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,.4); }
+        .btn:active{ transform:scale(.97); }
+        .btn-primary{background:linear-gradient(135deg,var(--blue),#2563eb);color:#fff;}
+        .btn-success{background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;}
+        .btn-danger{background:linear-gradient(135deg,var(--red),#dc2626);color:#fff;}
+        .btn-secondary{background:var(--bg2);color:var(--text0);border:2px solid var(--bd);}
+        .btn-sm{padding:10px 18px;font-size:.85rem;}
+        
+        /* CARDS */
+        .card{ background:var(--bg1); border:2px solid var(--bd);border-radius:14px;margin-bottom:20px;overflow:hidden;}
+        .card-hd{padding:18px 24px;border-bottom:2px solid var(--bd);display:flex;justify-content:space-between;align-items:center;}
+        .card-title{font-size:1.1rem;font-weight:800;color:var(--text0);}
+        .card-bd{padding:24px;}
+        
+        /* STATS */
+        .stats{ display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px;}
+        .stat{ background:var(--bg1);border:2px solid var(--bd);border-radius:14px;padding:24px;text-align:center;}
+        .stat-icon{font-size:2rem;margin-bottom:8px;}
+        .stat-val{font-size:2.2rem;font-weight:900;line-height:1;}
+        .stat-lbl{color:var(--text2);font-size:.85rem;margin-top:6px;font-weight:600;}
+        
+        /* PROJECT LIST */
+        .plist{ display:flex;flex-direction:column;gap:12px;}
+        .pitem{ background:var(--bg2);border:2px solid var(--bd);border-radius:14px;padding:20px;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:16px;}
+        .pitem:hover{border-color:var(--blue);transform:translateX(6px);}
+        .pinfo{flex:1;min-width:0;}
+        .pname{font-weight:800;font-size:1.05rem;}
+        .pmeta{font-size:.88rem;color:var(--text2);}
+        .prog-ring{width:70px;height:70px;position:relative;flex-shrink:0;}
+        .pr-bg{fill:none;stroke:var(--bd);stroke-width:7;}
+        .pr-fill{fill:none;stroke:var(--green);stroke-width:7;stroke-linecap:round;}
+        .pr-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:800;font-size:.95rem;}
+        
+        /* PANEL DETAIL */
+        .pdetail{margin-top:24px;}
+        .phdr{ background:linear-gradient(135deg,rgba(139,92,246,.08),transparent);border:2px solid var(--purple);border-radius:14px;padding:18px 20px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all .2s;}
+        .phdr:hover{border-color:var(--blue);background:linear-gradient(135deg,rgba(59,130,246,.12),transparent);}
+        .phdr.expanded .expand{transform:rotate(180deg);}
+        .phicon{width:48px;height:48px;background:linear-gradient(135deg,var(--purple),var(--blue));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+        .phinfo{flex:1;min-width:0;}
+        .pname{font-weight:800;font-size:1rem;}
+        .phmeta{font-size:.82rem;color:var(--text2);display:flex;gap:10px;flex-wrap:wrap;}
+        .phprog{width:60px;height:60px;flex-shrink:0;}
+        .exp-icn{font-size:1.2rem;color:var(--text-muted);transition:transform .3s;}
+        .phdr.expanded .exp-icn{transform:rotate(180deg);}
+        
+        .pcontent{ display:none;border-top:2px solid var(--bd);background:rgba(255,255,255,.02);animation:slideDown .3s ease;}
+        .phdr.expanded .pcontent{display:block;}
+        @keyframes slideDown{from{opacity:0;max-height:0;}to{opacity:1;max-height:2000px;}}
+        .pb{padding:20px;}
+        
+        /* STEPS GRID */
+        .step-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:16px;}
+        .step-card{ background:var(--bg2);border:2px solid var(--bd);border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:all .25s;}
+        .step-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--bd);z-index:1;}
+        .step-card[data-status="active"]::before{background:var(--blue);}
+        .step-card[data-status="done"]::before{background:var(--green);}
+        .step-card:hover{border-color:var(--blue);transform:translateY(-3px);}
+        
+        .st-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;}
+        .st-ico{font-size:1.5rem;}
+        .st-name{font-weight:700;font-size:.95rem;flex:1;}
+        .st-dot{width:12px;height:12px;border-radius:50%;}
+        .st-pend{background:var(--text-muted);}
+        .st-actv{background:var(--blue);box-shadow:0 0 10px var(--blue);animation:pulse 2s infinite;}
+        .st-done{background:var(--green);}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+        
+        /* STEP NOTE */
+        .st-note{margin:12px 0;}
+        .st-note-lbl{font-size:.78rem;color:var(--text2);font-weight:700;margin-bottom:6px;display:block;}
+        .st-note-txt{width:100%;padding:10px 12px;background:var(--bg1);border:1px solid var(--bd);border-radius:8px;color:var(--text0);font-size:.85rem;resize:vertical;min-height:65px;font-family:inherit;line-height:1.5;}
+        .st-note-txt:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.2);}
+        
+        /* FILES */
+        .files-sec{margin:12px 0;}
+        .file-cnt{font-size:.78rem;color:var(--text2);font-weight:600;margin-bottom:8px;}
+        .file-grid{display:flex;gap:10px;flex-wrap:wrap;}
+        .fitem{width:68px;height:68px;border-radius:10px;background:var(--bg1);border:2px solid var(--border);overflow:hidden;position:relative;cursor:pointer;transition:all .2s;}
+        .fitem:hover{border-color:var(--blue);transform:scale(1.08);z-index:10;}
+        .fimg{width:100%;height:100%;object-fit:cover;display:block;}
+        .fph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:var(--bg2);font-size:.7rem;}
+        .fdel{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:14px;font-weight:bold;cursor:pointer;opacity:0;transition:opacity .2s;z-index:9999;display:flex;align-items:center;justify-content:center;line-height:1;}
+        .fitem:hover .fdel{opacity:1;}
+        .fcap{position:absolute;bottom:0;left:0;right:0;width:100%;height:22px;background:rgba(0,0,0,.9);color:#fff;border:none;border-radius:0 0 8px 8px;font-size:.68rem;padding:0 4px;z-index:9999;display:flex;align-items:center;justify-content:center;font-weight:600;opacity:0;transition:opacity .2s;}
+        .fitem:hover .fcap{opacity:1;}
+        .fcap:focus{outline:none;background:rgba(59,130,246,.95);color:#fff;}
+        .add-fbtn{width:68px;height:68px;border:2px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:var(--text-muted);cursor:pointer;transition:all .2s;}
+        .add-fbtn:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.08);}
+        
+        /* STEP ACTIONS */
+        .st-actions{display:flex;gap:8px;margin-top:14px;}
+        .st-act{flex:1;padding:9px;border:1px solid var(--border);border-radius:8px;background:var(--bg1);color:var(--text2);font-size:.8rem;font-weight:700;cursor:pointer;text-align:center;transition:all .2s;}
+        .st-act:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.08);}
+        .st-act.done-active{border-color:var(--green)!important;color:var(--green)!important;background:rgba(34,197,94,.12)!important;}
+        
+        /* MODAL */
+        .modal-overlay{display:none;position:fixed;inset:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+        .modal{background:var(--bg1);border:2px solid var(--border);border-radius:18px;width:100%;max-width:520px;max-height:90vh;z-index:10000;position:relative;}
+        .modal-hd{padding:22px 26px;border-bottom:2px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+        .modal-title{font-size:1.15rem;font-weight:800;}
+        .close-modal{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+        .close-modal:hover{background:var(--red);color:#fff;}
+        .modal-body{padding:24px;}
+        .modal-ftr{display:flex;gap:12px;}
+        .modal-td{padding:12px;border:1px solid var(--border);border-radius:8px;}
+        
+        /* TOAST */
+        .toast-container{position:fixed;top:90px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
+        .toast{background:var(--bg1);color:var(--text0);padding:16px 20px;border:2px solid var(--border);border-left:4px solid var(--blue);border-radius:12px;font-size:.9rem;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:slideIn .3s forwards;cursor:pointer;z-index:99999;max-width:400px;word-break:break-word;}
+        .toast.success{border-left-color:var(--green);}
+        .toast.error{border-left-color:var(--red);}
+        @keyframes slideIn{from{transform:translateX(120%)}to{transform:translateX(0);} }
+        
+        /* EMPTY */
+        .empty{text-align:center;padding:60px 20px;color:var(--text2);}
+        .empty-icon{font-size:4rem;margin-bottom:16px;opacity:.4;}
+        .empty-title{font-size:1.2rem;font-weight:800;color:var(--text0);margin-bottom:8px;}
+        .empty-text{font-size:1rem;color:var(--text2);margin-bottom:30px;}
+        
+        @media(max-width:768px){
+            .sidebar{transform:translateX(-100%);position:fixed;z-index:100;}
+            .main{margin-left:0!important;}
+            .stats{grid-template-columns:repeat(2,1fr);gap:10px;}
+            .step-grid{grid-template-columns:1fr;}
+        }
+    </style>
 </head>
 <body>
 
-<div class="card">
-<button class="btn" onclick="createSample()">Create Sample</button>
-<button class="btn" onclick="clearDB()">Clear DB</button>
-<div id="app"></div>
+<!-- ============================================ -->
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-hdr">
+        <div class="logo">🏭</div>
+        <div class="title">ProdManager v12</div>
+    </div>
+    
+    <nav class="nav">
+        <div class="nav-sec"><div class="nav-sec-title">Menu</div></div>
+        <button class="nav-item active" onclick="navTo('dashboard')">📊 Dashboard</button>
+        <button class="nav-item" onclick="navTo('projects')">📋 Projects <span class="badge" id="projBadge">0</span></button>
+    </nav>
+    
+    <div style="padding:20px;border-top:2px solid var(--bd);font-size:.82rem;color:var(--text2);">
+        ⚡ Version 12.0 - FULLY INTERAKTIF
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main" id="main">
+    <header class="header">
+        <div class="header-left">
+            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+            <h1 class="page-title" id="pageTitle">Dashboard</h1>
+        </div>
+        <div class="header-right">
+            <button class="action-btn" onclick="openModal('settingsModal')">⚙️</button>
+        </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section class="page active" id="pg-dashboard">
+        <div class="stats">
+            <div class="stat"><div class="stat-icon">📋</div><div class="stat-val" id="st-projects">0</div><div class="stat-lbl">Total Projects</div></div>
+            <div class="stat"><div class="stat-icon">📦</div><div class="stat-val" id="st-panels">0</div><div class="stat-lbl">Total Panels</div></div>
+            <div class="stat"><div class="stat-icon">✅</div><div class="stat-val" id="st-completed">0</div><div class="stat-lbl">Completed</div></div>
+            <div class="stat"><div class="stat-icon">📈</div><div class="stat-val" id="st-progress">0%</div><div class="stat-lbl">Avg Progress</div></div>
+        </div>
+        
+        <div class="card">
+            <div class="card-hd"><span class="card-title">⚡ Quick Start</span></div>
+            <div class="card-bd">
+                <p style="margin-bottom:16px;">Klik tombol di bawah untuk testing:</p>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="createSampleData()">➕ Create Sample Data</button>
+                    <button class="btn btn-danger" onclick="clearAllData()">🗑 Clear All Data</button>
+                </div>
+            </div>
+            
+            <div class="log-box" id="logBox">
+                <div class="log-item">⏳ Ready... Klik tombol untuk test!</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PROJECTS PAGE -->
+    <section class="page" id="pg-projects">
+        <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="openModal('newProjModal')">+ New Project</button>
+        </div>
+        
+        <div class="plist" id="plist"></div>
+        <div class="pdetail" id="pdetail" style="display:none;"></div>
+    </section>
+
 </div>
 
-<script>
+<!-- NEW PROJECT MODAL -->
+<div class="modal-overlay" id="newProjModal">
+    <div class="modal">
+        <div class="modal-hd">
+            <h2 class="modal-title">➕ New Project</h2>
+            <button class="close-modal" onclick="closeModal('newProjModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Order Number *</label>
+                    <input type="text" class="form-input" id="inp-order" placeholder="PO-2024-001" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Customer Name</label>
+                    <input type="text" class="form-input" id="inp-customer" placeholder="PT. Nama">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                    <textarea class="form-input" id="inp-desc" rows="3" placeholder="Deskripsi..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('newProjModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveProject()">Create</button>
+        </div>
+    </div>
+</div>
 
-// ================= DATABASE =================
-const DB_NAME='V15_DB';
-let db;
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+        <div class="modal-hd">
+            <h2 class="modal-title">⚙ Settings</h2>
+            <button class="close-modal" onclick="closeModal('settingsModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom:20px;">
+                <button class="btn btn-secondary" style="width:100%;margin-bottom:10px;" onclick="setTheme('dark')">🌙 Dark Mode</button>
+                <button class="btn btn-secondary" style="width:100%;" onclick="setTheme('light')">☀ Light Mode</button>
+                <hr style="border-color:var(--bd);margin:20px 0;">
+                <button class="btn btn-danger" style="width:100%;margin-top:10px;" onclick="clearAllData()">🗑 Clear All Data</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- IMAGE VIEWER -->
+<div class="modal-overlay" id="imgViewer">
+    <div class="modal" style="max-width:90vw;max-height:90vh;">
+        <button class="close-modal" style="position:fixed;top:20px;right:20px;z-index:10001;background:var(--bg1);border:2px solid var(--bd);border-radius:50%;color:#fff;font-size:2rem;cursor:pointer;font-size:2.5rem;">×</div>
+        <img id="viewImg" src="" alt="" style="max-width:90vw;max-height:80vh;object-fit:contain;border-radius:12px;">
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ==========================================
+// STATE & CONSTANTS
+// ==========================================
+const STEPS = [
+    {id:'drawing',name:'Drawing',icon:'📐'},
+    {id:'preparation',name:'Preparation',icon:'📦'},
+    {id:'assembly',name:'   Assembly',icon:'🔧'},
+    {id:'wiring',name:'Wiring',icon:'🔌'},
+    {id:'finishing',name:'Finishing',icon:'✨'},
+    {id:'qc',name:'Quality Control',icon:'✅'}
+];
+
+let state = { projects:[], currentId:null, db:null };
+const DB='ProdManagerDB_v12';
+const VER=1;
+
+// ==========================================
+// INIT
+// ==========================================
+document.addEventListener('DOMContentLoaded',()=>{
+    console.log('[INIT] Starting...');
+    initDB();
+});
 
 function initDB(){
- const req=indexedDB.open(DB_NAME,1);
- req.onupgradeneeded=e=>{
-  db=e.target.result;
-  db.createObjectStore('projects',{keyPath:'id'});
- };
- req.onsuccess=e=>{
-  db=e.target.result;
-  load();
- };
+    const r=indexedDB.open(DB,VER);
+    r.onerror=()=>console.error('❌ DB Error');
+    r.onsuccess=(e)=>{
+        state.db=e.target.result;
+        loadProjects(()=>{ forceShow('dashboard'); renderAll(); });
+    };
+    r.onupgradeneed=(e)=>{
+        const db=e.target.result;
+        if(!db.objectStoreNames.contains('projects')) db.createObjectStore('projects',{keyPath:'id'});
+    };
 }
 
-function saveDB(data){
- const tx=db.transaction(['projects'],'readwrite');
- tx.objectStore('projects').put(data);
+function loadProjects(cb){ const tx=state.db.transaction(['projects'],'readonly');tx.objectStore('projects').getAll().onsuccess=(e)=>{state.projects=e.target.result||[]; if(cb)cb(); };}
+
+function saveProject(p,cb){ 
+    const tx=state.db.transaction(['projects'],'readwrite');tx.objectStore('projects').put(p); 
+    tx.oncomplete=cb||(()=>{}); 
 }
 
-function load(){
- const tx=db.transaction(['projects'],'readonly');
- const req=tx.objectStore('projects').getAll();
- req.onsuccess=e=>{
-  AppState.projects=e.target.result||[];
-  render();
- };
+function deleteProject(id,cb){ 
+    const tx=state.db.transaction(['projects'],'readwrite');tx.objectStore('projects').delete(id); 
+    tx.oncomplete=cb||(()=>{}); 
 }
 
-function clearDB(){
- const tx=db.transaction(['projects'],'readwrite');
- tx.objectStore('projects').clear();
- AppState.projects=[];
- render();
+function clearAllData(){ 
+    if(!confirm('Hapus SEMUA data?')) return;
+    if(state.db){const tx=state.db.transaction(['projects'],'readwrite');tx.objectStore('projects').clear();}
+    state.projects=[];state.currentId=null;
+    document.getElementById('pdetail').style.display='none';
+    document.getElementById('plist').innerHTML='';
+    updateStats();
+    showToast('🗑 Data dihapus!','warning');
 }
 
-// ================= STATE =================
-const AppState={projects:[]};
-
-// ================= HELPERS =================
-function debounce(fn,d=400){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),d)}}
-
-// ================= RENDER =================
-function render(){
- const root=document.getElementById('app');root.innerHTML='';
-
- AppState.projects.forEach(p=>{
-  const card=document.createElement('div');card.className='card';
-  card.innerHTML=`<h3>${p.order}</h3>`;
-
-  p.panels.forEach(panel=>{
-   const wrap=document.createElement('div');
-
-   Object.keys(panel.steps).forEach(stepId=>{
-    const step=panel.steps[stepId];
-
-    const div=document.createElement('div');
-    div.className='step';
-    div.id=`step-${panel.id}-${stepId}`;
-
-    div.innerHTML=`
-      <div><b>${stepId}</b> - <span>${step.status}</span></div>
-      <textarea oninput="saveNote('${p.id}','${panel.id}','${stepId}',this.value)">${step.note}</textarea>
-      <div class="files" id="files-${panel.id}-${stepId}"></div>
-      <button onclick="upload('${p.id}','${panel.id}','${stepId}')">+</button>
-      <button onclick="setStatus('${p.id}','${panel.id}','${stepId}','done')">Done</button>
-    `;
-
-    wrap.appendChild(div);
-    renderFiles(panel.id,stepId,step.files);
-   });
-
-   card.appendChild(wrap);
-  });
-
-  root.appendChild(card);
- });
+// ==========================================
+// NAVIGATION
+// ==========================================
+function forceShow(page){
+    document.querySelectorAll('.page').forEach(p=>{ p.classList.remove('active');p.style.display='none'; });
+    const el=document.getElementById('pg-'+page);
+    if(el){ el.classList.add('active'); el.style.display='block'; }
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    const nav=document.querySelector(`.nav-item[onclick*="${page}"]`);
+    if(nav) nav.classList.add('active');
+    const titles={dashboard:'📊 Dashboard',projects:'📋 Projects'};
+    document.getElementById('pageTitle').textContent=titles[page]||page;
 }
 
-// ================= FILE RENDER =================
-function renderFiles(panelId,stepId,files){
- const el=document.getElementById(`files-${panelId}-${stepId}`);
- if(!el)return;
- el.innerHTML='';
-
- const max=10;
- files.slice(0,max).forEach(f=>{
-  const d=document.createElement('div');d.className='file';
-  d.innerHTML=`<img src="${f.url}" loading="lazy">`;
-  el.appendChild(d);
- });
-
- if(files.length>max){
-  const more=document.createElement('div');
-  more.textContent=`+${files.length-max}`;
-  el.appendChild(more);
- }
-}
-
-// ================= ACTION =================
-function setStatus(pid,panid,stepId,status){
- const p=AppState.projects.find(x=>x.id===pid);
- const pan=p.panels.find(x=>x.id===panid);
- pan.steps[stepId].status=status;
- saveDB(p);
- render();
-}
-
-const saveNote=debounce((pid,panid,stepId,val)=>{
- const p=AppState.projects.find(x=>x.id===pid);
- const pan=p.panels.find(x=>x.id===panid);
- pan.steps[stepId].note=val;
- saveDB(p);
-},400);
-
-// ================= UPLOAD =================
-function upload(pid,panid,stepId){
- const input=document.createElement('input');
- input.type='file';input.multiple=true;
-
- input.onchange=e=>{
-  const files=[...e.target.files];
-  const p=AppState.projects.find(x=>x.id===pid);
-  const pan=p.panels.find(x=>x.id===panid);
-
-  files.forEach(f=>{
-    const url=URL.createObjectURL(f);
-    pan.steps[stepId].files.push({
-      id:Date.now()+Math.random(),
-      url:url,
-      blob:f
-    });
-  });
-
-  saveDB(p);
-  renderFiles(panid,stepId,pan.steps[stepId].files);
- };
- input.click();
-}
-
-// ================= SAMPLE =================
-function createSample(){
- const proj={
-  id:'p1',
-  order:'PO-V15',
-  panels:[{
-    id:'pan1',
-    steps:{
-      drawing:{status:'pending',files:[],note:''},
-      wiring:{status:'pending',files:[],note:''}
+function navTo(page){
+    forceShow(page);
+    switch(page){
+        case'dashboard':renderAll();break;
+        case 'projects':renderProjects();break;
     }
-  }]
- };
-
- AppState.projects=[proj];
- saveDB(proj);
- render();
 }
 
-// INIT
-initDB();
+function toggleSidebar(){
+    const sb=document.getElementById('sidebar');
+    sb.classList.toggle('hidden');
+    document.getElementById('main').classList.toggle('full-width');
+}
 
+// ==========================================
+// UI UPDATE
+// ==========================================
+function updateStats(){
+    let tp=state.projects.length,tPa=0,tC=0,tPr=0;
+    state.projects.forEach(p=>{
+        tPa+=(p.panels||[]).length;
+        (p.panels||[]).forEach(pa=>{
+            const pr=calcPanelProgress(pa);
+            tPr+=pr;if(pr===100) tC++;
+        }
+    }
+    document.getElementById('st-projects').textContent=tp;
+    document.getElementById('st-panels').textContent=tPa;
+    document.getElementById('st-completed').textContent=tC;
+    document.getElementById('st-progress').textContent=tPa>0?Math.round(tPr/tPa)+'%':'0%';
+    document.getElementById('projBadge').textContent=tp;
+}
+
+function renderAll(){
+    updateStats();
+    renderProjects();
+}
+
+function renderProjects(){
+    const c=document.getElementById('plist');
+    c.innerHTML='';
+    if(!state.projects.length){
+        c.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Belum Ada Project</div><div class="empty-text">Klik "Create Sample Data"</div></div>`;
+        return;
+    }
+    
+    state.projects.forEach((p,i)=>{
+        const pr=calcProjectProgress(p);
+        const circ=2*Math.PI*32,off=circ-(pr/100)*circ;
+        c.innerHTML+=`<div class="pitem" onclick="selectProject('${p.id}')">
+            <div class="pinfo"><div class="pname">${escapeHTML(p.order)}</div><div class="pmeta">${escapeHTML(p.customer||'-')} • ${(p.panels||[]).length} panels</div></div>
+            <div class="progress-ring"><svg width="70" height="70" viewBox="0 0 70 70"><circle class="pr-bg" cx="35" cy="35" r="28"/><circle class="pr-fill" cx="35" cy="35" r="28" style="stroke-dasharray:${circ};stroke-dashoffset:${off};"/></svg><div class="pr-txt">${pr}%</div></div>
+        `;
+    });
+}
+
+function selectProject(pid){
+    state.currentId=pid;
+    document.getElementById('pdetail').style.display='block';
+    const p=state.projects.find(x=>x.id===pid);
+    if(!p)return;
+    
+    document.getElementById('detailProjectTitle').textContent=p.order;
+    
+    const pans=p.panels||[];
+    const comp=pans.filter(x=>calcPanelProgress(x)===100).length;
+    const act=pans.filter(x=>{const pr=calcPanelProgress(x);return pr>0&&pr<100}).length;
+    
+    document.getElementById('dp-panels').textContent=pans.length;
+    document.getElementById('dp-completed').textContent=comp.length;
+    document.getElementById('dp-active').textContent=act.length;
+    document.getElementById('dp-progress').textContent=calcProjectProgress(p)+'%';
+    
+    renderPanelDetail(p);
+    document.getElementById('pdetail').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderPanelDetail(proj){
+    const c=document.getElementById('pdetail');
+    const pans=proj.panels||[];
+    
+    if(!pans.length){
+        c.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">No panels yet</div><div class="empty-text">Add panel dulu</div></div>`;
+        return;
+    }
+    
+    c.innerHTML = pans.map((pan,idx)=>{
+        const pp=calcPanelProgress(pan);
+        const circ=2*Math.PI*24,off=circ-(pp/100)*circ;
+        return `
+        <div class="phdr" id="phdr-${pan.id}">
+            <div class="phdr" onclick="togglePh('${pan.id}')">
+                <div class="phicon-wrapper">📦</div>
+                <div class="phinfo">
+                    <div class="pname">${escapeHTML(pan.name)}</div>
+                    <div class="phmeta">${escapeHTML(pan.spec||'-')} • Qty: ${pan.quantity}</div>
+                </div>
+                <div class="pprog-mini">
+                    <div class="progress-ring" style="width:56px;height:56px;">
+                        <svg width="56" height="56" viewBox="0 0 56 56"><circle class="pr-bg" cx="28" cy="28" r="22"/><circle class="pr-fill" cx="cx="28" cy="28" r="22" style="stroke-dasharray:${circ};stroke-dashoffset:${off};"/></svg>
+                        <div class="pr-txt" style="font-size:.8rem;font-weight:800;">${pp}%</div>
+                    </div>
+                    <div class="expand-icon">▼</div>
+                </div>
+                <div class="pcontent" id="pcont-${pan.id}">
+                    ${renderSteps(proj.id, pan)}
+                </div>
+            </div>
+        `;
+    });
+}
+
+function togglePh(pid){
+    const c=document.getElementById(`pcont-${pid}`);
+    const h=c?.previousElementSibling;
+    if(c){
+        const isVisible=c.classList.contains('show');
+        if(isVisible){c.classList.remove('show');if(h)h.classList.remove('expanded');}
+        else{c.classList.add('show');if(h)h.classList.add('expanded');}
+}
+
+function renderSteps(pid, pan){
+    let html='<div class="steps-grid">';
+    
+    STEPS.forEach(sd=>{
+        const st=pan.steps?.[sd.id] || {status:'pending',files:[],note:''};
+        const fc=st.files?.length||0;
+        const stClass=st.status==='active'?'active':st.status==='done'?'done':'pending';
+        
+        html+=`<div class="step-card ${stClass}" data-status="${st.status}" id="step-${pid}-${sd.id}">
+            <div class="st-hdr" onclick="togStDetail('${pid}','${sd.id}')">
+                <span class="st-ico">${sd.icon}</span>
+                <span class="st-name">${sd.name}</span>
+                <div class="st-dot status-${st}"></div>
+            </div>
+            
+            <!-- NOTE -->
+            <div class="st-note">
+                <div class="st-note-lbl">📝 Catatan:</div>
+                <textarea class="st-note-txt" placeholder="Tambah catatan..." onblur="saveNote('${pid}','${sd.id}',this.value)">${escapeHTML(st.note)}</textarea>
+            </div>
+            
+            <!-- FILES -->
+            <div class="files-sec">
+                <div class="file-cnt">📎 ${fc} file${fc!==1?'s':''}</div>
+                <div class="file-grid">
+                    ${(st.files||[]).slice(0,6).map((f,fi)=>{
+                        const isImg=f.type?.startsWith('image/');
+                        return `
+                        <div class="fitem" title="${esc(f.caption||f.name)}" onclick="viewImage('${f.data}')">
+                            ${isImg?`<img src="${f.data}" loading="lazy" alt="${esc(f.name)}">`:`<div class="fph">📄</div>`
+                        </div>
+                        <button class="fdel" onclick="event.stopPropagation();delFile('${pid}','${sd.id}','${f.id}')" title="Hapus">×</button>
+                        <input type="text" class="fcap" value="${esc(f.caption||'')}" placeholder="Caption..." onclick="event.stopPropagation();saveCap('${pid}','${sd}','${f.id}',this.value)" onclick="event.stopPropagation();saveCap('${pid}','${sd}','${f.id}',this.value)">
+                        </div>
+                        ${fc>6?<div class="fitem"><div class="fph">+${fc-6}</div>`:''}
+                        <div class="add-file-btn" onclick="triggerUpload('${pid}','${sd}')" title="Upload File/Foto">+</div>
+                    </div>
+                    
+                    <!-- ACTIONS -->
+                    <div class="st-actions">
+                        <button class="st-act ${st==='done'?'done-active':''}" onclick="setStatus('${pid}','${sd}','done')" ${fc===0?'title:"Upload file dulu!"':''}>✅ Done</button>
+                        <button class="st-act ${st==='active'?'done-active':''}" onclick="setStatus('${pid}','${sd}','active')">▶ Active</button>
+                    </div>
+                    
+                    <!-- Hidden file input -->
+                    <input type="file" id="f-${pid}-${sd}" style="display:none;" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple onchange="handleFile('${pid}','${sd}',this)">
+                </div>
+                </div>
+            </div>
+        `});
+    
+    c.innerHTML += `</div>`;
+}
+
+function togStDetail(pid,sid){
+    const d=document.getElementById(`detail-${pid}-${sid}`);
+    if(d)d.classList.toggle('show');
+}
+
+function saveNote(pid,sid,val){
+    const p=state.projects.find(x=>x.id===pid);
+    const pan=p?.panels?.find(x=>x.id===sid);
+    if(pan?.steps?.[sid]){pan.steps[sid].note=val;saveProject(p);}
+    setStatus(pid,sid,'pending');
+}
+
+function setStatus(pid,sid,st){
+    const p=state.projects.find(x=>x.id===pid);
+    const pan=p?.panels?.find(x=>x.id===sid);
+    if(!pan||!pan?.steps?.[sid])return;
+    if(st==='done' && !(pan.steps[sid].files?.length)){showToast('⚠️ Upload minimal 1 file dulu!','warning');return;}
+    pan.steps[sid].status=st;
+    saveProject(p,()=>{
+        renderPanelDetail(pid);
+        showToast(`Step "${st.toUpperCase()}" berhasil diupdate! ✅`,'success');
+    });
+}
+
+// FILE OPS
+function triggerUpload(pid,sid){document.getElementById(`f-${pid}-${sid}`).click();}
+function handleFile(pid,sid,input){
+    const files=Array.from(input.files);
+    if(!files.length)return;
+    const p=state.projects.find(x=>x.id===pid);
+    const pan=p?.panels?.find(x=>x.id===sid);
+    if(!pan)return;
+    
+    let proc=0,total=totalFiles;
+    showToast(`⏳ Uploading ${totalFiles} file...`,'info');
+    
+    files.forEach(file=>{
+        if(file.size>10*1024*1024){showToast(`${file.name} terlalu besar!','warning');proc++;return;}
+        const reader=new FileReader();
+        reader.onload=e=>{
+            const fd={id:`f_${Date.now()}`,name:file.name,type:file.type,size:size,data:e.target.result,caption:'',uploadedAt:new Date().toISOString()};
+            if(!pan.steps[sid].files)pan.steps[sid].files=[];
+            pan.steps[sid].files.push(fd);
+            if(++proc===totalFiles){
+                saveProject(p,()=>{
+                    renderPanelDetail(pid);
+                    showToast(`${proc} file uploaded! ✅`,'success');
+                });
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function delFile(pid,sid,fid){
+    if(!confirm('Hapus file ini?'))return;
+    const p=state.projects.find(x=>x.id===pid);
+    const pan=p?.panels?.find(x=>x.id===sid);
+    if(!pan||!pan?.steps?.[sid])return;
+    const origLen=pan.steps[sid].files?.length||0;
+    pan.steps[sid].files=pan.steps[sid].filter(f=>f.id!==fid);
+    saveProject(p,()=>{
+        renderPanelDetail(pid);
+        showToast(`File dihapus! (${origLen-1} tersisa)`,'info');
+    });
+}
+
+function saveCap(pid,sid,fid,cap){
+    const p=state.projects.find(x=>x.id===pid);
+    const pan=p?.panels?.find(x=>x.id===sid);
+    const f=pan?.steps?.[sid]?.files?.find(f=>f.id===fid);
+    if(f){f.caption=cap;saveProject(p);}
+    showToast('💬 Caption tersimpan!','success');
+}
+
+function viewImage(src){
+    document.getElementById('viewImg').src=src;
+    openModal('imgViewer');
+}
+
+// PROJECT CRUD
+function createSampleData(){
+    const proj={
+        id:`proj_${Date.now()}`,
+        order:`PO-SAMPLE-${Math.floor(Math.random()*1000)}`,
+        customer:'PT. Test Indonesia',
+        description:'Sample project',
+        createdAt:new Date().toISOString(),
+        panels:[{
+            id:`pan_${Date.now()}_1`,
+            name:'MDP Main Distribution Panel',
+            spec:'3 Phase, 400V, 2500A',
+            quantity:2,
+            steps:{}
+        ],[
+            id:`pan_${Date.now()}_2`,
+            name:'MCC Motor Control Center',
+            spec:'3 Phase, 400V, 1600A',
+            quantity:1,
+            steps:{}
+        ]
+    };
+    
+    // Init steps for each panel
+    proj.panels.forEach(pan=>{
+        STEPS.forEach(s=>{
+            pan.steps[s.id]={status:Math.random()>0.5?'active':'pending'},files:[],note:''};
+        });
+    });
+    
+    saveProject(proj,()=>{
+        state.projects.push(proj);
+        closeModal('newProjModal');
+        updateStats();
+        navigateTo('projects');
+        showToast('✅ Sample data berhasil dibuat! (2 panel x 6 steps)','success');
+    });
+}
+
+function saveProject(){
+    const order=document.getElementById('inp-order').value.trim();
+    if(!order){showToast('Order wajib diisi!','warning');document.getElementById('inp-order').focus();return;}
+    
+    const proj={
+        id:`proj_${Date.now()}`,
+        order,
+        customer:document.getElementById('inp-customer').value.trim(),
+        description:document.getElementById('inp-desc').value.trim(),
+        createdAt:new Date().toISOString(),
+        panels:[]
+    };
+    
+    saveProject(proj,()=>{
+        closeModal('newProjModal');
+        updateStats();
+        navigateTo('projects');
+        showToast(`✅ Project "${order}" berhasil dibuat!`,'success');
+        ['inp-order','inp-customer','inp-desc','inp-due'].forEach(el=>{const el=document.getElementById(el);if(el)el.value='';});
+    });
+}
+
+function deleteCurrentProject(){
+    if(!confirm('Hapus project ini?'))return;
+    deleteProject(state.currentId,()=>{
+        document.getElementById('pdetail').style.display='none';
+        updateStats();
+        renderProjects();
+        showToast('🗑 Project dihapus!','info');
+    });
+}
+
+// EXPORT PDF
+function exportPDF(pid){
+    const p=state.projects.find(p=>p.id===pid);
+    if(!p){showToast('Pilih project dulu!','warning');return;}
+    
+    showToast('⏳ Generating PDF...','info');
+    
+    const pr=calcProjectProgress(p);
+    const html=`
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHTML(p.order)}</title>
+    <style>
+    body{font-family:Arial,sans-serif;color:#222;padding:40px;line-height:1.6;background:#fff;margin:0 auto;}
+    h1{text-align:center;color:#009e4d;font-size:32pt;margin-bottom:8pt;text-transform:uppercase;letter-spacing:2pt;}
+    h2{color:#333;font-size:18pt;margin:20px 0 15px;padding-bottom:8px;border-bottom:3px solid #009e4d;}
+    table{width:100%;border-collapse:collapse;margin:15pt 0;font-size:11pt;}
+    th{background:#009e4d;color:#fff;padding:12px;text-align:left;font-weight:700;border:1px solid #007a3b;}
+    td{padding:10px;border:1px solid #ddd;vertical-align:top;}
+    tr:nth-child(even){background:#f9faf9;}
+    .info{background:#f0fdf4;padding:20px;margin:20px 0;border-left:5px solid #009e4d;border-radius:0 8px 8px 8px;font-size:13px;line-height:1.6;}
+    .progress-big{font-size:24px;font-weight:900;color:#009e4d;margin:15px 0;}
+    .sig-area{margin-top:60px;display:flex;justify-content:space-around;}
+    .sig-line{border-bottom:2px solid #000;width:200px;margin-top:45px;}
+    .footer-bar{height:12px;background:linear-gradient(90deg,#009e4d,#00c853);margin-top:40px;border-radius:0 0 4px 4px;}
+    </style></head><body>
+    <div style="min-height:1050px;">
+        <h1 style="text-align:center;color:#009e4d;font-size:32pt;margin-bottom:8px;">${escapeHTML(p.order)}</h1>
+        <p style="text-align:center;color:#666;font-size:14px;margin-bottom:30px;">Customer: ${escapeHTML(p.customer||'-')}</p>
+        <div class="info">
+            <p><strong>Description:</strong><br>${escapeHTML(p.description||'No description')}</p>
+            <p><strong>Date:</strong> ${p.dueDate ? new Date(p.dueDate).toLocaleDateString('id-ID'):'-' : '-'}</p>
+            <div class="progress-big">Overall Progress: ${pr}%</div>
+        </div>
+        <div class="sig-area">
+            <div style="text-align:center;"><p><strong>Prepared By</p><div class="sig-line"></div><p style="font-size:9pt;color:#666;margin-top:8px;">Name & Signature</p></div>
+            <div style="text-align:center;"><p><strong>Accepted By</p><div class="sig-line"></div><p style="font-size:9pt;color:#666;margin-top:8px;">Name & Signature</p></div>
+        </div>
+        <div class="footer-bar"></div>
+    </div>
+    <div style="page-break-before:always;"></div>
+    
+    <div style="page-break-before:always;"></div>
+    
+    <h2>📋 Ringkasan Panel</h2>
+    <table>
+        <tr><th>#</th><th>Panel</th><th>Spec</th><th>Qty</th><th>Progress</th></tr>
+        ${(p.panels||[]).map((pa,i)=>{
+            const pp=calcPanelProgress(pa);
+            return `<tr>
+                <td style="text-align:center;">${i+1}</td>
+                <td><strong>${escapeHTML(pa.name)}</td>
+                <td>${escapeHTML(pa.spec||'-')}</td>
+                <td style="text-align:center;">${pa.quantity}</td>
+                <td style="text-align:center;font-weight:900;color:${pp===100?'#009e4d':'#3b82f6'};">${pp}%</td>
+            </tr>;
+        }).join('')}
+    </table>
+    
+    ${(p.panels||[]).map((pan,idx)=>{
+        <div style="page-break-before:always;"></div>
+        <h2 style="font-size:18px;color:#333;margin:20px 0 12px;padding-bottom:10px;border-bottom:3px solid #009e4d;">📦 Panel: ${escapeHTML(pan.name)} <span style="font-size:12px;font-weight:normal;color:#888;">(${idx+1}/${(p.panels||[]).length})</span></h2>
+        <table style="margin:20px 0;">
+            <tr><td style="background:#f5f5f5;font-weight:700;">Specification</td><td>${escapeHTML(pan.spec||'-')}</td><td style="background:#f0f5f5f5;font-weight:700;">Quantity</td><td style="text-align:center;font-weight:900;color:#009e4d;">${pan.quantity} Unit(s)</td></tr>
+        </table>
+        
+        ${STEPS.map(step=>{
+            const st=pan.steps?.[step.id];
+            if(!st||(st.status==='pending)&&!(st.note)&&(st.files&&st.files&&st.files.length>0)) return '';
+            const photos=(st.files||[]).filter(f=>f.type?.startsWith('image/'));
+            const bClass=st.status==='active'?'badge-active':st.status==='done'?'badge-done':'badge-pending';
+            return `<div style="margin:20px 0;border:1px solid #ddd;border-radius:8px;overflow:hidden;page-break-inside:avoid;">
+                <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:12px 16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ddd;">
+                    <span>${step.icon}<strong>${step.name}</span>
+                    <span class="${bClass}">${step.status.toUpperCase()}</span>
+                </div>
+                <div style="padding:16px;display:flex;gap:20px;">
+                    <div style="flex:1;background:#fefce8;border-left:4px solid #eab308;padding:12px;border-radius:6px;font-size:11px;line-height:1.6;">
+                        <strong style="color:#854d0e;display:block;margin-bottom:6px;">Notes:</strong>
+                        ${st.note?escapeHTML(st.note).replace(/\n/g,'<br>):'<em>No notes</em>'}</div>
+                        <div style="flex:1;display:flex;flex-wrap:wrap;justify-content:flex-end;">
+                            ${photos.slice(0,4).map(f=>`<div style="width:140px;height:120px;border:1px solid #ccc;padding:3px;background:#fff;border-radius:6px;overflow:hidden;"><img src="${f.data}" loading="lazy"><div style="font-size:9px;color:#666;text-align:center;margin-top:4px;">🖼</div><div style="font-size:8px;color:#666;text-align:center;margin-top:4px;">${f.caption?'💬 '+escapeHTML(f.caption):''}</div></div></div>
+                    </div>
+                </div>
+            </div>
+        `}).join('');
+    }</div>
+    </div>
+    `;
+    
+    const w=window.open('','','_blank','width=800,height:600');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(()=>{
+        w.print();
+        showToast('✅ PDF dialog terbuka! Gunakan "Save as PDF"', 'success');
+    },500);
+}
 </script>
 </body>
 </html>
