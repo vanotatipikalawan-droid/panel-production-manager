@@ -3,558 +3,469 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0a0a0a">
-    <title>🏭 Production Manager - Interactive Fix</title>
+    <title>🏭 Production Manager v12 - COMPLETE</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        /* DARK MODE */
-        :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #141414;
-            --bg-tertiary: #1e1e1e;
-            --border-color: #2a2a2a;
-            --text-primary: #ffffff;
-            --text-secondary: #aaaaaa;
-            --text-muted: #777777;
-            --accent-blue: #3b82f6;
-            --accent-green: #22c55e;
-            --accent-red: #ef4444;
-            --accent-yellow: #eab308;
-            --accent-purple: #8b5cf6;
-        }
-        
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-card: #141414;
+            --bg-input: #1e1e1e;
+            --border-color: #2a2a2a;
+            --text-white: #ffffff;
+            --text-gray: #aaaaaa;
+            --blue: #3b82f6;
+            --green: #22c55e;
+            --red: #ef4444;
+            --yellow: #eab308;
+            --purple: #8b5cf6;
+        }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-primary) !important;
-            color: var(--text-primary) !important;
+            background: var(--bg-dark);
+            color: var(--text-white);
             line-height: 1.6;
             min-height: 100vh;
         }
         
-        .app-container { display: flex; min-height: 100vh; }
+        .app-layout { display: flex; min-height: 100vh; }
         
         /* SIDEBAR */
         .sidebar {
             width: 260px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
+            background: var(--bg-card);
+            border-right: 2px solid var(--border-color);
             display: flex;
             flex-direction: column;
             position: fixed;
             top: 0; left: 0; bottom: 0;
-            z-index: 1000;
-            transform: translateX(-100%);
+            z-index: 100;
             transition: transform 0.3s ease;
         }
-        .sidebar.open { transform: translateX(0); }
-        
-        .sidebar-header { padding: 24px 20px; border-bottom: 1px solid var(--border-color); }
-        .sidebar-logo { font-size: 2.5rem; }
-        .sidebar-title { font-size: 1.15rem; font-weight: 800; color: var(--text-primary); }
-        
-        .sidebar-nav { flex: 1; overflow-y: auto; padding: 20px 16px; }
-        .nav-section { margin-bottom: 28px; }
-        .nav-section-title { 
-            font-size: 0.72rem; 
-            font-weight: 800; 
-            color: var(--text-muted); 
-            text-transform: uppercase; 
-            letter-spacing: 1.5px; 
-            padding: 0 14px; 
-            margin-bottom: 12px; 
-        }
+        .sidebar.hidden { transform: translateX(-100%); }
+        .sidebar-header { padding: 24px; border-bottom: 2px solid var(--border-color); text-align: center; }
+        .logo { font-size: 3rem; }
+        .app-title { font-size: 1.1rem; font-weight: 800; }
+        .nav-menu { flex: 1; padding: 20px 16px; overflow-y: auto; }
         .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 13px 16px;
+            display: block;
+            width: 100%;
+            padding: 14px 18px;
+            margin-bottom: 8px;
+            background: transparent;
+            border: 2px solid transparent;
             border-radius: 12px;
-            cursor: pointer;
-            color: var(--text-secondary);
+            color: var(--text-gray);
+            font-size: 1rem;
             font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 6px;
+            cursor: pointer;
+            text-align: left;
             transition: all 0.2s;
-            border: 1px solid transparent;
         }
-        .nav-item:hover { 
-            background: var(--bg-tertiary); 
-            color: var(--text-primary);
-            border-color: var(--border-color);
-        }
-        .nav-item.active { 
-            background: rgba(59,130,246,0.15); 
-            color: var(--accent-blue); 
-            border-color: rgba(59,130,246,0.3);
-        }
-        .nav-icon { font-size: 1.35rem; width: 26px; text-align: center; }
-        .nav-badge {
-            margin-left: auto;
-            background: var(--accent-red);
-            color: #fff;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 800;
-        }
+        .nav-item:hover { background: rgba(59,130,246,0.1); border-color: var(--blue); color: var(--text-white); transform: translateX(4px); }
+        .nav-item.active { background: rgba(59,130,246,0.15); border-color: var(--blue); color: var(--blue); font-weight: 700; }
+        .badge { float: right; background: var(--red); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .sidebar-footer { padding: 20px; border-top: 2px solid var(--border-color); text-align: center; font-size: 0.85rem; color: var(--text-gray); }
         
-        /* MAIN CONTENT */
-        .main-content {
-            flex: 1;
-            margin-left: 0;
-            transition: margin-left 0.3s;
-            min-height: 100vh;
-        }
-        .main-content.sidebar-open { margin-left: 260px; }
+        /* MAIN */
+        .main-content { flex: 1; margin-left: 260px; transition: margin-left 0.3s; min-height: 100vh; }
+        .main-content.full { margin-left: 0; }
         
-        .top-header {
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-color);
+        .header {
+            background: var(--bg-card);
+            border-bottom: 2px solid var(--border-color);
             padding: 18px 28px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             position: sticky;
-            top: 0;
-            z-index: 100;
+            top: 0; z-index: 50;
         }
-        .header-left { display: flex; align-items: center; gap: 18px; }
-        .menu-toggle {
-            width: 44px; height: 44px;
+        .menu-btn {
+            width: 46px; height: 46px;
+            background: var(--bg-input);
+            border: 2px solid var(--border-color);
             border-radius: 12px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            cursor: pointer;
+            color: var(--text-white);
             font-size: 1.4rem;
-        }
-        .header-title { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); }
-        .header-right { display: flex; align-items: center; gap: 12px; }
-        .header-action {
-            width: 44px; height: 44px;
-            border-radius: 12px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
             cursor: pointer;
-            font-size: 1.25rem;
         }
+        .menu-btn:hover { background: var(--blue); border-color: var(--blue); }
+        .page-title { font-size: 1.4rem; font-weight: 800; }
         
         /* PAGES */
-        .page {
-            display: none;
-            padding: 28px;
-            min-height: calc(100vh - 85px);
-            animation: fadeIn 0.3s ease;
-        }
+        .page { display: none; padding: 32px; animation: fadeIn 0.3s; }
         .page.active { display: block !important; }
         @keyframes fadeIn { from{opacity:0} to{opacity:1} }
         
         /* BUTTONS */
         .btn {
-            padding: 13px 22px;
-            border: none;
-            border-radius: 12px;
-            font-size: 0.92rem;
-            font-weight: 700;
-            cursor: pointer;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 9px;
+            gap: 10px;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
             transition: all 0.2s;
+            user-select: none;
         }
-        .btn:hover { transform: translateY(-2px); }
-        .btn:active { transform: scale(0.98); }
-        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
-        .btn-success { background: #22c55e; color: #fff; }
-        .btn-danger { background: #ef4444; color: #fff; }
-        .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); }
-        .btn-sm { padding: 9px 16px; font-size: 0.84rem; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .btn-primary { background: linear-gradient(135deg, var(--blue), #2563eb); color: white; }
+        .btn-success { background: linear-gradient(135deg, var(--green), #16a34a); color: white; }
+        .btn-danger { background: linear-gradient(135deg, var(--red), #dc2626); color: white; }
+        .btn-secondary { background: var(--bg-input); color: var(--text-white); border: 2px solid var(--border-color); }
+        .btn-sm { padding: 10px 18px; font-size: 0.9rem; }
         
         /* CARDS */
-        .card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 18px;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-        .card-header {
-            padding: 20px 26px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
-        .card-body { padding: 26px; }
+        .card { background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 16px; margin-bottom: 24px; overflow: hidden; }
+        .card-header { padding: 20px 24px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .card-title { font-size: 1.15rem; font-weight: 800; }
+        .card-body { padding: 24px; }
         
-        /* PROJECT LIST - ENHANCED */
-        .project-list { display: flex; flex-direction: column; gap: 14px; }
-        .project-item {
-            background: var(--bg-tertiary);
+        /* STATS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 16px; padding: 20px; text-align: center; }
+        .stat-value { font-size: 2.5rem; font-weight: 900; }
+        .stat-label { color: var(--text-gray); font-size: 0.9rem; margin-top: 8px; text-transform: uppercase; }
+        
+        /* PROJECT LIST */
+        .project-list { display: flex; flex-direction: column; gap: 16px; }
+        .project-card {
+            background: var(--bg-input);
             border: 2px solid var(--border-color);
             border-radius: 16px;
-            padding: 22px;
+            padding: 24px;
             cursor: pointer;
-            transition: all 0.25s ease;
+            transition: all 0.25s;
             display: flex;
             align-items: center;
-            gap: 18px;
-            position: relative;
-            overflow: hidden;
+            gap: 20px;
         }
-        .project-item::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 4px;
-            background: var(--accent-blue);
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .project-item:hover {
-            border-color: var(--accent-blue) !important;
-            transform: translateX(8px);
-            box-shadow: 0 8px 24px rgba(59,130,246,0.2);
-        }
-        .project-item:hover::before { opacity: 1; }
-        .project-item.selected {
-            border-color: var(--accent-green) !important;
-            background: rgba(34,197,94,0.08);
-        }
-        .project-item.selected::before { background: var(--accent-green); opacity: 1; }
+        .project-card:hover { border-color: var(--blue); transform: translateX(8px); }
+        .project-icon { font-size: 3rem; }
+        .project-info { flex: 1; }
+        .project-name { font-size: 1.2rem; font-weight: 800; margin-bottom: 6px; }
+        .project-meta { color: var(--text-gray); font-size: 0.95rem; }
         
-        .project-icon { font-size: 2.5rem; z-index: 1; }
-        .project-info { flex: 1; min-width: 0; z-index: 1; }
-        .project-name { 
-            font-weight: 800; 
-            font-size: 1.15rem; 
-            color: var(--text-primary); 
-            margin-bottom: 4px;
-        }
-        .project-meta { font-size: 0.87rem; color: var(--text-secondary); }
-        .project-arrow {
-            font-size: 1.5rem;
-            color: var(--text-muted);
-            transition: transform 0.2s;
-            z-index: 1;
-        }
-        .project-item:hover .project-arrow { transform: translateX(4px); }
-        
-        .progress-ring { position: relative; width: 76px; height: 76px; z-index: 1; }
-        .progress-ring svg { transform: rotate(-90deg); }
-        .progress-ring-circle { fill: none; stroke: var(--border-color); stroke-width: 8; }
-        .progress-ring-progress { fill: none; stroke: var(--accent-blue); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.5s; }
-        .progress-ring-text {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%,-50%);
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: var(--text-primary);
-        }
-        
-        /* PROJECT DETAIL CARD */
-        .project-detail-card {
-            background: linear-gradient(135deg, rgba(34,197,94,0.05), transparent);
-            border: 2px solid var(--accent-green);
-            border-radius: 20px;
-            margin-top: 24px;
-            overflow: hidden;
-            animation: slideUp 0.4s ease;
-            box-shadow: 0 10px 40px rgba(34,197,94,0.15);
-        }
-        @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-        
-        .detail-header {
-            background: var(--bg-secondary);
-            padding: 24px 28px;
-            border-bottom: 1px solid var(--border-color);
+        /* PANEL DETAIL */
+        .panel-detail { margin-top: 32px; border: 2px solid var(--purple); border-radius: 16px; overflow: hidden; }
+        .panel-detail-header {
+            background: linear-gradient(135deg, rgba(139,92,246,0.2), transparent);
+            padding: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 2px solid var(--border-color);
         }
-        .detail-title {
-            font-size: 1.3rem;
-            font-weight: 900;
-            color: var(--accent-green);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .detail-actions { display: flex; gap: 10px; }
+        .panel-detail-title { font-size: 1.4rem; font-weight: 800; color: var(--purple); }
+        .panel-stats { display: flex; gap: 20px; }
+        .panel-stat { text-align: center; }
+        .panel-stat-value { font-size: 1.5rem; font-weight: 900; color: var(--purple); }
+        .panel-stat-label { font-size: 0.85rem; color: var(--text-gray); }
         
-        .detail-body { padding: 28px; }
+        /* STEPS GRID */
+        .steps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; padding: 24px; }
         
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 28px;
-        }
-        .stat-box {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+        /* STEP CARD */
+        .step-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
             border-radius: 14px;
             padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s;
+        }
+        .step-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--border-color);
+        }
+        .step-card[data-status="active"]::before { background: var(--blue); }
+        .step-card[data-status="done"]::before { background: var(--green); }
+        .step-card:hover { border-color: var(--blue); transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        
+        .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; cursor: pointer; }
+        .step-icon { font-size: 1.8rem; }
+        .step-name { flex: 1; font-weight: 700; font-size: 1.05rem; }
+        .step-status-dot {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: var(--text-gray);
+        }
+        .step-status-dot.active { background: var(--blue); animation: pulse 2s infinite; }
+        .step-status-dot.done { background: var(--green); }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        
+        /* STEP NOTE */
+        .step-note-area { margin: 14px 0; }
+        .step-note-label { font-size: 0.85rem; color: var(--text-gray); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+        .step-note-textarea {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-white);
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 70px;
+            font-family: inherit;
+        }
+        .step-note-textarea:focus { outline: none; border-color: var(--yellow); }
+        
+        /* FILE UPLOAD AREA */
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
             text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+            margin: 14px 0;
+        }
+        .file-upload-area:hover, .file-upload-area.dragover {
+            border-color: var(--blue);
+            background: rgba(59,130,246,0.05);
+        }
+        .upload-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .upload-text { font-weight: 600; margin-bottom: 4px; }
+        .upload-hint { font-size: 0.85rem; color: var(--text-gray); }
+        
+        /* FILE THUMBNAILS */
+        .files-container { margin: 14px 0; }
+        .files-label { font-size: 0.85rem; color: var(--text-gray); font-weight: 700; margin-bottom: 10px; }
+        .files-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        .file-item {
+            width: 80px; height: 80px;
+            border-radius: 10px;
+            background: var(--bg-dark);
+            border: 2px solid var(--border-color);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
             transition: all 0.2s;
         }
-        .stat-box:hover {
-            border-color: var(--accent-blue);
-            transform: translateY(-4px);
-        }
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 900;
-            margin-bottom: 6px;
-        }
-        .stat-label {
-            font-size: 0.82rem;
-            color: var(--text-secondary);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .file-item:hover { border-color: var(--blue); transform: scale(1.08); z-index: 10; }
+        .file-item img { width: 100%; height: 100%; object-fit: cover; }
+        .file-placeholder {
+            width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+            background: var(--bg-input);
         }
         
-        /* PANEL LIST */
-        .panel-list { display: flex; flex-direction: column; gap: 14px; margin-top: 20px; }
-        .panel-item {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            overflow: hidden;
-            transition: all 0.3s;
-        }
-        .panel-item:hover { border-color: var(--accent-purple); }
-        .panel-header {
-            padding: 18px 20px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
+        /* DELETE BUTTON ON FILE */
+        .file-delete-btn {
+            position: absolute;
+            top: 3px; right: 3px;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: var(--red);
+            color: white;
+            border: none;
+            font-size: 12px;
+            font-weight: bold;
             cursor: pointer;
-            background: linear-gradient(135deg, rgba(139,92,246,0.08), transparent);
-            transition: background 0.2s;
-        }
-        .panel-header:hover { background: linear-gradient(135deg, rgba(139,92,246,0.15), transparent); }
-        .panel-icon {
-            width: 48px; height: 48px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            opacity: 0;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            flex-shrink: 0;
+            z-index: 20;
         }
-        .panel-info { flex: 1; min-width: 0; }
-        .panel-name { font-weight: 800; font-size: 1rem; color: var(--text-primary); margin-bottom: 4px; }
-        .panel-meta { font-size: 0.82rem; color: var(--text-secondary); display: flex; gap: 12px; flex-wrap: wrap; }
-        .panel-expand-icon {
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            transition: transform 0.3s;
-        }
-        .panel-item.expanded .panel-expand-icon { transform: rotate(180deg); }
-        .panel-content {
-            display: none;
-            border-top: 1px solid var(--border-color);
-            background: rgba(255,255,255,0.02);
-            animation: fadeIn 0.3s;
-        }
-        .panel-item.expanded .panel-content { display: block; }
-        .panel-body { padding: 20px; }
+        .file-item:hover .file-delete-btn { opacity: 1; }
+        .file-delete-btn:hover { background: #dc2626; transform: scale(1.15); }
         
-        /* EMPTY STATE */
-        .empty-state {
-            text-align: center;
-            padding: 60px 24px;
-            color: var(--text-secondary);
+        /* CAPTION INPUT */
+        .file-caption {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            font-size: 0.7rem;
+            padding: 3px 6px;
+            border: none;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        .empty-state-icon { font-size: 4rem; margin-bottom: 16px; opacity: 0.45; }
-        .empty-state-title { font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; }
-        .empty-state-text { font-size: 0.94rem; color: var(--text-muted); }
+        .file-item:hover .file-caption { opacity: 1; }
+        .file-caption:focus { outline: none; background: var(--blue); }
         
-        /* TOAST */
-        .toast-container {
-            position: fixed;
-            top: 90px; right: 24px;
-            z-index: 3000;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .toast {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            padding: 16px 22px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            font-size: 0.9rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            min-width: 280px;
-            max-width: 400px;
+        /* ADD FILE BUTTON */
+        .add-file-btn {
+            width: 80px; height: 80px;
+            border-radius: 10px;
+            border: 2px dashed var(--border-color);
             display: flex;
             align-items: center;
-            gap: 12px;
-            animation: slideInRight 0.3s;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--text-gray);
+            cursor: pointer;
+            transition: all 0.2s;
+            background: transparent;
         }
-        .toast.success { border-left: 4px solid #22c55e; }
-        .toast.error { border-left: 4px solid #ef4444; }
-        .toast.warning { border-left: 4px solid #eab308; }
-        .toast.info { border-left: 4px solid #3b82f6; }
-        @keyframes slideInRight { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
+        .add-file-btn:hover { border-color: var(--blue); color: var(--blue); background: rgba(59,130,246,0.1); }
+        
+        /* STEP ACTIONS */
+        .step-actions { display: flex; gap: 8px; margin-top: 16px; }
+        .step-action-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-input);
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .step-action-btn:hover { border-color: var(--blue); color: var(--blue); }
+        .step-action-btn.active-status { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.15); }
         
         /* MODAL */
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92);
-            z-index: 2000;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 9999;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            backdrop-filter: blur(8px);
         }
         .modal-overlay.show { display: flex !important; animation: fadeIn 0.2s; }
         .modal {
-            background: var(--bg-secondary);
-            border-radius: 22px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
             width: 100%;
             max-width: 500px;
             max-height: 90vh;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 30px 80px rgba(0,0,0,0.7);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            overflow-y: auto;
+            z-index: 10000;
+            position: relative;
         }
-        .modal-header {
-            padding: 22px 26px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .modal-title { font-size: 1.15rem; font-weight: 800; color: var(--text-primary); }
-        .modal-close {
-            width: 36px; height: 36px;
+        .modal-header { padding: 24px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 1.2rem; font-weight: 800; }
+        .close-btn {
+            width: 40px; height: 40px;
+            background: var(--bg-input);
+            border: 2px solid var(--border-color);
             border-radius: 10px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
+            color: var(--text-gray);
             font-size: 1.5rem;
             cursor: pointer;
         }
-        .modal-close:hover { background: var(--accent-red); color: #fff; }
-        .modal-body { padding: 26px; overflow-y: auto; flex: 1; }
-        .modal-footer {
-            padding: 18px 26px;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 12px;
-        }
+        .close-btn:hover { background: var(--red); color: white; }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 20px 24px; border-top: 2px solid var(--border-color); display: flex; gap: 12px; justify-content: flex-end; }
         
         .form-group { margin-bottom: 18px; }
-        .form-label {
-            display: block;
-            font-size: 0.87rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-            margin-bottom: 9px;
-        }
+        .form-label { display: block; font-size: 0.9rem; font-weight: 700; color: var(--text-gray); margin-bottom: 8px; }
         .form-input {
-            width: 100%;
-            padding: 13px 16px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            width: 100%; padding: 14px 18px;
+            background: var(--bg-input);
+            border: 2px solid var(--border-color);
             border-radius: 10px;
-            color: var(--text-primary);
-            font-size: 0.94rem;
+            color: var(--text-white);
+            font-size: 1rem;
         }
-        .form-input:focus { outline: none; border-color: var(--accent-blue); }
+        .form-input:focus { outline: none; border-color: var(--blue); }
+        
+        /* TOAST */
+        .toast-container { position: fixed; top: 100px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 12px; }
+        .toast {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-left: 5px solid var(--blue);
+            color: var(--text-white);
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            min-width: 300px;
+            max-width: 450px;
+            animation: slideInRight 0.3s;
+            cursor: pointer;
+        }
+        .toast.success { border-left-color: var(--green); }
+        .toast.error { border-left-color: var(--red); }
+        @keyframes slideInRight { from{transform:translateX(120%)} to{transform:translateX(0)} }
+        
+        /* EMPTY STATE */
+        .empty-state { text-align: center; padding: 60px 24px; color: var(--text-gray); }
+        .empty-icon { font-size: 5rem; margin-bottom: 20px; opacity: 0.4; }
+        .empty-title { font-size: 1.4rem; font-weight: 800; color: var(--text-white); margin-bottom: 12px; }
         
         @media(max-width:768px) {
-            .sidebar { width: 100%; }
-            .main-content.sidebar-open { margin-left: 0; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .steps-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-<div class="app-container" style="display:flex;">
+<div class="app-layout">
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-logo">🏭</div>
-            <div class="sidebar-title">ProdManager v12</div>
+            <div class="logo">🏭</div>
+            <div class="app-title">Production Manager</div>
         </div>
-        <nav class="sidebar-nav">
-            <div class="nav-section">
-                <div class="nav-section-title">Menu</div>
-                <div class="nav-item active" id="nav-dashboard" onclick="switchPage('dashboard')">
-                    <span class="nav-icon">📊</span> Dashboard
-                </div>
-                <div class="nav-item" id="nav-projects" onclick="switchPage('projects')">
-                    <span class="nav-icon">📋</span> Projects
-                    <span class="nav-badge" id="projectBadge">0</span>
-                </div>
-            </div>
+        <nav class="nav-menu">
+            <button class="nav-item active" onclick="showPage('dashboard')">📊 Dashboard</button>
+            <button class="nav-item" onclick="showPage('projects')">📋 Projects <span class="badge" id="projectBadge">0</span></button>
+            <button class="nav-item" onclick="generatePDF()">📄 Export PDF</button>
         </nav>
-        <div style="padding:20px;border-top:1px solid var(--border-color);font-size:0.82rem;color:var(--text-muted);">
-            ⚡ Interactive Fix
-        </div>
+        <div class="sidebar-footer">v12 Complete</div>
     </aside>
 
-    <!-- MAIN -->
+    <!-- MAIN CONTENT -->
     <main class="main-content" id="mainContent">
-        <header class="top-header">
-            <div class="header-left">
-                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-                <h1 class="header-title" id="pageTitle">Dashboard</h1>
-            </div>
-            <div class="header-right">
-                <button class="header-action" onclick="showToast('Settings','info')">⚙️</button>
+        <header class="header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+                <h1 class="page-title" id="pageTitle">Dashboard</h1>
             </div>
         </header>
 
         <!-- DASHBOARD PAGE -->
-        <div class="page active" id="page-dashboard">
-            <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:24px;">📊 Dashboard</h2>
-            
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;">
-                <div class="card" style="padding:24px;text-align:center;">
-                    <div style="font-size:2.5rem;font-weight:900;color:var(--accent-blue);" id="statProjects">0</div>
-                    <div style="color:var(--text-secondary);font-weight:600;margin-top:8px;">Projects</div>
-                </div>
-                <div class="card" style="padding:24px;text-align:center;">
-                    <div style="font-size:2.5rem;font-weight:900;color:var(--accent-purple);" id="statPanels">0</div>
-                    <div style="color:var(--text-secondary);font-weight:600;margin-top:8px;">Panels</div>
-                </div>
-                <div class="card" style="padding:24px;text-align:center;">
-                    <div style="font-size:2.5rem;font-weight:900;color:var(--accent-green);" id="statCompleted">0</div>
-                    <div style="color:var(--text-secondary);font-weight:600;margin-top:8px;">Completed</div>
-                </div>
-                <div class="card" style="padding:24px;text-align:center;">
-                    <div style="font-size:2.5rem;font-weight:900;color:var(--accent-yellow);" id="statProgress">0%</div>
-                    <div style="color:var(--text-secondary);font-weight:600;margin-top:8px;">Avg Progress</div>
-                </div>
+        <div class="page active" id="dashboardPage">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value" id="totalProjects">0</div><div class="stat-label">Projects</div></div>
+                <div class="stat-card"><div class="stat-value" id="totalPanels">0</div><div class="stat-label">Panels</div></div>
+                <div class="stat-card"><div class="stat-value" id="completedPanels">0</div><div class="stat-label">Completed</div></div>
+                <div class="stat-card"><div class="stat-value" id="avgProgress">0%</div><div class="stat-label">Progress</div></div>
             </div>
             
             <div class="card">
                 <div class="card-header"><span class="card-title">⚡ Quick Actions</span></div>
                 <div class="card-body">
-                    <p style="color:var(--text-secondary);margin-bottom:20px;">Click to test functionality:</p>
+                    <p style="color:var(--text-gray);margin-bottom:20px;">Create sample data or start new project:</p>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                        <button class="btn btn-primary" onclick="createSampleProject()">➕ Create Sample Project</button>
-                        <button class="btn btn-success" onclick="testPDF()">📄 Test PDF</button>
+                        <button class="btn btn-primary" onclick="createSampleData()">➕ Create Sample Data</button>
+                        <button class="btn btn-success" onclick="generatePDF()">📄 Generate PDF</button>
                         <button class="btn btn-danger" onclick="clearAllData()">🗑 Clear Data</button>
                     </div>
                 </div>
@@ -562,62 +473,28 @@
         </div>
 
         <!-- PROJECTS PAGE -->
-        <div class="page" id="page-projects">
-            <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:24px;">📋 Projects</h2>
-            
+        <div class="page" id="projectsPage">
             <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
                 <button class="btn btn-primary" onclick="openModal('newProjectModal')">+ New Project</button>
+                <button class="btn btn-success" onclick="generatePDF()">📄 Export PDF</button>
             </div>
             
-            <!-- PROJECT LIST -->
-            <div class="project-list" id="projectListContainer">
-                <div class="empty-state">
-                    <div class="empty-state-icon">📋</div>
-                    <div class="empty-state-title">No Projects Yet</div>
-                    <div class="empty-state-text">Click "Create Sample Project" to get started!</div>
-                </div>
-            </div>
+            <div class="project-list" id="projectListContainer"></div>
             
-            <!-- PROJECT DETAIL (Hidden by default) -->
-            <div class="project-detail-card" id="projectDetailCard" style="display:none;">
-                <div class="detail-header">
-                    <div class="detail-title">
-                        📋 <span id="detailTitle">Project Name</span>
+            <!-- PANEL DETAIL SECTION -->
+            <div class="panel-detail" id="panelDetailSection" style="display:none;">
+                <div class="panel-detail-header">
+                    <div>
+                        <div class="panel-detail-title" id="detailPanelName">Panel Name</div>
+                        <div style="color:var(--text-gray);margin-top:4px;" id="detailPanelSpec">Specification</div>
                     </div>
-                    <div class="detail-actions">
-                        <button class="btn btn-sm btn-secondary" onclick="openModal('newPanelModal')">+ Add Panel</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()">Delete</button>
-                        <button class="btn btn-sm btn-secondary" onclick="closeProjectDetail()">✕ Close</button>
+                    <div class="panel-stats">
+                        <div class="panel-stat"><div class="panel-stat-value" id="detailProgress">0%</div><div class="panel-stat-label">Progress</div></div>
+                        <div class="panel-stat"><div class="panel-stat-value" id="detailFiles">0</div><div class="panel-stat-label">Files</div></div>
                     </div>
                 </div>
-                <div class="detail-body">
-                    <!-- Stats Grid -->
-                    <div class="stats-grid">
-                        <div class="stat-box">
-                            <div class="stat-value" style="color:var(--accent-purple);" id="detailPanelsCount">0</div>
-                            <div class="stat-label">Total Panels</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value" style="color:var(--accent-green);" id="detailCompletedCount">0</div>
-                            <div class="stat-label">Completed</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value" style="color:var(--accent-blue);" id="detailActiveCount">0</div>
-                            <div class="stat-label">In Progress</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value" id="detailProgressCount">0%</div>
-                            <div class="stat-label">Overall Progress</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Panel List in Detail -->
-                    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
-                        📦 Panels
-                        <span style="font-size:0.85rem;color:var(--text-muted);font-weight:normal;">(Click panel to expand)</span>
-                    </h3>
-                    <div class="panel-list" id="panelListContainer"></div>
-                </div>
+                
+                <div class="steps-grid" id="stepsGridContainer"></div>
             </div>
         </div>
     </main>
@@ -626,371 +503,403 @@
 <!-- MODALS -->
 <div class="modal-overlay" id="newProjectModal">
     <div class="modal">
-        <div class="modal-header"><span class="modal-title">➕ New Project</span><button class="modal-close" onclick="closeModal('newProjectModal')">&times;</button></div>
+        <div class="modal-header"><span class="modal-title">➕ New Project</span><button class="close-btn" onclick="closeModal('newProjectModal')">×</button></div>
         <div class="modal-body">
-            <div class="form-group"><label class="form-label">Order Number *</label><input type="text" class="form-input" id="inputOrder" placeholder="PO-2024-001" value=""></div>
-            <div class="form-group"><label class="form-label">Customer</label><input type="text" class="form-input" id="inputCustomer" placeholder="PT. Example" value=""></div>
-            <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="inputDesc" placeholder="Description..." rows="3"></textarea></div>
+            <div class="form-group"><label class="form-label">Order Number *</label><input type="text" class="form-input" id="inputOrder" placeholder="PO-2024-001"></div>
+            <div class="form-group"><label class="form-label">Customer</label><input type="text" class="form-input" id="inputCustomer" placeholder="PT. Example"></div>
+            <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="inputDesc" rows="3" placeholder="Description..."></textarea></div>
         </div>
-        <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('newProjectModal')">Cancel</button><button class="btn btn-primary" onclick="saveNewProject()">Create Project</button></div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('newProjectModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveNewProject()">Create</button>
+        </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="newPanelModal">
-    <div class="modal">
-        <div class="modal-header"><span class="modal-title">📦 Add Panel</span><button class="modal-close" onclick="closeModal('newPanelModal')">&times;</button></div>
-        <div class="modal-body">
-            <div class="form-group"><label class="form-label">Panel Name *</label><input type="text" class="form-input" id="inputPanelName" placeholder="MDP 1600A" value=""></div>
-            <div class="form-group"><label class="form-label">Specification</label><input type="text" class="form-input" id="inputPanelSpec" placeholder="3 Phase, 400V" value=""></div>
-        </div>
-        <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('newPanelModal')">Cancel</button><button class="btn btn-primary" onclick="saveNewPanel()">Add Panel</button></div>
+<div class="modal-overlay" id="imageViewerModal">
+    <div style="position:relative;width:100%;max-width:90vw;">
+        <button class="close-btn" style="position:absolute;top:-45px;right:0;" onclick="closeModal('imageViewerModal')">×</button>
+        <img id="viewerImage" src="" style="width:100%;max-height:85vh;object-fit:contain;border-radius:12px;">
     </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
+// ==================== CONSTANTS ====================
+const PROCESS_STEPS = [
+    {id:'drawing', name:'Drawing / Gambar', icon:'📐'},
+    {id:'preparation', name:'Preparation / Persiapan', icon:'📦'},
+    {id:'assembly', name:'Assembly / Perakitan', icon:'🔧'},
+    {id:'wiring', name:'Wiring / Kabel', icon:'🔌'},
+    {id:'finishing', name:'Finishing / Finishing', icon:'✨'},
+    {id:'qc', name:'Quality Control / QC', icon:'✅'}
+];
+
 // ==================== STATE ====================
-let state = {
+let appState = {
     projects: [],
-    currentProjectId: null,
+    selectedProjectId: null,
+    selectedPanelId: null,
     db: null
 };
 
-const DB_NAME = 'ProdManagerDB_Fix';
-const DB_VERSION = 1;
-
-console.log('🚀 [APP] Starting...');
+const DB_NAME = 'ProdManagerDB_Complete';
+let DB;
 
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('✅ [APP] DOM Ready');
     initDB();
 });
 
 function initDB() {
-    console.log('💾 [DB] Opening database...');
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    
-    req.onerror = (e) => console.error('❌ [DB] Error:', e.target.error);
-    req.onsuccess = (e) => {
-        state.db = e.target.result;
-        console.log('✅ [DB] Connected!');
-        loadProjects(() => updateUI());
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onerror = () => showToast('DB Error!', 'error');
+    request.onsuccess = (e) => {
+        DB = e.target.result;
+        loadProjects();
     };
-    req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains('projects')) {
-            db.createObjectStore('projects', { keyPath: 'id' });
+    request.onupgradeneeded = (e) => {
+        if (!e.target.result.objectStoreNames.contains('projects')) {
+            e.target.result.createObjectStore('projects', { keyPath: 'id' });
         }
     };
 }
 
-// ==================== DATABASE ====================
+function loadProjects() {
+    if (!DB) return;
+    const tx = DB.transaction(['projects'], 'readonly');
+    tx.objectStore('projects').getAll().onsuccess = (e) => {
+        appState.projects = e.target.result || [];
+        updateUI();
+    };
+}
+
 function saveProject(proj, cb) {
-    if (!state.db) return cb && cb();
-    const tx = state.db.transaction(['projects'], 'readwrite');
+    if (!DB) return;
+    const tx = DB.transaction(['projects'], 'readwrite');
     tx.objectStore('projects').put(proj);
-    tx.oncomplete = () => { console.log('💾 Saved:', proj.id); if(cb) cb(); };
-}
-
-function getProjects(cb) {
-    if (!state.db) return cb && cb([]);
-    const req = state.db.transaction(['projects'], 'readonly').objectStore('projects').getAll();
-    req.onsuccess = (e) => cb(e.target.result || []);
-}
-
-function loadProjects(cb) {
-    getProjects((projs) => {
-        state.projects = projs || [];
-        console.log(`📂 Loaded ${state.projects.length} projects`);
-        if (cb) cb();
-    });
+    tx.oncomplete = cb || (()=>{});
 }
 
 // ==================== NAVIGATION ====================
-function switchPage(page) {
-    console.log(`📍 Switching to: ${page}`);
-    
-    // Update nav items
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    const navEl = document.getElementById('nav-' + page);
-    if (navEl) navEl.classList.add('active');
-    
-    // Show/hide pages
+function showPage(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const pageEl = document.getElementById('page-' + page);
-    if (pageEl) pageEl.classList.add('active');
-    
-    // Update title
+    document.getElementById(page+'Page').classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelector(`.nav-item[onclick*="${page}"]`)?.classList.add('active');
     document.getElementById('pageTitle').textContent = page === 'dashboard' ? '📊 Dashboard' : '📋 Projects';
-    
-    // Render content
-    if (page === 'dashboard') renderDashboard();
-    else if (page === 'projects') renderProjectsPage();
+    updateUI();
 }
 
 function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('open');
-    document.getElementById('mainContent').classList.toggle('sidebar-open');
+    document.getElementById('sidebar').classList.toggle('hidden');
+    document.getElementById('mainContent').classList.toggle('full');
 }
 
-// ==================== RENDER FUNCTIONS ====================
+// ==================== UI UPDATE ====================
 function updateUI() {
-    updateStats();
-    renderProjectsList();
-    console.log('🎨 UI Updated');
-}
-
-function updateStats() {
-    let totalP = state.projects.length, totalPan = 0, comp = 0, progSum = 0;
-    
-    state.projects.forEach(p => {
-        totalPan += (p.panels?.length || 0);
-        (p.panels || []).forEach(pa => {
-            const pr = calcPanelProg(pa);
-            progSum += pr;
-            if (pr === 100) comp++;
+    let tProj = appState.projects.length, tPan = 0, comp = 0, totProg = 0;
+    appState.projects.forEach(p => {
+        (p.panels||[]).forEach(pa => {
+            tPan++;
+            let pr = calcPanelProgress(pa);
+            totProg += pr;
+            if(pr === 100) comp++;
         });
     });
-    
-    document.getElementById('statProjects').textContent = totalP;
-    document.getElementById('statPanels').textContent = totalPan;
-    document.getElementById('statCompleted').textContent = comp;
-    document.getElementById('statProgress').textContent = totalPan > 0 ? Math.round(progSum/totalPan)+'%' : '0%';
-    document.getElementById('projectBadge').textContent = totalP;
+    document.getElementById('totalProjects').textContent = tProj;
+    document.getElementById('totalPanels').textContent = tPan;
+    document.getElementById('completedPanels').textContent = comp;
+    document.getElementById('avgProgress').textContent = tPan ? Math.round(totProg/tPan)+'%' : '0%';
+    document.getElementById('projectBadge').textContent = tProj;
+    renderProjectList();
 }
 
-function renderDashboard() {
-    updateStats();
-}
-
-function renderProjectsPage() {
-    renderProjectsList();
-    // Keep detail visible if a project is selected
-    if (state.currentProjectId) {
-        showProjectDetail(state.currentProjectId);
-    }
-}
-
-function renderProjectsList() {
+function renderProjectList() {
     const container = document.getElementById('projectListContainer');
-    
-    if (!state.projects.length) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📋</div>
-                <div class="empty-state-title">No Projects Yet</div>
-                <div class="empty-state-text">Click "Create Sample Project"!</div>
-            </div>`;
+    if (!appState.projects.length) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No Projects</div><button class="btn btn-primary" style="margin-top:20px;" onclick="createSampleData()">➕ Create Sample</button></div>`;
         return;
     }
-    
-    container.innerHTML = state.projects.map(p => {
-        const prog = calcProjProg(p);
-        const circ = 2 * Math.PI * 32;
-        const offset = circ - (prog/100)*circ;
-        const isSelected = p.id === state.currentProjectId;
-        
-        return `
-        <div class="project-item ${isSelected ? 'selected' : ''}" 
-             onclick="handleProjectClick('${p.id}', event)"
-             data-id="${p.id}">
+    container.innerHTML = appState.projects.map(p => {
+        const prog = calcProjectProgress(p);
+        return `<div class="project-card" onclick="selectProject('${p.id}')">
             <div class="project-icon">📋</div>
             <div class="project-info">
-                <div class="project-name">${escHtml(p.order)}</div>
-                <div class="project-meta">${escHtml(p.customer||'-')} • ${(p.panels||[]).length} panels</div>
+                <div class="project-name">${esc(p.order)}</div>
+                <div class="project-meta">${esc(p.customer||'-')} • ${(p.panels||[]).length} panels</div>
             </div>
-            <div class="progress-ring">
-                <svg width="76" height="76">
-                    <circle class="progress-ring-circle" cx="38" cy="38" r="32"/>
-                    <circle class="progress-ring-progress" cx="38" cy="38" r="32" 
-                            style="stroke-dasharray:${circ};stroke-dashoffset:${offset};"/>
-                </svg>
-                <div class="progress-ring-text">${prog}%</div>
-            </div>
-            <div class="project-arrow">→</div>
+            <div style="font-size:1.8rem;font-weight:900;color:${prog===100?'var(--green)':'var(--blue)'};">${prog}%</div>
         </div>`;
     }).join('');
-    
-    console.log(`🎨 Rendered ${state.projects.length} projects`);
 }
 
-// ==================== PROJECT CLICK HANDLER ====================
-function handleProjectClick(projectId, event) {
-    console.log('🖱️ [CLICK] Project clicked:', projectId);
-    event.stopPropagation();
-    
-    // Visual feedback
-    document.querySelectorAll('.project-item').forEach(el => el.classList.remove('selected'));
-    const clickedEl = document.querySelector(`.project-item[data-id="${projectId}"]`);
-    if (clickedEl) clickedEl.classList.add('selected');
-    
-    // Show detail
-    showProjectDetail(projectId);
+function selectProject(pid) {
+    appState.selectedProjectId = pid;
+    showPage('projects');
+    document.getElementById('panelDetailSection').style.display = 'none';
 }
 
-function showProjectDetail(projectId) {
-    console.log('📂 Showing detail for:', projectId);
+// ==================== PANEL DETAIL WITH STEPS ====================
+function showPanelDetail(panelId) {
+    appState.selectedPanelId = panelId;
+    const proj = appState.projects.find(p => p.id === appState.selectedProjectId);
+    const panel = proj?.panels?.find(p => p.id === panelId);
+    if (!panel) return;
     
-    state.currentProjectId = projectId;
-    const project = state.projects.find(p => p.id === projectId);
+    document.getElementById('detailPanelName').textContent = panel.name;
+    document.getElementById('detailPanelSpec').textContent = panel.spec || '-';
+    document.getElementById('detailProgress').textContent = calcPanelProgress(panel) + '%';
     
-    if (!project) {
-        console.error('❌ Project not found:', projectId);
-        showToast('Project not found!', 'error');
-        return;
-    }
+    // Count total files
+    let totalFiles = 0;
+    Object.values(panel.steps||{}).forEach(s => totalFiles += (s.files||[]).length);
+    document.getElementById('detailFiles').textContent = totalFiles;
     
-    // Update detail header
-    document.getElementById('detailTitle').textContent = project.order;
+    document.getElementById('panelDetailSection').style.display = 'block';
+    document.getElementById('panelDetailSection').scrollIntoView({behavior:'smooth'});
     
-    // Calculate stats
-    const panels = project.panels || [];
-    let completed = 0, active = 0;
-    panels.forEach(p => {
-        const pr = calcPanelProg(p);
-        if (pr === 100) completed++;
-        else if (pr > 0) active++;
-    });
-    
-    // Update stat boxes
-    document.getElementById('detailPanelsCount').textContent = panels.length;
-    document.getElementById('detailCompletedCount').textContent = completed;
-    document.getElementById('detailActiveCount').textContent = active;
-    document.getElementById('detailProgressCount').textContent = calcProjProg(project) + '%';
-    
-    // Render panels
-    renderPanelsInDetail(project);
-    
-    // SHOW the detail card with animation
-    const detailCard = document.getElementById('projectDetailCard');
-    detailCard.style.display = 'block';
-    
-    // Scroll into view
-    setTimeout(() => {
-        detailCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-    
-    showToast(`Opened: ${project.order}`, 'success');
-    console.log('✅ Detail shown successfully');
+    renderSteps(panel);
 }
 
-function closeProjectDetail() {
-    console.log('✕ Closing project detail');
-    state.currentProjectId = null;
-    document.getElementById('projectDetailCard').style.display = 'none';
-    document.querySelectorAll('.project-item').forEach(el => el.classList.remove('selected'));
-    showToast('Detail closed', 'info');
-}
-
-function renderPanelsInDetail(project) {
-    const container = document.getElementById('panelListContainer');
-    const panels = project.panels || [];
-    
-    if (!panels.length) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📦</div><div class="empty-state-title">No Panels</div><div class="empty-state-text">Click "Add Panel"</div></div>`;
-        return;
-    }
-    
-    container.innerHTML = panels.map(panel => {
-        const prog = calcPanelProg(panel);
-        const circ = 2 * Math.PI * 24;
-        const off = circ - (prog/100)*circ;
+function renderSteps(panel) {
+    const container = document.getElementById('stepsGridContainer');
+    container.innerHTML = PROCESS_STEPS.map(stepDef => {
+        const step = panel.steps?.[stepDef.id] || {status:'pending', files:[], note:''};
+        const files = step.files || [];
+        const fileCount = files.length;
         
         return `
-        <div class="panel-item" onclick="togglePanel(this)">
-            <div class="panel-header">
-                <div class="panel-icon">📦</div>
-                <div class="panel-info">
-                    <div class="panel-name">${escHtml(panel.name)}</div>
-                    <div class="panel-meta">
-                        <span>${escHtml(panel.spec||'-')}</span>
-                        <span>Progress: ${prog}%</span>
+        <div class="step-card" data-status="${step.status}" id="step-${panel.id}-${stepDef.id}">
+            <div class="step-header" onclick="toggleStepExpand('${panel.id}','${stepDef.id}')">
+                <span class="step-icon">${stepDef.icon}</span>
+                <span class="step-name">${stepDef.name}</span>
+                <div class="step-status-dot ${step.status}"></div>
+            </div>
+            
+            <!-- NOTE AREA -->
+            <div class="step-note-area">
+                <div class="step-note-label">📝 Catatan / Notes</div>
+                <textarea class="step-note-textarea" 
+                          placeholder="Tambah catatan untuk step ini..."
+                          onblur="saveStepNote('${panel.id}','${stepDef.id}',this.value)">${esc(step.note)}</textarea>
+            </div>
+            
+            <!-- FILES AREA -->
+            <div class="files-container">
+                <div class="files-label">📎 Files/Foto (${fileCount})</div>
+                <div class="files-grid">
+                    ${files.map((f, idx) => `
+                    <div class="file-item" title="${esc(f.caption||f.name)}">
+                        ${f.type?.startsWith('image/') ? 
+                            `<img src="${f.data}" loading="lazy" onclick="viewImage('${f.data}')">` :
+                            `<div class="file-placeholder" onclick="viewImage('${f.data}')">${getFileIcon(f.type)}</div>`
+                        }
+                        <button class="file-delete-btn" onclick="event.stopPropagation();deleteFile('${panel.id}','${stepDef.id}','${f.id}')">×</button>
+                        <input type="text" class="file-caption" 
+                               placeholder="Keterangan..."
+                               value="${esc(f.caption||'')}"
+                               onclick="event.stopPropagation()"
+                               onchange="saveCaption('${panel.id}','${stepDef.id}','${f.id}',this.value)">
                     </div>
-                </div>
-                <div class="panel-expand-icon">▼</div>
-            </div>
-            <div class="panel-content">
-                <div class="panel-body">
-                    <p style="color:var(--text-secondary);font-size:0.9rem;">
-                        Panel details would appear here...
-                    </p>
+                    `).join('')}
+                    
+                    <div class="add-file-btn" onclick="triggerUpload('${panel.id}','${stepDef.id}')">+</div>
                 </div>
             </div>
-        </div>`;
+            
+            <!-- UPLOAD ZONE -->
+            <div class="file-upload-area"
+                 onclick="triggerUpload('${panel.id}','${stepDef.id}')"
+                 ondragover="e=>{e.preventDefault();this.classList.add('dragover')}"
+                 ondragleave="e=>{e.preventDefault();this.classList.remove('dragover')}"
+                 ondrop="e=>{e.preventDefault();this.classList.remove('dragover');handleDrop(e,'${panel.id}','${stepDef.id}')}">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Klik atau drag file ke sini</div>
+                <div class="upload-hint">Foto, PDF, Word, Excel (Max 10MB)</div>
+            </div>
+            
+            <input type="file" id="file-${panel.id}-${stepDef.id}" 
+                   style="display:none"
+                   accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                   multiple
+                   onchange="handleFiles('${panel.id}','${stepDef.id}',this)">
+            
+            <!-- ACTIONS -->
+            <div class="step-actions">
+                <button class="step-action-btn ${step.status==='done'?'active-status':''}" 
+                        onclick="setStepStatus('${panel.id}','${stepDef.id}','done')"
+                        ${fileCount===0?'title="Upload file dulu!"':''}>
+                    ✅ Selesai
+                </button>
+                <button class="step-action-btn" 
+                        onclick="setStepStatus('${panel.id}','${stepDef.id}','active')">
+                    ▶ Proses
+                </button>
+            </div>
+        </div>
+        `;
     }).join('');
 }
 
-function togglePanel(panelEl) {
-    panelEl.classList.toggle('expanded');
-    console.log('🔄 Panel toggled');
+function toggleStepExpand(pid, sid) {
+    // Could expand/collapse step details
+    console.log('Toggle step:', pid, sid);
 }
 
-// ==================== PROGRESS CALCULATIONS ====================
-function calcPanelProg(panel) {
-    if (!panel?.steps) return 0;
-    const steps = Object.values(panel.steps);
-    if (!steps.length) return 0;
-    return Math.round((steps.filter(s=>s.status==='done').length/steps.length)*100);
+// ==================== STEP ACTIONS ====================
+function saveStepNote(pid, sid, note) {
+    const proj = getProject();
+    const panel = proj?.panels?.find(p => p.id === pid);
+    if (panel?.steps?.[sid]) {
+        panel.steps[sid].note = note;
+        saveProject(proj);
+        showToast('💾 Catatan disimpan!', 'success');
+    }
 }
 
-function calcProjProg(project) {
-    if (!project?.panels?.length) return 0;
-    return Math.round(project.panels.reduce((s,p)=>s+calcPanelProg(p),0)/project.panels.length);
-}
-
-// ==================== CRUD OPERATIONS ====================
-function createSampleProject() {
-    console.log('➕ Creating sample project...');
+function setStepStatus(pid, sid, status) {
+    const proj = getProject();
+    const panel = proj?.panels?.find(p => p.id === pid);
+    const step = panel?.steps?.[sid];
     
-    const sample = {
-        id: 'proj_' + Date.now(),
-        order: 'PO-SAMPLE-' + Math.floor(Math.random()*1000),
-        customer: 'PT. Test Company',
-        description: 'Sample project for testing',
-        createdAt: new Date().toISOString(),
-        panels: [
-            {
-                id: 'pan_' + Date.now() + '_1',
-                name: 'MDP Main Distribution Panel',
-                spec: '3 Phase, 400V, 2500A',
-                quantity: 2,
-                steps: {
-                    drawing: {status:'done', files:[], note:'Approved'},
-                    preparation: {status:'done', files:[], note:'Ready'},
-                    assembly: {status:'active', files:[], note:'In progress'},
-                    wiring: {status:'pending', files:[], note:''},
-                    finishing: {status:'pending', files:[], note:''},
-                    qc: {status:'pending', files:[], note:''}
-                }
-            },
-            {
-                id: 'pan_' + Date.now() + '_2',
-                name: 'MCC Motor Control Center',
-                spec: '3 Phase, 400V, 1600A',
-                quantity: 1,
-                steps: {
-                    drawing: {status:'done', files:[], note:''},
-                    preparation: {status:'pending', files:[], note:''},
-                    assembly: {status:'pending', files:[], note:''},
-                    wiring: {status:'pending', files:[], note:''},
-                    finishing: {status:'pending', files:[], note:''},
-                    qc: {status:'pending', files:[], note:''}
-                }
+    if (status === 'done' && (!step?.files?.length)) {
+        showToast('⚠️ Upload minimal 1 file sebelum mark Selesai!', 'warning');
+        return;
+    }
+    
+    if (step) {
+        step.status = status;
+        saveProject(proj, () => {
+            showPanelDetail(pid);
+            showToast(`Status: ${status.toUpperCase()} ✅`, 'success');
+        });
+    }
+}
+
+// ==================== FILE OPERATIONS ====================
+function triggerUpload(pid, sid) {
+    document.getElementById(`file-${pid}-${sid}`).click();
+}
+
+function handleFiles(pid, sid, input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    
+    const proj = getProject();
+    const panel = proj?.panels?.find(p => p.id === pid);
+    if (!panel) return;
+    
+    let processed = 0;
+    showToast(`📤 Mengupload ${files.length} file...`, 'info');
+    
+    files.forEach(file => {
+        if (file.size > 10*1024*1024) {
+            showToast(`${file.name} terlalu besar!`, 'error');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const fileData = {
+                id: 'f_'+Date.now()+Math.random().toString(36).substr(2,9),
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                data: e.target.result,
+                caption: '',
+                uploadedAt: new Date().toISOString()
+            };
+            
+            if (!panel.steps[sid].files) panel.steps[sid].files = [];
+            panel.steps[sid].files.push(fileData);
+            
+            if (++processed === files.length) {
+                saveProject(proj, () => {
+                    showPanelDetail(pid);
+                    showToast(`✅ ${processed} file berhasil diupload!`, 'success');
+                });
             }
-        ]
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function handleDrop(e, pid, sid) {
+    e.preventDefault();
+    const dt = new DataTransfer();
+    if (e.dataTransfer.items) {
+        Array.from(e.dataTransfer.items).forEach(item => {
+            if (item.kind === 'file') dt.items.add(item.getAsFile());
+        });
+    }
+    if (dt.files.length) {
+        const input = document.getElementById(`file-${pid}-${sid}`);
+        input.files = dt.files;
+        handleFiles(pid, sid, input);
+    }
+}
+
+function saveCaption(pid, sid, fid, caption) {
+    const proj = getProject();
+    const panel = proj?.panels?.find(p => p.id === pid);
+    const file = panel?.steps?.[sid]?.files?.find(f => f.id === fid);
+    if (file) {
+        file.caption = caption;
+        saveProject(proj);
+        showToast('💬 Keterangan disimpan!', 'success');
+    }
+}
+
+function deleteFile(pid, sid, fid) {
+    if (!confirm('Hapus file ini?')) return;
+    
+    const proj = getProject();
+    const panel = proj?.panels?.find(p => p.id === pid);
+    if (panel?.steps?.[sid]) {
+        const orig = panel.steps[sid].files.length;
+        panel.steps[sid].files = panel.steps[sid].files.filter(f => f.id !== fid);
+        
+        saveProject(proj, () => {
+            showPanelDetail(pid);
+            showToast(`🗑 File dihapus (${orig-1} tersisa)`, 'info');
+        });
+    }
+}
+
+function viewImage(src) {
+    document.getElementById('viewerImage').src = src;
+    openModal('imageViewerModal');
+}
+
+// ==================== PROJECT CRUD ====================
+function createSampleData() {
+    const proj = {
+        id: 'proj_'+Date.now(),
+        order: 'PO-SAMPLE-'+Math.floor(Math.random()*1000),
+        customer: 'PT. Test Company',
+        description: 'Sample project with complete features',
+        createdAt: new Date().toISOString(),
+        panels: [{
+            id: 'panel_1',
+            name: 'MDP Main Distribution Panel',
+            spec: '3 Phase, 400V, 2500A',
+            quantity: 2,
+            steps: {}
+        }]
     };
     
-    saveProject(sample, () => {
-        loadProjects(() => {
-            updateUI();
-            showToast('✅ Sample project created!', 'success');
-            // Auto-switch to projects page and open it
-            switchPage('projects');
-            setTimeout(() => showProjectDetail(sample.id), 500);
-        });
+    // Initialize all steps
+    PROCESS_STEPS.forEach(s => {
+        proj.panels[0].steps[s.id] = { status: 'pending', files: [], note: '' };
+    });
+    
+    saveProject(proj, () => {
+        appState.projects.push(proj);
+        updateUI();
+        showToast('✅ Sample data created!', 'success');
+        showPage('projects');
     });
 }
 
@@ -999,8 +908,8 @@ function saveNewProject() {
     if (!order) { showToast('Order number required!', 'warning'); return; }
     
     const proj = {
-        id: 'proj_' + Date.now(),
-        order: order,
+        id: 'proj_'+Date.now(),
+        order,
         customer: document.getElementById('inputCustomer').value.trim(),
         description: document.getElementById('inputDesc').value.trim(),
         createdAt: new Date().toISOString(),
@@ -1008,138 +917,180 @@ function saveNewProject() {
     };
     
     saveProject(proj, () => {
+        appState.projects.push(proj);
         closeModal('newProjectModal');
-        loadProjects(() => {
-            updateUI();
-            showToast(`✅ Project "${order}" created!`, 'success');
-            // Clear inputs
-            document.getElementById('inputOrder').value = '';
-            document.getElementById('inputCustomer').value = '';
-            document.getElementById('inputDesc').value = '';
-        });
+        updateUI();
+        showToast(`✅ Project "${order}" created!`, 'success');
+        ['inputOrder','inputCustomer','inputDesc'].forEach(id => document.getElementById(id).value = '');
     });
-}
-
-function saveNewPanel() {
-    const name = document.getElementById('inputPanelName').value.trim();
-    if (!name) { showToast('Panel name required!', 'warning'); return; }
-    if (!state.currentProjectId) { showToast('Select a project first!', 'warning'); return; }
-    
-    const project = state.projects.find(p => p.id === state.currentProjectId);
-    if (!project) return;
-    
-    const panel = {
-        id: 'pan_' + Date.now(),
-        name: name,
-        spec: document.getElementById('inputPanelSpec').value.trim(),
-        quantity: 1,
-        steps: {
-            drawing:{status:'pending',files:[],note:''},
-            preparation:{status:'pending',files:[],note:''},
-            assembly:{status:'pending',files:[],note:''},
-            wiring:{status:'pending',files:[],note:''},
-            finishing:{status:'pending',files:[],note:''},
-            qc:{status:'pending',files:[],note:''}
-        }
-    };
-    
-    if (!project.panels) project.panels = [];
-    project.panels.push(panel);
-    
-    saveProject(project, () => {
-        closeModal('newPanelModal');
-        loadProjects(() => {
-            updateUI();
-            showProjectDetail(project.id);
-            showToast(`✅ Panel "${name}" added!`, 'success');
-            document.getElementById('inputPanelName').value = '';
-            document.getElementById('inputPanelSpec').value = '';
-        });
-    });
-}
-
-function deleteCurrentProject() {
-    if (!confirm('Delete this project?')) return;
-    if (!state.currentProjectId) return;
-    
-    const proj = state.projects.find(p => p.id === state.currentProjectId);
-    if (!proj) return;
-    
-    if (state.db) {
-        const tx = state.db.transaction(['projects'], 'readwrite');
-        tx.objectStore('projects').delete(proj.id);
-        tx.oncomplete = () => {
-            state.projects = state.projects.filter(p => p.id !== proj.id);
-            state.currentProjectId = null;
-            document.getElementById('projectDetailCard').style.display = 'none';
-            updateUI();
-            showToast('🗑 Project deleted!', 'info');
-        };
-    }
 }
 
 function clearAllData() {
-    if (!confirm('Delete ALL data?')) return;
-    if (state.db) {
-        const tx = state.db.transaction(['projects'], 'readwrite');
-        tx.objectStore('projects').clear();
-        tx.oncomplete = () => {
-            state.projects = [];
-            state.currentProjectId = null;
-            document.getElementById('projectDetailCard').style.display = 'none';
-            updateUI();
-            showToast('🗑 All data cleared!', 'warning');
-        };
-    }
+    if(!confirm('Hapus semua data?'))return;
+    if(DB){DB.transaction(['projects'],'readwrite').objectStore('pages').clear();}
+    appState.projects=[];
+    updateUI();
+    showToast('🗑 Data dihapus!', 'warning');
 }
 
-// ==================== PDF TEST ====================
-function testPDF() {
-    showToast('Opening print dialog...', 'info');
-    const win = window.open('', '_blank');
-    win.document.write(`
-        <html><head><title>Test PDF</title></head>
-        <body style="font-family:Arial;padding:40px;text-align:center;">
-            <h1 style="color:#009e4d;">📄 PDF TEST</h1>
-            <p>This is a test to verify PDF generation works.</p>
-            <p>Total Projects: ${state.projects.length}</p>
-            <button onclick="window.print()" style="padding:15px 30px;background:#009e4d;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;margin-top:20px;">Print / Save as PDF</button>
-        </body></html>
-    `);
-    win.document.close();
+function getProject() { return appState.projects.find(p => p.id === appState.selectedProjectId); }
+
+// ==================== PROGRESS CALC ====================
+function calcPanelProgress(panel) {
+    if (!panel?.steps) return 0;
+    const steps = Object.values(panel.steps);
+    if (!steps.length) return 0;
+    return Math.round((steps.filter(s => s.status==='done').length/steps.length)*100);
+}
+
+function calcProjectProgress(proj) {
+    if (!proj?.panels?.length) return 0;
+    return Math.round(proj.panels.reduce((s,p)=>s+calcPanelProgress(p),0)/proj.panels.length);
+}
+
+// ==================== PDF GENERATOR ====================
+function generatePDF() {
+    if (!appState.projects.length) { showToast('Buat project dulu!', 'warning'); return; }
+    
+    showToast('⏳ Generating PDF...', 'info');
+    const proj = appState.projects[0];
+    
+    const printWindow = window.open('','');
+    printWindow.document.write(`
+<!DOCTYPE html><html><head><title>Report-${proj.order}</title>
+<style>
+body{font-family:Arial,sans-serif;padding:30px;color:#222;line-height:1.6;}
+h1{color:#009e4d;text-align:center;font-size:28pt;margin-bottom:8pt;}
+h2{color:#333;border-bottom:3px solid #009e4d;padding-bottom:8pt;margin:25pt 0 15pt;}
+.info-box{background:#f0fdf4;padding:18pt;margin:20pt 0;border-left:5px solid #009e4d;}
+table{width:100%;border-collapse:collapse;margin:15pt 0;font-size:11pt;}
+th{background:#009e4d;color:#fff;padding:10pt;text-align:left;border:1px solid #007a3b;}
+td{padding:10pt;border:1px solid #ddd;vertical-align:top;}
+tr:nth-child(even){background:#f9f9f9;}
+.step-block{margin:18pt 0;border:1px solid #ddd;border-radius:8pt;overflow:hidden;}
+.step-header{background:#f0fdf4;padding:10pt 15pt;font-weight:bold;display:flex;justify-content:space-between;}
+.step-body{padding:15pt;display:flex;gap:20pt;}
+.step-notes{flex:1;background:#fefce8;padding:12pt;border-left:3px solid #eab308;font-size:10pt;line-height:1.6;}
+.step-photos{flex:1;display:flex;flex-wrap:wrap;gap:10pt;justify-content:flex-end;}
+.photo{width:140pt;height:120pt;object-fit:contain;border:1px solid #ccc;padding:3pt;background:#fff;}
+.photo-caption{font-size:8pt;color:#666;text-align:center;margin-top:4pt;font-style:italic;}
+.badge{padding:3pt 10pt;border-radius:12pt;font-size:9pt;font-weight:bold;text-transform:uppercase;}
+.badge-pending{background:#f1f5f9;color:#64748b;}
+.badge-active{background:#dbeafe;color:#2563eb;}
+.badge-done{background:#dcfce7;color:#16a34a;}
+.sig-area{margin-top:50pt;display:flex;justify-content:space-around;}
+.sig-line{border-bottom:2pt solid #000;width:180pt;margin-top:45pt;}
+.footer-bar{height:12pt;background:linear-gradient(90deg,#009e4d,#00c853);margin-top:35pt;}
+</style></head><body>
+
+<h1>${esc(proj.order)}</h1>
+<p style="text-align:center;color:#666;">Customer: ${esc(proj.customer||'-')} | Generated: ${new Date().toLocaleString('id-ID')}</p>
+
+<div class="info-box">
+<strong>Description:</strong> ${esc(proj.description||'-')}<br><br>
+<strong>Overall Progress:</strong> ${calcProjectProgress(proj)}%<br>
+<strong>Total Panels:</strong> ${(proj.panels||[]).length}
+</div>
+
+<h2>📋 Panel Summary</h2>
+<table>
+<tr><th>#</th><th>Panel Name</th><th>Spec</th><th>Qty</th><th>Progress</th></tr>
+${(proj.panels||[]).map((pan,i)=>`
+<tr>
+<td>${i+1}</td>
+<td><strong>${esc(pan.name)}</strong></td>
+<td>${esc(pan.spec||'-')}</td>
+<td>${pan.quantity}</td>
+<td style="font-weight:bold;color:${calcPanelProgress(pan)===100?'#009e4d':'#2563eb'};">${calcPanelProgress(pan)}%</td>
+</tr>`).join('')}
+</table>
+
+${(proj.panels||[]).map((pan,idx)=>{
+let hasSteps=false;
+let stepsHTML='';
+PROCESS_STEPS.forEach(sd=>{
+const st=pan.steps?.[sd.id];
+if(st&&(st.status!=='pending'||st.note||(st.files&&st.files.length>0))){
+hasSteps=true;
+const photos=(st.files||[]).filter(f=>f.type?.startsWith('image/'));
+stepsHTML+=`
+<div class="step-block">
+<div class="step-header">
+<span>${sd.icon} <strong>${sd.name}</strong></span>
+<span class="badge badge-${st.status}">${st.status.toUpperCase()}</span>
+</div>
+<div class="step-body">
+<div class="step-notes">
+<strong style="color:#854d0e;">Notes:</strong><br>
+${st.note?esc(st.note):'<em>No notes</em>'}
+</div>
+${photos.length>0?`
+<div class="step-photos">
+${photos.slice(0,3).map(f=>`
+<div>
+<img class="photo" src="${f.data}" alt="Photo">
+${f.caption?`<div class="photo-caption">💬 ${esc(f.caption)}</div>`:''}
+</div>`).join('')}
+</div>`:'<em style="color:#aaa;">No photos</em>'}
+</div>
+</div>`;
+}
+});
+if(!hasSteps) stepsHTML='<p style="text-align:center;color:#999;padding:30pt;font-style:italic;">No progress recorded yet.</p>';
+
+return `
+<h2>📦 Panel ${idx+1}: ${esc(pan.name)}</h2>
+<table style="margin-bottom:20pt;">
+<tr><td style="background:#f5f5f5;font-weight:bold;width:25%;">Spec:</td><td>${esc(pan.spec||'-')}</td>
+<tr><td style="background:#f5f5f5;font-weight:bold;width:25%;">Quantity:</td><td>${pan.quantity} Unit(s)</td>
+</table>
+${stepsHTML}
+<div class="footer-bar"></div>
+`;
+}).join('')}
+
+<div class="sig-area">
+<div style="text-align:center;"><p><strong>Prepared By</strong></p><div class="sig-line"></div><p style="font-size:9pt;color:#666;margin-top:8pt;">Name & Signature</p></div>
+<div style="text-align:center;"><p><strong>Accepted By</strong></p><div class="sig-line"></div><p style="font-size:9pt;color:#666;margin-top:8pt;">Name & Signature</p></div>
+</div>
+
+</body></html>`);
+    printWindow.document.close();
+    setTimeout(()=>{printWindow.print();showToast('✅ PDF dialog opened!','success');},500);
 }
 
 // ==================== UTILITIES ====================
-function escHtml(t) { if(!t) return ''; const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+function esc(str){if(!str)return '';const d=document.createElement('div');d.textContent=str;return d.innerHTML;}
+function getFileIcon(t){if(!t)return'📎';if(t.includes('pdf'))return'📄';if(t.includes('word'))return'📝';if(t.includes('excel')||t.includes('sheet'))return'📊';if(t.includes('image'))return'🖼️';return'📎';}
 
-function openModal(id) { document.getElementById(id).classList.add('show'); }
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+// ==================== MODALS ====================
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
 
-function showToast(msg, type='info') {
-    console.log(`💬 [TOAST] ${msg}`);
-    const c = document.getElementById('toastContainer');
-    if (!c) return;
-    const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.innerHTML = `<span>${msg}</span>`;
-    c.appendChild(t);
-    setTimeout(() => { t.style.animation='slideOutRight .3s forwards'; setTimeout(()=>t.remove(),300); }, 3500);
-}
-
-// Close modals on overlay click
-document.querySelectorAll('.modal-overlay').forEach(m => {
-    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('show'); });
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+    m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');});
 });
 
-// Keyboard shortcut
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
+// ==================== TOAST ====================
+function showToast(msg,type){
+    const c=document.getElementById('toastContainer');
+    const t=document.createElement('div');
+    t.className=`toast ${type||'info'}`;
+    t.innerHTML=msg;
+    t.onclick=()=>{t.style.animation='slideInRight .3s reverse';setTimeout(()=>t.remove(),300);};
+    c.appendChild(t);
+    setTimeout(()=>{if(t.parentNode){t.style.animation='slideInRight .3s reverse';setTimeout(()=>t.remove(),300);}},4000);
+}
+
+// Keyboard
+document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+        document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show'));
     }
 });
 
-console.log('%c🏭 Production Manager - INTERACTIVE FIX READY', 'color:#22c55e;font-size:18px;font-weight:bold;');
-console.log('%c✅ Click on any project to open it!', 'color:#3b82f6;font-size:14px;');
+console.log('%c🏭 Production Manager v12 - COMPLETE VERSION','color:#22c55e;font-size:20px;font-weight:bold;');
+console.log('%c✅ All features: Steps, Files, Notes, Captions, Delete, PDF','color:#3b82f6;font-size:14px;');
 </script>
 
 </body>
