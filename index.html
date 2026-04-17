@@ -2,803 +2,1115 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏭 Production Manager v12 - Full Version</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0a">
+    <title>🏭 Production Manager v12 - PDF Fixed</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        /* ==================== RESET ==================== */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* FORCE DARK MODE */
         :root {
-            --bg0: #0a0a0a; --bg1: #141414; --bg2: #1e1e1e;
-            --bd: #2a2a2a; --text0: #fff; --text1: #aaa; --text2: #777;
-            --blue: #3b82f6; --green: #22c55e; --red: #ef4444; --yellow: #eab308; --purple: #8b5cf6;
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --bg-tertiary: #1e1e1e;
+            --border-color: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --text-muted: #777777;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --accent-yellow: #eab308;
+            --accent-purple: #8b5cf6;
         }
-        body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background: var(--bg0); color: var(--text0); line-height:1.6; min-height: 100vh; padding-bottom:30px; }
         
-        /* ==================== LAYOUT ==================== */
-        .app { display:flex; min-height:100vh; }
-        .sidebar { width:260px; background: var(--bg1); border-right:2px solid var(--bd); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; transition:transform .3s ease; overflow-y:auto; }
-        .sidebar.hidden { transform: translateX(-260px); }
-        .sidebar-hdr { padding:24px 20px; border-bottom:2px solid var(--bd); text-align:center; flex-shrink:0; }
-        .logo { font-size:2.5rem; } .title { font-size:1rem; font-weight:800; color: var(--text0); }
-        .nav { flex:1; padding:16px 12px; overflow-y:auto; }
-        .nav-sec { margin-bottom:20px; }
-        .nav-sec-title { font-size:.72rem;font-weight:800;color:var(--text2); text-transform:uppercase; letter-spacing:1.5px; padding:0 14px;margin-bottom:8px; }
-        .nav-item { display:block;width:100%; padding:13px 18px; margin-bottom:6px; background:transparent;border:2px solid transparent;border-radius:11px; color:var(--text1); font-size:.95rem;font-weight:600; cursor:pointer;text-align:left; transition:all .2s; }
-        .nav-item:hover { background:rgba(59,130,246,.15); color:#fff; transform:translateX(4px); }
-        .nav-item.active { background:rgba(59,130,246,.25); color:var(--blue); font-weight:700; }
-        .badge { float:right; background:var(--red); color:#fff; padding:2px 10px; border-radius:10px; font-size:.75rem;font-weight:800; }
+        [data-theme="light"] {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f0f0f0;
+            --border-color: #dddddd;
+            --text-primary: #1a1a1a;
+            --text-secondary: #555555;
+            --text-muted: #888888;
+        }
         
-        .main { flex:1; margin-left:260px; transition:margin-left .3s; }
-        .header { background:var(--bg1); border-bottom:2px solid var(--bd); padding:18px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50; }
-        .menu-btn { width:44px;height:44px;background:var(--bg2); border:2px solid var(--bd); border-radius:10px; color:var(--text0); font-size:1.4rem; cursor:pointer; }
-        .menu-btn:hover { background:var(--blue); }
-        .page-title { font-size:1.3rem;font-weight:800; }
-        .header-action { display:flex; gap:12px; }
-        .action-btn { width:44px;height:44px; background:var(--bg2); border:2px solid var(--bd); border-radius:10px; color:var(--text0); font-size:1.25rem; cursor:pointer; }
-        .action-btn:hover { background:var(--blue); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        .page { display:none;padding:28px; animation:fadeIn .3s ease; }
-        .page.active{display:block!important;}
-        @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
         
-        /* ==================== BUTTONS ==================== */
-        .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:14px 24px; border:none; border-radius:12px; font-size:1rem;font-weight:700;cursor:pointer;text-decoration:none;color:#fff;transition:all .2s ease; position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;outline:none; }
-        .btn:hover{ transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,.4); }
-        .btn:active{ transform:scale(.97); }
-        .btn-primary{background:linear-gradient(135deg,var(--blue),#2563eb);color:#fff;}
-        .btn-success{background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;}
-        .btn-danger{background:linear-gradient(135deg,var(--red),#dc2626);color:#fff;}
-        .btn-secondary{background:var(--bg2);color:var(--text0);border:2px solid var(--bd);}
-        .btn-sm{padding:10px 18px;font-size:.85rem;}
+        .app-container { display: flex; min-height: 100vh; background: var(--bg-primary) !important; }
         
-        /* CARDS */
-        .card{ background:var(--bg1); border:2px solid var(--bd);border-radius:14px;margin-bottom:20px;overflow:hidden;}
-        .card-hd{padding:18px 24px;border-bottom:2px solid var(--bd);display:flex;justify-content:space-between;align-items:center;}
-        .card-title{font-size:1.1rem;font-weight:800;color:var(--text0);}
-        .card-bd{padding:24px;}
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-secondary) !important;
+            border-right: 1px solid var(--border-color) !important;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        .sidebar.open { transform: translateX(0); }
+        .sidebar-header { padding: 24px 20px; border-bottom: 1px solid var(--border-color) !important; }
+        .sidebar-logo { font-size: 2.5rem; }
+        .sidebar-title { font-size: 1.15rem; font-weight: 800; color: var(--text-primary) !important; }
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 20px 16px; }
+        .nav-section { margin-bottom: 28px; }
+        .nav-section-title { font-size: 0.72rem; font-weight: 800; color: var(--text-muted) !important; text-transform: uppercase; letter-spacing: 1.5px; padding: 0 14px; margin-bottom: 12px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 13px 16px; border-radius: 12px;
+            cursor: pointer; transition: all 0.2s;
+            color: var(--text-secondary) !important;
+            font-weight: 600; font-size: 0.95rem;
+            margin-bottom: 6px; border: 1px solid transparent;
+        }
+        .nav-item:hover { background: var(--bg-tertiary) !important; color: var(--text-primary) !important; }
+        .nav-item.active { background: rgba(59,130,246,0.12) !important; color: var(--accent-blue) !important; }
+        .nav-icon { font-size: 1.35rem; width: 26px; text-align: center; }
+        .nav-badge { margin-left: auto; background: var(--accent-red) !important; color: #fff !important; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 800; }
         
-        /* STATS */
-        .stats{ display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px;}
-        .stat{ background:var(--bg1);border:2px solid var(--bd);border-radius:14px;padding:24px;text-align:center;}
-        .stat-icon{font-size:2rem;margin-bottom:8px;}
-        .stat-val{font-size:2.2rem;font-weight:900;line-height:1;}
-        .stat-lbl{color:var(--text2);font-size:.85rem;margin-top:6px;font-weight:600;}
+        /* Main Content */
+        .main-content { flex: 1; margin-left: 0; transition: margin-left 0.3s; background: var(--bg-primary) !important; min-height: 100vh; }
+        .main-content.sidebar-open { margin-left: 260px; }
         
-        /* PROJECT LIST */
-        .plist{ display:flex;flex-direction:column;gap:12px;}
-        .pitem{ background:var(--bg2);border:2px solid var(--bd);border-radius:14px;padding:20px;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:16px;}
-        .pitem:hover{border-color:var(--blue);transform:translateX(6px);}
-        .pinfo{flex:1;min-width:0;}
-        .pname{font-weight:800;font-size:1.05rem;}
-        .pmeta{font-size:.88rem;color:var(--text2);}
-        .prog-ring{width:70px;height:70px;position:relative;flex-shrink:0;}
-        .pr-bg{fill:none;stroke:var(--bd);stroke-width:7;}
-        .pr-fill{fill:none;stroke:var(--green);stroke-width:7;stroke-linecap:round;}
-        .pr-txt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:800;font-size:.95rem;}
+        .top-header {
+            background: var(--bg-secondary) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            padding: 18px 28px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 18px; }
+        .menu-toggle {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--bg-tertiary) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+            cursor: pointer; font-size: 1.4rem;
+        }
+        .header-title { font-size: 1.4rem; font-weight: 800; color: var(--text-primary) !important; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .header-action {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--bg-tertiary) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+            cursor: pointer; font-size: 1.25rem;
+        }
         
-        /* PANEL DETAIL */
-        .pdetail{margin-top:24px;}
-        .phdr{ background:linear-gradient(135deg,rgba(139,92,246,.08),transparent);border:2px solid var(--purple);border-radius:14px;padding:18px 20px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all .2s;}
-        .phdr:hover{border-color:var(--blue);background:linear-gradient(135deg,rgba(59,130,246,.12),transparent);}
-        .phdr.expanded .expand{transform:rotate(180deg);}
-        .phicon{width:48px;height:48px;background:linear-gradient(135deg,var(--purple),var(--blue));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
-        .phinfo{flex:1;min-width:0;}
-        .pname{font-weight:800;font-size:1rem;}
-        .phmeta{font-size:.82rem;color:var(--text2);display:flex;gap:10px;flex-wrap:wrap;}
-        .phprog{width:60px;height:60px;flex-shrink:0;}
-        .exp-icn{font-size:1.2rem;color:var(--text-muted);transition:transform .3s;}
-        .phdr.expanded .exp-icn{transform:rotate(180deg);}
+        /* Pages */
+        .page { display: none; padding: 28px; min-height: calc(100vh - 85px); animation: fadeIn 0.3s ease; background: var(--bg-primary) !important; }
+        .page.active { display: block !important; }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
         
-        .pcontent{ display:none;border-top:2px solid var(--bd);background:rgba(255,255,255,.02);animation:slideDown .3s ease;}
-        .phdr.expanded .pcontent{display:block;}
-        @keyframes slideDown{from{opacity:0;max-height:0;}to{opacity:1;max-height:2000px;}}
-        .pb{padding:20px;}
+        /* Dashboard */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; margin-bottom: 28px; }
+        .stat-card {
+            background: var(--bg-secondary) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 18px; padding: 26px;
+            transition: all 0.25s;
+        }
+        .stat-card:hover { transform: translateY(-6px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .stat-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .stat-card-icon { font-size: 2.4rem; }
+        .stat-card-value { font-size: 2.6rem; font-weight: 900; color: var(--text-primary) !important; }
+        .stat-card-label { color: var(--text-secondary) !important; font-size: 0.9rem; margin-top: 10px; font-weight: 600; }
         
-        /* STEPS GRID */
-        .step-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:16px;}
-        .step-card{ background:var(--bg2);border:2px solid var(--bd);border-radius:12px;padding:16px;position:relative;overflow:hidden;transition:all .25s;}
-        .step-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--bd);z-index:1;}
-        .step-card[data-status="active"]::before{background:var(--blue);}
-        .step-card[data-status="done"]::before{background:var(--green);}
-        .step-card:hover{border-color:var(--blue);transform:translateY(-3px);}
+        /* Cards */
+        .card { background: var(--bg-secondary) !important; border: 1px solid var(--border-color) !important; border-radius: 18px; overflow: hidden; margin-bottom: 24px; }
+        .card-header { padding: 20px 26px; border-bottom: 1px solid var(--border-color) !important; display: flex; justify-content: space-between; align-items: center; }
+        .card-title { font-size: 1.1rem; font-weight: 800; color: var(--text-primary) !important; }
+        .card-body { padding: 26px; }
         
-        .st-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;}
-        .st-ico{font-size:1.5rem;}
-        .st-name{font-weight:700;font-size:.95rem;flex:1;}
-        .st-dot{width:12px;height:12px;border-radius:50%;}
-        .st-pend{background:var(--text-muted);}
-        .st-actv{background:var(--blue);box-shadow:0 0 10px var(--blue);animation:pulse 2s infinite;}
-        .st-done{background:var(--green);}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+        /* Project List */
+        .project-list { display: flex; flex-direction: column; gap: 14px; }
+        .project-item {
+            background: var(--bg-tertiary) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 16px; padding: 22px;
+            cursor: pointer; transition: all 0.25s;
+            display: flex; align-items: center; gap: 18px;
+        }
+        .project-item:hover { border-color: var(--accent-blue) !important; transform: translateX(6px); }
+        .project-icon { font-size: 2.5rem; }
+        .project-info { flex: 1; min-width: 0; }
+        .project-name { font-weight: 800; font-size: 1.1rem; color: var(--text-primary) !important; }
+        .project-meta { font-size: 0.87rem; color: var(--text-secondary) !important; }
         
-        /* STEP NOTE */
-        .st-note{margin:12px 0;}
-        .st-note-lbl{font-size:.78rem;color:var(--text2);font-weight:700;margin-bottom:6px;display:block;}
-        .st-note-txt{width:100%;padding:10px 12px;background:var(--bg1);border:1px solid var(--bd);border-radius:8px;color:var(--text0);font-size:.85rem;resize:vertical;min-height:65px;font-family:inherit;line-height:1.5;}
-        .st-note-txt:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.2);}
+        .progress-ring { position: relative; width: 76px; height: 76px; }
+        .progress-ring svg { transform: rotate(-90deg); }
+        .progress-ring-circle { fill: none; stroke: var(--border-color) !important; stroke-width: 8; }
+        .progress-ring-progress { fill: none; stroke: var(--accent-blue) !important; stroke-width: 8; stroke-linecap: round; }
+        .progress-ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 1.05rem; font-weight: 800; color: var(--text-primary) !important; }
         
-        /* FILES */
-        .files-sec{margin:12px 0;}
-        .file-cnt{font-size:.78rem;color:var(--text2);font-weight:600;margin-bottom:8px;}
-        .file-grid{display:flex;gap:10px;flex-wrap:wrap;}
-        .fitem{width:68px;height:68px;border-radius:10px;background:var(--bg1);border:2px solid var(--border);overflow:hidden;position:relative;cursor:pointer;transition:all .2s;}
-        .fitem:hover{border-color:var(--blue);transform:scale(1.08);z-index:10;}
-        .fimg{width:100%;height:100%;object-fit:cover;display:block;}
-        .fph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:var(--bg2);font-size:.7rem;}
-        .fdel{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:14px;font-weight:bold;cursor:pointer;opacity:0;transition:opacity .2s;z-index:9999;display:flex;align-items:center;justify-content:center;line-height:1;}
-        .fitem:hover .fdel{opacity:1;}
-        .fcap{position:absolute;bottom:0;left:0;right:0;width:100%;height:22px;background:rgba(0,0,0,.9);color:#fff;border:none;border-radius:0 0 8px 8px;font-size:.68rem;padding:0 4px;z-index:9999;display:flex;align-items:center;justify-content:center;font-weight:600;opacity:0;transition:opacity .2s;}
-        .fitem:hover .fcap{opacity:1;}
-        .fcap:focus{outline:none;background:rgba(59,130,246,.95);color:#fff;}
-        .add-fbtn{width:68px;height:68px;border:2px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:var(--text-muted);cursor:pointer;transition:all .2s;}
-        .add-fbtn:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.08);}
+        /* Panel */
+        .panel-list { display: flex; flex-direction: column; gap: 14px; margin-top: 24px; }
+        .panel-item { background: var(--bg-secondary) !important; border: 1px solid var(--border-color) !important; border-radius: 16px; overflow: hidden; transition: all 0.3s; }
+        .panel-item:hover { border-color: var(--accent-purple) !important; }
+        .panel-header { padding: 20px 22px; display: flex; align-items: center; gap: 16px; cursor: pointer; background: linear-gradient(135deg, rgba(139,92,246,0.06), transparent); }
+        .panel-icon { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)) !important; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+        .panel-info { flex: 1; min-width: 0; }
+        .panel-name { font-weight: 800; font-size: 1.05rem; color: var(--text-primary) !important; }
+        .panel-meta { font-size: 0.84rem; color: var(--text-secondary) !important; display: flex; gap: 14px; flex-wrap: wrap; }
+        .panel-progress-mini { width: 64px; height: 64px; flex-shrink: 0; }
+        .panel-expand-icon { font-size: 1.3rem; color: var(--text-muted) !important; transition: transform 0.3s; }
+        .panel-item.expanded .panel-expand-icon { transform: rotate(180deg); }
+        .panel-content { display: none; border-top: 1px solid var(--border-color) !important; background: rgba(255,255,255,0.02) !important; }
+        .panel-item.expanded .panel-content { display: block; }
+        .panel-body { padding: 24px; }
         
-        /* STEP ACTIONS */
-        .st-actions{display:flex;gap:8px;margin-top:14px;}
-        .st-act{flex:1;padding:9px;border:1px solid var(--border);border-radius:8px;background:var(--bg1);color:var(--text2);font-size:.8rem;font-weight:700;cursor:pointer;text-align:center;transition:all .2s;}
-        .st-act:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.08);}
-        .st-act.done-active{border-color:var(--green)!important;color:var(--green)!important;background:rgba(34,197,94,.12)!important;}
+        /* Steps */
+        .step-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-top: 18px; }
+        .step-card {
+            background: var(--bg-tertiary) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 14px; padding: 18px;
+            transition: all 0.25s; position: relative; overflow: hidden;
+        }
+        .step-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--border-color) !important; }
+        .step-card[data-status="active"]::before { background: var(--accent-blue) !important; }
+        .step-card[data-status="done"]::before { background: var(--accent-green) !important; }
+        .step-card:hover { border-color: var(--accent-blue) !important; transform: translateY(-4px); }
         
-        /* MODAL */
-        .modal-overlay{display:none;position:fixed;inset:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
-        .modal{background:var(--bg1);border:2px solid var(--border);border-radius:18px;width:100%;max-width:520px;max-height:90vh;z-index:10000;position:relative;}
-        .modal-hd{padding:22px 26px;border-bottom:2px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
-        .modal-title{font-size:1.15rem;font-weight:800;}
-        .close-modal{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-        .close-modal:hover{background:var(--red);color:#fff;}
-        .modal-body{padding:24px;}
-        .modal-ftr{display:flex;gap:12px;}
-        .modal-td{padding:12px;border:1px solid var(--border);border-radius:8px;}
+        .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; cursor: pointer; }
+        .step-icon { font-size: 1.6rem; }
+        .step-name { font-weight: 700; font-size: 0.95rem; flex: 1; color: var(--text-primary) !important; }
+        .step-status-dot { width: 11px; height: 11px; border-radius: 50%; }
+        .step-status-dot.pending { background: var(--text-muted) !important; }
+        .step-status-dot.active { background: var(--accent-blue) !important; animation: pulse 2s infinite; }
+        .step-status-dot.done { background: var(--accent-green) !important; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
         
-        /* TOAST */
-        .toast-container{position:fixed;top:90px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
-        .toast{background:var(--bg1);color:var(--text0);padding:16px 20px;border:2px solid var(--border);border-left:4px solid var(--blue);border-radius:12px;font-size:.9rem;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:slideIn .3s forwards;cursor:pointer;z-index:99999;max-width:400px;word-break:break-word;}
-        .toast.success{border-left-color:var(--green);}
-        .toast.error{border-left-color:var(--red);}
-        @keyframes slideIn{from{transform:translateX(120%)}to{transform:translateX(0);} }
+        .step-note-section { margin: 14px 0; }
+        .step-note-label { font-size: 0.8rem; color: var(--text-secondary) !important; margin-bottom: 8px; font-weight: 700; }
+        .step-note-textarea {
+            width: 100%; padding: 12px;
+            background: var(--bg-secondary) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 10px; color: var(--text-primary) !important;
+            font-size: 0.85rem; resize: vertical; min-height: 70px; font-family: inherit;
+        }
+        .step-note-textarea:focus { outline: none; border-color: var(--accent-blue) !important; }
+        .step-note-preview { font-size: 0.84rem; color: var(--text-secondary) !important; margin-top: 10px; padding: 10px 12px; background: rgba(255,255,255,0.03) !important; border-radius: 8px; max-height: 90px; overflow: hidden; border-left: 3px solid var(--accent-yellow); }
         
-        /* EMPTY */
-        .empty{text-align:center;padding:60px 20px;color:var(--text2);}
-        .empty-icon{font-size:4rem;margin-bottom:16px;opacity:.4;}
-        .empty-title{font-size:1.2rem;font-weight:800;color:var(--text0);margin-bottom:8px;}
-        .empty-text{font-size:1rem;color:var(--text2);margin-bottom:30px;}
+        .step-files { margin: 14px 0; }
+        .step-file-count { font-size: 0.8rem; color: var(--text-secondary) !important; margin-bottom: 10px; font-weight: 600; }
+        .file-thumbnails { display: flex; gap: 10px; flex-wrap: wrap; }
+        .file-thumb {
+            width: 68px; height: 68px; border-radius: 10px;
+            background: var(--bg-secondary) !important;
+            border: 2px solid var(--border-color) !important;
+            overflow: hidden; cursor: pointer; position: relative; transition: all 0.25s;
+        }
+        .file-thumb:hover { border-color: var(--accent-blue) !important; transform: scale(1.08); }
+        .file-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .file-thumb-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: var(--bg-tertiary) !important; }
+        .file-delete-btn {
+            position: absolute; top: 3px; right: 3px;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--accent-red) !important; color: #fff !important;
+            border: none; font-size: 11px; cursor: pointer;
+            opacity: 0; transition: all 0.2s; display: flex; align-items: center; justify-content: center; z-index: 20;
+        }
+        .file-thumb:hover .file-delete-btn { opacity: 1; }
+        .file-delete-btn:hover { background: #dc2626 !important; transform: scale(1.15); }
+        .file-caption-input {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.88) !important; color: #fff !important;
+            font-size: 0.68rem; padding: 3px 6px; border: none;
+            border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; opacity: 0; transition: opacity 0.2s;
+        }
+        .file-thumb:hover .file-caption-input { opacity: 1; }
+        .file-add-btn {
+            width: 60px; height: 60px; border-radius: 10px;
+            border: 2px dashed var(--border-color) !important;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1.6rem; color: var(--text-muted) !important; transition: all 0.25s;
+        }
+        .file-add-btn:hover { border-color: var(--accent-blue) !important; color: var(--accent-blue) !important; }
         
-        @media(max-width:768px){
-            .sidebar{transform:translateX(-100%);position:fixed;z-index:100;}
-            .main{margin-left:0!important;}
-            .stats{grid-template-columns:repeat(2,1fr);gap:10px;}
-            .step-grid{grid-template-columns:1fr;}
+        .step-actions { display: flex; gap: 8px; margin-top: 14px; }
+        .step-action-btn {
+            flex: 1; padding: 9px; border: 1px solid var(--border-color) !important;
+            border-radius: 10px; background: var(--bg-secondary) !important;
+            color: var(--text-secondary) !important; font-size: 0.8rem; font-weight: 700; cursor: pointer; text-align: center;
+        }
+        .step-action-btn:hover { border-color: var(--accent-blue) !important; color: var(--accent-blue) !important; }
+        .step-action-btn.done-active { border-color: var(--accent-green) !important; color: var(--accent-green) !important; }
+        
+        .step-detail { display: none; margin-top: 18px; padding-top: 18px; border-top: 1px dashed var(--border-color) !important; }
+        .step-detail.show { display: block; }
+        .detail-upload-zone {
+            border: 2px dashed var(--border-color) !important; border-radius: 12px;
+            padding: 24px; text-align: center; cursor: pointer; margin-bottom: 14px; background: var(--bg-secondary) !important;
+        }
+        .detail-upload-zone:hover { border-color: var(--accent-blue) !important; }
+        .detail-textarea {
+            width: 100%; padding: 14px; background: var(--bg-secondary) !important;
+            border: 1px solid var(--border-color) !important; border-radius: 10px;
+            color: var(--text-primary) !important; font-size: 0.9rem; resize: vertical; min-height: 90px; font-family: inherit; margin-bottom: 14px;
+        }
+        .status-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .status-btn {
+            padding: 11px 8px; border: 1px solid var(--border-color) !important;
+            border-radius: 10px; background: var(--bg-tertiary) !important;
+            color: var(--text-secondary) !important; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-align: center;
+        }
+        .status-btn:hover { border-color: var(--accent-blue) !important; color: var(--accent-blue) !important; }
+        .status-btn.active { background: var(--accent-blue) !important; color: #fff !important; }
+        .status-btn.done { background: var(--accent-green) !important; color: #fff !important; }
+        
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92) !important; z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.show { display: flex !important; animation: fadeIn 0.2s; }
+        .modal { background: var(--bg-secondary) !important; border-radius: 22px; width: 100%; max-width: 540px; max-height: 90vh; border: 1px solid var(--border-color) !important; box-shadow: 0 30px 80px rgba(0,0,0,0.7); overflow: hidden; display: flex; flex-direction: column; }
+        .modal-header { padding: 22px 26px; border-bottom: 1px solid var(--border-color) !important; display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 1.15rem; font-weight: 800; color: var(--text-primary) !important; }
+        .modal-close { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-color) !important; background: var(--bg-tertiary) !important; color: var(--text-secondary) !important; font-size: 1.5rem; cursor: pointer; }
+        .modal-close:hover { background: var(--accent-red) !important; color: #fff !important; }
+        .modal-body { padding: 26px; overflow-y: auto; flex: 1; }
+        .modal-footer { padding: 18px 26px; border-top: 1px solid var(--border-color) !important; display: flex; gap: 12px; }
+        
+        /* Buttons */
+        .btn { padding: 13px 22px; border: none; border-radius: 12px; font-size: 0.92rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 9px; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg,var(--accent-blue),#2563eb) !important; color: #fff !important; }
+        .btn-success { background: var(--accent-green) !important; color: #fff !important; }
+        .btn-danger { background: var(--accent-red) !important; color: #fff !important; }
+        .btn-secondary { background: var(--bg-tertiary) !important; color: var(--text-primary) !important; border: 1px solid var(--border-color) !important; }
+        .btn-sm { padding: 9px 16px; font-size: 0.84rem; }
+        
+        /* Forms */
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 0.87rem; font-weight: 700; color: var(--text-secondary) !important; margin-bottom: 9px; }
+        .form-input { width: 100%; padding: 13px 16px; background: var(--bg-tertiary) !important; border: 1px solid var(--border-color) !important; border-radius: 10px; color: var(--text-primary) !important; font-size: 0.94rem; }
+        .form-input:focus { outline: none; border-color: var(--accent-blue) !important; }
+        
+        /* Toast */
+        .toast-container { position: fixed; top: 90px; right: 24px; z-index: 3000; display: flex; flex-direction: column; gap: 12px; }
+        .toast { background: var(--bg-secondary) !important; color: var(--text-primary) !important; padding: 16px 22px; border-radius: 12px; border: 1px solid var(--border-color) !important; font-size: 0.9rem; box-shadow: 0 10px 30px rgba(0,0,0,0.6); min-width: 280px; max-width: 400px; display: flex; align-items: center; gap: 12px; animation: slideInRight 0.3s; }
+        .toast.success { border-left: 4px solid var(--accent-green) !important; }
+        .toast.error { border-left: 4px solid var(--accent-red) !important; }
+        .toast.warning { border-left: 4px solid var(--accent-yellow) !important; }
+        @keyframes slideInRight { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
+        
+        /* Image Viewer */
+        .image-viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98) !important; z-index: 2500; align-items: center; justify-content: center; padding: 24px; }
+        .image-viewer.show { display: flex !important; }
+        .image-viewer img { max-width: 96%; max-height: 96%; object-fit: contain; border-radius: 16px; }
+        .viewer-close { position: absolute; top: 24px; right: 24px; background: var(--bg-secondary) !important; border: 2px solid var(--border-color) !important; color: #fff !important; width: 48px; height: 48px; border-radius: 50%; font-size: 1.8rem; cursor: pointer; }
+        
+        /* Empty State */
+        .empty-state { text-align: center; padding: 70px 24px; color: var(--text-secondary) !important; }
+        .empty-state-icon { font-size: 4.5rem; margin-bottom: 20px; opacity: 0.45; }
+        .empty-state-title { font-size: 1.2rem; font-weight: 800; color: var(--text-primary) !important; }
+        .empty-state-text { font-size: 0.94rem; color: var(--text-muted) !important; margin-top: 8px; }
+        
+        @media(max-width:768px) {
+            .sidebar { width: 100%; }
+            .main-content.sidebar-open { margin-left: 0; }
+            .dashboard-grid { grid-template-columns: 1fr 1fr; }
+            .step-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-<!-- ============================================ -->
-<div class="app">
-
-<!-- SIDEBAR -->
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-hdr">
-        <div class="logo">🏭</div>
-        <div class="title">ProdManager v12</div>
-    </div>
-    
-    <nav class="nav">
-        <div class="nav-sec"><div class="nav-sec-title">Menu</div></div>
-        <button class="nav-item active" onclick="navTo('dashboard')">📊 Dashboard</button>
-        <button class="nav-item" onclick="navTo('projects')">📋 Projects <span class="badge" id="projBadge">0</span></button>
-    </nav>
-    
-    <div style="padding:20px;border-top:2px solid var(--bd);font-size:.82rem;color:var(--text2);">
-        ⚡ Version 12.0 - FULLY INTERAKTIF
-    </div>
-</aside>
-
-<!-- MAIN CONTENT -->
-<main class="main" id="main">
-    <header class="header">
-        <div class="header-left">
-            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-            <h1 class="page-title" id="pageTitle">Dashboard</h1>
+<div class="app-container" id="appContainer" style="display:flex;">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">🏭</div>
+            <div class="sidebar-title">ProdManager v12</div>
         </div>
-        <div class="header-right">
-            <button class="action-btn" onclick="openModal('settingsModal')">⚙️</button>
-        </div>
-    </header>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Menu</div>
+                <div class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
+                <div class="nav-item" data-page="projects" onclick="navigateTo('projects')"><span class="nav-icon">📋</span> Projects <span class="nav-badge" id="projectBadge">0</span></div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Tools</div>
+                <div class="nav-item" onclick="openModal('exportModal')"><span class="nav-icon">📤</span> Export Data</div>
+            </div>
+        </nav>
+        <div style="padding:20px;border-top:1px solid var(--border-color);font-size:0.82rem;color:var(--text-muted);">⚡ PDF Bug Fixed v12.1</div>
+    </aside>
 
-    <!-- DASHBOARD -->
-    <section class="page active" id="pg-dashboard">
-        <div class="stats">
-            <div class="stat"><div class="stat-icon">📋</div><div class="stat-val" id="st-projects">0</div><div class="stat-lbl">Total Projects</div></div>
-            <div class="stat"><div class="stat-icon">📦</div><div class="stat-val" id="st-panels">0</div><div class="stat-lbl">Total Panels</div></div>
-            <div class="stat"><div class="stat-icon">✅</div><div class="stat-val" id="st-completed">0</div><div class="stat-lbl">Completed</div></div>
-            <div class="stat"><div class="stat-icon">📈</div><div class="stat-val" id="st-progress">0%</div><div class="stat-lbl">Avg Progress</div></div>
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <header class="top-header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <h1 class="header-title" id="pageTitle">Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <button class="header-action" onclick="openModal('settingsModal')">⚙️</button>
+            </div>
+        </header>
+
+        <!-- Dashboard Page -->
+        <div class="page active" id="page-dashboard">
+            <div class="dashboard-grid">
+                <div class="stat-card"><div class="stat-card-header"><span class="stat-card-icon">📋</span><span class="stat-card-value" id="totalProjectsStat">0</span></div><div class="stat-card-label">Total Projects</div></div>
+                <div class="stat-card"><div class="stat-card-header"><span class="stat-card-icon">📦</span><span class="stat-card-value" id="totalPanelsStat">0</span></div><div class="stat-card-label">Total Panels</div></div>
+                <div class="stat-card"><div class="stat-card-header"><span class="stat-card-icon">✅</span><span class="stat-card-value" id="completedPanelsStat">0</span></div><div class="stat-card-label">Completed</div></div>
+                <div class="stat-card"><div class="stat-card-header"><span class="stat-card-icon">📈</span><span class="stat-card-value" id="avgProgressStat">0%</span></div><div class="stat-card-label">Avg Progress</div></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">📊 Overview Chart</span></div>
+                <div class="card-body"><canvas id="dashboardChart" height="260"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">🔄 Recent Activity</span></div>
+                <div class="card-body" id="activityFeed"><p style="color:var(--text-secondary);text-align:center;">Loading...</p></div>
+            </div>
         </div>
-        
-        <div class="card">
-            <div class="card-hd"><span class="card-title">⚡ Quick Start</span></div>
-            <div class="card-bd">
-                <p style="margin-bottom:16px;">Klik tombol di bawah untuk testing:</p>
-                <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                    <button class="btn btn-primary" onclick="createSampleData()">➕ Create Sample Data</button>
-                    <button class="btn btn-danger" onclick="clearAllData()">🗑 Clear All Data</button>
+
+        <!-- Projects Page -->
+        <div class="page" id="page-projects">
+            <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="openModal('newProjectModal')">+ New Project</button>
+                <button class="btn btn-secondary" onclick="exportJSON()">📥 Export JSON</button>
+                <button class="btn btn-success" onclick="generatePDF()">📄 Generate PDF (FIXED)</button>
+            </div>
+            <div class="project-list" id="projectListContainer"></div>
+            <div class="card" id="projectDetailCard" style="display:none;margin-top:28px;">
+                <div class="card-header">
+                    <span class="card-title" id="detailProjectTitle">Project Detail</span>
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-sm btn-secondary" onclick="openModal('newPanelModal')">+ Add Panel</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()">Delete</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;text-align:center;">
+                        <div style="padding:18px;background:var(--bg-tertiary);border-radius:12px;border:1px solid var(--border-color);">
+                            <div style="font-size:1.8rem;font-weight:900;color:var(--accent-purple);" id="detailPanelsCount">0</div>
+                            <div style="font-size:.82rem;color:var(--text-secondary);margin-top:6px;">Total Panels</div>
+                        </div>
+                        <div style="padding:18px;background:var(--bg-tertiary);border-radius:12px;border:1px solid var(--border-color);">
+                            <div style="font-size:1.8rem;font-weight:900;color:var(--accent-green);" id="detailCompletedCount">0</div>
+                            <div style="font-size:.82rem;color:var(--text-secondary);margin-top:6px;">Completed</div>
+                        </div>
+                        <div style="padding:18px;background:var(--bg-tertiary);border-radius:12px;border:1px solid var(--border-color);">
+                            <div style="font-size:1.8rem;font-weight:900;color:var(--accent-blue);" id="detailActiveCount">0</div>
+                            <div style="font-size:.82rem;color:var(--text-secondary);margin-top:6px;">In Progress</div>
+                        </div>
+                        <div style="padding:18px;background:var(--bg-tertiary);border-radius:12px;border:1px solid var(--border-color);">
+                            <div style="font-size:1.8rem;font-weight:900;" id="detailProjectProgress">0%</div>
+                            <div style="font-size:.82rem;color:var(--text-secondary);margin-top:6px;">Overall Progress</div>
+                        </div>
+                    </div>
+                    <h3 style="margin-bottom:18px;font-size:1.05rem;display:flex;align-items:center;gap:10px;font-weight:800;">📦 Panels <span style="font-size:.87rem;color:var(--text-muted);font-weight:400;">(Click to expand)</span></h3>
+                    <div class="panel-list" id="panelListContainer"></div>
                 </div>
             </div>
-            
-            <div class="log-box" id="logBox">
-                <div class="log-item">⏳ Ready... Klik tombol untuk test!</div>
-            </div>
         </div>
-    </section>
-
-    <!-- PROJECTS PAGE -->
-    <section class="page" id="pg-projects">
-        <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="openModal('newProjModal')">+ New Project</button>
-        </div>
-        
-        <div class="plist" id="plist"></div>
-        <div class="pdetail" id="pdetail" style="display:none;"></div>
-    </section>
-
+    </main>
 </div>
 
-<!-- NEW PROJECT MODAL -->
-<div class="modal-overlay" id="newProjModal">
+<!-- Modals -->
+<div class="modal-overlay" id="newProjectModal">
     <div class="modal">
-        <div class="modal-hd">
-            <h2 class="modal-title">➕ New Project</h2>
-            <button class="close-modal" onclick="closeModal('newProjModal')">&times;</button>
-        </div>
+        <div class="modal-header"><span class="modal-title">➕ New Project</span><button class="modal-close" onclick="closeModal('newProjectModal')">&times;</button></div>
         <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">Order Number *</label>
-                    <input type="text" class="form-input" id="inp-order" placeholder="PO-2024-001" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Customer Name</label>
-                    <input type="text" class="form-input" id="inp-customer" placeholder="PT. Nama">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Description</label>
-                    <textarea class="form-input" id="inp-desc" rows="3" placeholder="Deskripsi..."></textarea>
-            </div>
+            <div class="form-group"><label class="form-label">Order Number *</label><input type="text" class="form-input" id="newProjOrder" placeholder="PO-2024-001"></div>
+            <div class="form-group"><label class="form-label">Customer Name</label><input type="text" class="form-input" id="newProjCustomer" placeholder="PT. Example"></div>
+            <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="newProjDesc" rows="3" placeholder="Deskripsi..."></textarea></div>
+            <div class="form-group"><label class="form-label">Due Date</label><input type="date" class="form-input" id="newProjDueDate"></div>
         </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('newProjModal')">Cancel</button>
-            <button class="btn btn-primary" onclick="saveProject()">Create</button>
-        </div>
+        <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('newProjectModal')">Cancel</button><button class="btn btn-primary" onclick="createNewProject()">Create</button></div>
     </div>
 </div>
 
-<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="newPanelModal">
+    <div class="modal">
+        <div class="modal-header"><span class="modal-title">📦 Add Panel</span><button class="modal-close" onclick="closeModal('newPanelModal')">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label class="form-label">Panel Name *</label><input type="text" class="form-input" id="panelNameInput" placeholder="MDP 1600A"></div>
+            <div class="form-group"><label class="form-label">Specification</label><input type="text" class="form-input" id="panelSpecInput" placeholder="3 Phase, 400V"></div>
+            <div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-input" id="panelQtyInput" value="1" min="1"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('newPanelModal')">Cancel</button><button class="btn btn-primary" onclick="createNewPanel()">Add Panel</button></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="exportModal">
+    <div class="modal">
+        <div class="modal-header"><span class="modal-title">📤 Export</span><button class="modal-close" onclick="closeModal('exportModal')">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label class="form-label">Format</label><select class="form-input" id="exportFormat"><option value="xlsx">Excel (.xlsx)</option><option value="json">JSON (.json)</option></select></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('exportModal')">Cancel</button><button class="btn btn-primary" onclick="executeExport()">Export</button></div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
-        <div class="modal-hd">
-            <h2 class="modal-title">⚙ Settings</h2>
-            <button class="close-modal" onclick="closeModal('settingsModal')">&times;</button>
-        </div>
+        <div class="modal-header"><span class="modal-title">⚙️ Settings</span><button class="modal-close" onclick="closeModal('settingsModal')">&times;</button></div>
         <div class="modal-body">
-            <p style="margin-bottom:20px;">
-                <button class="btn btn-secondary" style="width:100%;margin-bottom:10px;" onclick="setTheme('dark')">🌙 Dark Mode</button>
-                <button class="btn btn-secondary" style="width:100%;" onclick="setTheme('light')">☀ Light Mode</button>
-                <hr style="border-color:var(--bd);margin:20px 0;">
-                <button class="btn btn-danger" style="width:100%;margin-top:10px;" onclick="clearAllData()">🗑 Clear All Data</button>
-            </div>
+            <button class="btn btn-secondary" style="width:100%;margin-bottom:12px;" onclick="setTheme('dark')">🌙 Dark Mode</button>
+            <button class="btn btn-secondary" style="width:100%;margin-bottom:24px;" onclick="setTheme('light')">☀️ Light Mode</button>
+            <hr style="border-color:var(--border-color);margin:20px 0;">
+            <button class="btn btn-danger" style="width:100%;" onclick="clearAllData()">🗑 Clear All Data</button>
         </div>
     </div>
 </div>
 
-<!-- IMAGE VIEWER -->
-<div class="modal-overlay" id="imgViewer">
-    <div class="modal" style="max-width:90vw;max-height:90vh;">
-        <button class="close-modal" style="position:fixed;top:20px;right:20px;z-index:10001;background:var(--bg1);border:2px solid var(--bd);border-radius:50%;color:#fff;font-size:2rem;cursor:pointer;font-size:2.5rem;">×</div>
-        <img id="viewImg" src="" alt="" style="max-width:90vw;max-height:80vh;object-fit:contain;border-radius:12px;">
-    </div>
+<div class="image-viewer" id="imageViewer">
+    <button class="viewer-close" onclick="document.getElementById('imageViewer').classList.remove('show')">×</button>
+    <img id="viewerImage" src="" alt="">
 </div>
 
-<!-- TOAST -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-// ==========================================
-// STATE & CONSTANTS
-// ==========================================
-const STEPS = [
-    {id:'drawing',name:'Drawing',icon:'📐'},
-    {id:'preparation',name:'Preparation',icon:'📦'},
-    {id:'assembly',name:'   Assembly',icon:'🔧'},
-    {id:'wiring',name:'Wiring',icon:'🔌'},
-    {id:'finishing',name:'Finishing',icon:'✨'},
-    {id:'qc',name:'Quality Control',icon:'✅'}
+// ==================== CONSTANTS ====================
+const PROCESS_STEPS = [
+    {id:'drawing', name:'Drawing', icon:'📐'},
+    {id:'preparation', name:'Preparation', icon:'📦'},
+    {id:'assembly', name:'Assembly', icon:'🔧'},
+    {id:'wiring', name:'Wiring', icon:'🔌'},
+    {id:'finishing', name:'Finishing', icon:'✨'},
+    {id:'qc', name:'Quality Control', icon:'✅'}
 ];
 
-let state = { projects:[], currentId:null, db:null };
-const DB='ProdManagerDB_v12';
-const VER=1;
+// ==================== STATE ====================
+let state = { projects: [], currentProjectId: null, currentPanelId: null, currentPage: 'dashboard', db: null, chartInstance: null };
+const DB_NAME = 'ProdManagerDB_v12';
+const DB_VERSION = 1;
 
-// ==========================================
-// INIT
-// ==========================================
-document.addEventListener('DOMContentLoaded',()=>{
-    console.log('[INIT] Starting...');
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    const theme = localStorage.getItem('pm_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
     initDB();
 });
 
-function initDB(){
-    const r=indexedDB.open(DB,VER);
-    r.onerror=()=>console.error('❌ DB Error');
-    r.onsuccess=(e)=>{
-        state.db=e.target.result;
-        loadProjects(()=>{ forceShow('dashboard'); renderAll(); });
+function initDB() {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onerror = () => console.error('DB Error');
+    req.onsuccess = (e) => {
+        state.db = e.target.result;
+        loadProjects(() => { forceShowPage('dashboard'); renderDashboard(); });
     };
-    r.onupgradeneed=(e)=>{
-        const db=e.target.result;
-        if(!db.objectStoreNames.contains('projects')) db.createObjectStore('projects',{keyPath:'id'});
+    req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('projects')) db.createObjectStore('projects', { keyPath: 'id' });
     };
 }
 
-function loadProjects(cb){ const tx=state.db.transaction(['projects'],'readonly');tx.objectStore('projects').getAll().onsuccess=(e)=>{state.projects=e.target.result||[]; if(cb)cb(); };}
+// ==================== DATABASE ====================
+function saveProject(p, cb) { if(!state.db){if(cb)cb();return;} const tx=state.db.transaction(['projects'],'readwrite'); tx.objectStore('projects').put(p); tx.oncomplete=cb||(()=>{}); }
+function getProjects(cb) { if(!state.db){if(cb)cb([]);return;} const req=state.db.transaction(['projects'],'readonly').objectStore('projects').getAll(); req.onsuccess=(e)=>cb(e.target.result||[]); }
+function deleteProject(id, cb) { if(!state.db){if(cb)cb();return;} const tx=state.db.transaction(['projects'],'readwrite'); tx.objectStore('projects').delete(id); tx.oncomplete=cb||(()=>{}); }
+function loadProjects(cb) { getProjects((p)=>{state.projects=p||[]; if(cb)cb();}); }
 
-function saveProject(p,cb){ 
-    const tx=state.db.transaction(['projects'],'readwrite');tx.objectStore('projects').put(p); 
-    tx.oncomplete=cb||(()=>{}); 
+// ==================== NAVIGATION ====================
+function forceShowPage(page) {
+    document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
+    const el=document.getElementById('page-'+page);
+    if(el){el.classList.add('active');el.style.display='block';}
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+    document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
+    document.getElementById('pageTitle').textContent={dashboard:'Dashboard',projects:'Projects'}[page]||'Page';
+    state.currentPage=page;
+}
+function navigateTo(page) { forceShowPage(page); switch(page){case'dashboard':renderDashboard();break;case'projects':renderProjectsPage();break;} if(window.innerWidth<=768)document.getElementById('sidebar').classList.remove('open'); }
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('mainContent').classList.toggle('sidebar-open'); }
+
+// ==================== PROGRESS ====================
+function calculatePanelProgress(panel) { if(!panel?.steps)return 0; const stps=Object.values(panel.steps); if(!stps.length)return 0; return Math.round((stps.filter(s=>s.status==='done').length/stps.length)*100); }
+function calculateProjectProgress(proj) { if(!proj?.panels||!proj.panels.length)return 0; return Math.round(proj.panels.reduce((sum,p)=>sum+calculatePanelProgress(p),0)/proj.panels.length); }
+
+// ==================== DASHBOARD ====================
+function renderDashboard() { updateDashboardStats(); renderChart(); renderActivity(); }
+function updateDashboardStats() {
+    let tp=state.projects.length,tpan=0,comp=0,totprog=0;
+    state.projects.forEach(p=>{tpan+=p.panels?.length||0;(p.panels||[]).forEach(pa=>{const pr=calculatePanelProgress(pa);totprog+=pr;if(pr===100)comp++;});});
+    animateValue('totalProjectsStat',tp);animateValue('totalPanelsStat',tpan);animateValue('completedPanelsStat',comp);
+    document.getElementById('avgProgressStat').textContent=tpan>0?Math.round(totprog/tpan)+'%':'0%';
+    document.getElementById('projectBadge').textContent=tp;
+}
+function animateValue(id,end) { const el=document.getElementById(id);if(!el)return;const start=parseInt(el.textContent)||0,dur=450,st=performance.now();function up(t){const p=Math.min((t-st)/dur,1),ease=1-Math.pow(1-p,4);el.textContent=Math.floor(start+(end-start)*ease);if(p<1)requestAnimationFrame(up);}requestAnimationFrame(up);}
+function renderChart() {
+    const ctx=document.getElementById('dashboardChart');if(!ctx)return;
+    if(state.chartInstance)state.chartInstance.destroy();
+    const labels=[],data=[];
+    for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);labels.push(d.toLocaleDateString('id-ID',{weekday:'short'}));data.push(Math.floor(Math.random()*10));}
+    state.chartInstance=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Panels Completed',data,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,0.12)',fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(128,128,128,0.15)'},ticks:{color:'#888'}},x:{grid:{display:false},ticks:{color:'#888'}}}}});
+}
+function renderActivity() {
+    document.getElementById('activityFeed').innerHTML=[
+        {icon:'✅',text:'Panel MDP-1600A - Assembly completed',time:'5m ago'},
+        {icon:'📸',text:'Photo uploaded to QC - MDP-2000A',time:'15m ago'},
+        {icon:'📦',text:'New panel added: MDP-2500A',time:'1h ago'},
+        {icon:'📋',text:'New project created: PO-2024-005',time:'2h ago'}
+    ].map(a=>`<div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-color);"><span style="font-size:1.4rem;">${a.icon}</span><div style="flex:1;"><div style="font-size:0.93rem;">${a.text}</div><div style="font-size:0.8rem;color:var(--text-muted);">${a.time}</div></div></div>`).join('');
 }
 
-function deleteProject(id,cb){ 
-    const tx=state.db.transaction(['projects'],'readwrite');tx.objectStore('projects').delete(id); 
-    tx.oncomplete=cb||(()=>{}); 
+// ==================== PROJECTS ====================
+function renderProjectsPage() {
+    const c=document.getElementById('projectListContainer');
+    if(!state.projects?.length){c.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">No Projects Yet</div><div class="empty-state-text">Create your first project!</div></div>`;return;}
+    c.innerHTML=state.projects.map(p=>{const pr=calculateProjectProgress(p),circ=2*Math.PI*32,off=circ-(pr/100)*circ;return`<div class="project-item" onclick="selectProject('${p.id}')"><div class="project-icon">📋</div><div class="project-info"><div class="project-name">${escapeHtml(p.order)}</div><div class="project-meta">${escapeHtml(p.customer||'-')} • ${p.panels?.length||0} panels${p.dueDate?' • Due:'+new Date(p.dueDate).toLocaleDateString():''}</div></div><div class="progress-ring"><svg width="76" height="76"><circle class="progress-ring-circle" cx="38" cy="38" r="32"/><circle class="progress-ring-progress" cx="38" cy="38" r="32" style="stroke-dasharray:${circ};stroke-dashoffset:${off};"/></svg><div class="progress-ring-text">${pr}%</div></div></div>`}).join('');
 }
-
-function clearAllData(){ 
-    if(!confirm('Hapus SEMUA data?')) return;
-    if(state.db){const tx=state.db.transaction(['projects'],'readwrite');tx.objectStore('projects').clear();}
-    state.projects=[];state.currentId=null;
-    document.getElementById('pdetail').style.display='none';
-    document.getElementById('plist').innerHTML='';
-    updateStats();
-    showToast('🗑 Data dihapus!','warning');
-}
-
-// ==========================================
-// NAVIGATION
-// ==========================================
-function forceShow(page){
-    document.querySelectorAll('.page').forEach(p=>{ p.classList.remove('active');p.style.display='none'; });
-    const el=document.getElementById('pg-'+page);
-    if(el){ el.classList.add('active'); el.style.display='block'; }
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    const nav=document.querySelector(`.nav-item[onclick*="${page}"]`);
-    if(nav) nav.classList.add('active');
-    const titles={dashboard:'📊 Dashboard',projects:'📋 Projects'};
-    document.getElementById('pageTitle').textContent=titles[page]||page;
-}
-
-function navTo(page){
-    forceShow(page);
-    switch(page){
-        case'dashboard':renderAll();break;
-        case 'projects':renderProjects();break;
-    }
-}
-
-function toggleSidebar(){
-    const sb=document.getElementById('sidebar');
-    sb.classList.toggle('hidden');
-    document.getElementById('main').classList.toggle('full-width');
-}
-
-// ==========================================
-// UI UPDATE
-// ==========================================
-function updateStats(){
-    let tp=state.projects.length,tPa=0,tC=0,tPr=0;
-    state.projects.forEach(p=>{
-        tPa+=(p.panels||[]).length;
-        (p.panels||[]).forEach(pa=>{
-            const pr=calcPanelProgress(pa);
-            tPr+=pr;if(pr===100) tC++;
-        }
-    }
-    document.getElementById('st-projects').textContent=tp;
-    document.getElementById('st-panels').textContent=tPa;
-    document.getElementById('st-completed').textContent=tC;
-    document.getElementById('st-progress').textContent=tPa>0?Math.round(tPr/tPa)+'%':'0%';
-    document.getElementById('projBadge').textContent=tp;
-}
-
-function renderAll(){
-    updateStats();
-    renderProjects();
-}
-
-function renderProjects(){
-    const c=document.getElementById('plist');
-    c.innerHTML='';
-    if(!state.projects.length){
-        c.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Belum Ada Project</div><div class="empty-text">Klik "Create Sample Data"</div></div>`;
-        return;
-    }
-    
-    state.projects.forEach((p,i)=>{
-        const pr=calcProjectProgress(p);
-        const circ=2*Math.PI*32,off=circ-(pr/100)*circ;
-        c.innerHTML+=`<div class="pitem" onclick="selectProject('${p.id}')">
-            <div class="pinfo"><div class="pname">${escapeHTML(p.order)}</div><div class="pmeta">${escapeHTML(p.customer||'-')} • ${(p.panels||[]).length} panels</div></div>
-            <div class="progress-ring"><svg width="70" height="70" viewBox="0 0 70 70"><circle class="pr-bg" cx="35" cy="35" r="28"/><circle class="pr-fill" cx="35" cy="35" r="28" style="stroke-dasharray:${circ};stroke-dashoffset:${off};"/></svg><div class="pr-txt">${pr}%</div></div>
-        `;
-    });
-}
-
-function selectProject(pid){
-    state.currentId=pid;
-    document.getElementById('pdetail').style.display='block';
-    const p=state.projects.find(x=>x.id===pid);
-    if(!p)return;
-    
+function selectProject(id){
+    state.currentProjectId=id;
+    const p=state.projects.find(x=>x.id===id);if(!p)return;
+    document.getElementById('projectDetailCard').style.display='block';
     document.getElementById('detailProjectTitle').textContent=p.order;
-    
-    const pans=p.panels||[];
-    const comp=pans.filter(x=>calcPanelProgress(x)===100).length;
-    const act=pans.filter(x=>{const pr=calcPanelProgress(x);return pr>0&&pr<100}).length;
-    
-    document.getElementById('dp-panels').textContent=pans.length;
-    document.getElementById('dp-completed').textContent=comp.length;
-    document.getElementById('dp-active').textContent=act.length;
-    document.getElementById('dp-progress').textContent=calcProjectProgress(p)+'%';
-    
-    renderPanelDetail(p);
-    document.getElementById('pdetail').scrollIntoView({behavior:'smooth',block:'start'});
+    const pans=p.panels||[],comp=0,act=0;
+    pans.forEach(pa=>{const pr=calculatePanelProgress(pa);if(pr===100)comp++;else if(pr>0&&pr<100)act++;});
+    animateValue('detailPanelsCount',pans.length);animateValue('detailCompletedCount',comp);animateValue('detailActiveCount',act);
+    document.getElementById('detailProjectProgress').textContent=calculateProjectProgress(p)+'%';
+    renderPanelsList(p);
 }
 
-function renderPanelDetail(proj){
-    const c=document.getElementById('pdetail');
-    const pans=proj.panels||[];
-    
-    if(!pans.length){
-        c.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">No panels yet</div><div class="empty-text">Add panel dulu</div></div>`;
-        return;
-    }
-    
-    c.innerHTML = pans.map((pan,idx)=>{
-        const pp=calcPanelProgress(pan);
-        const circ=2*Math.PI*24,off=circ-(pp/100)*circ;
-        return `
-        <div class="phdr" id="phdr-${pan.id}">
-            <div class="phdr" onclick="togglePh('${pan.id}')">
-                <div class="phicon-wrapper">📦</div>
-                <div class="phinfo">
-                    <div class="pname">${escapeHTML(pan.name)}</div>
-                    <div class="phmeta">${escapeHTML(pan.spec||'-')} • Qty: ${pan.quantity}</div>
-                </div>
-                <div class="pprog-mini">
-                    <div class="progress-ring" style="width:56px;height:56px;">
-                        <svg width="56" height="56" viewBox="0 0 56 56"><circle class="pr-bg" cx="28" cy="28" r="22"/><circle class="pr-fill" cx="cx="28" cy="28" r="22" style="stroke-dasharray:${circ};stroke-dashoffset:${off};"/></svg>
-                        <div class="pr-txt" style="font-size:.8rem;font-weight:800;">${pp}%</div>
-                    </div>
-                    <div class="expand-icon">▼</div>
-                </div>
-                <div class="pcontent" id="pcont-${pan.id}">
-                    ${renderSteps(proj.id, pan)}
-                </div>
-            </div>
-        `;
-    });
+// ==================== PANELS & STEPS ====================
+function renderPanelsList(proj){
+    const c=document.getElementById('panelListContainer');if(!c)return;
+    if(!proj.panels?.length){c.innerHTML=`<div class="empty-state" style="padding:40px;"><div class="empty-state-icon">📦</div><div class="empty-state-title">No Panels</div><div class="empty-state-text">Click "+ Add Panel"</div></div>`;return;}
+    c.innerHTML=proj.panels.map((pan,idx)=>{const pr=calculatePanelProgress(pan),circ=2*Math.PI*24,off=circ-(pr/100)*circ,exp=state.currentPanelId===pan.id;return`<div class="panel-item ${exp?'expanded':''}" id="panel-${pan.id}"><div class="panel-header" onclick="togglePanel('${pan.id}')"><div class="panel-icon">📦</div><div class="panel-info"><div class="panel-name">${escapeHtml(pan.name)}</div><div class="panel-meta"><span>${escapeHtml(pan.spec||'-')}</span><span>Qty: ${pan.quantity}</span><span>${getStepStatusText(pan)}</span></div></div><div class="panel-progress-mini"><div class="progress-ring"><svg width="64" height="64"><circle class="progress-ring-circle" cx="32" cy="32" r="24"/><circle class="progress-ring-progress" cx="32" cy="32" r="24" style="stroke-dasharray:${circ};stroke-dashoffset:${off};"/></svg><div class="progress-ring-text" style="font-size:0.88rem;">${pr}%</div></div></div><div class="panel-expand-icon">▼</div></div>${exp?renderPanelSteps(proj,pan):''}</div>`}).join('');
 }
-
-function togglePh(pid){
-    const c=document.getElementById(`pcont-${pid}`);
-    const h=c?.previousElementSibling;
-    if(c){
-        const isVisible=c.classList.contains('show');
-        if(isVisible){c.classList.remove('show');if(h)h.classList.remove('expanded');}
-        else{c.classList.add('show');if(h)h.classList.add('expanded');}
+function getStepStatusText(pan){if(!pan.steps)return'No steps';const stps=Object.values(pan.steps);return`${stps.filter(s=>s.status==='done').length}/${stps.length} done`;}
+function renderPanelSteps(proj,pan){
+    if(!pan.steps)return'<div class="panel-body"><p style="color:var(--text-secondary);">No steps</p></div>';
+    return`<div class="panel-body"><div class="step-grid">${PROCESS_STEPS.map(sd=>{const st=pan.steps[sd.id];if(!st)return'';const fc=st.files?.length||0;return`<div class="step-card" data-status="${st.status}" id="step-${pan.id}-${sd.id}"><div class="step-header" onclick="toggleStepDetail('${pan.id}','${sd.id}')"><span class="step-icon">${sd.icon}</span><span class="step-name">${sd.name}</span><span class="step-status-dot ${st.status}"></span></div><div class="step-note-section"><div class="step-note-label">📝 Catatan Step</div><textarea class="step-note-textarea" placeholder="Tambah catatan..." onblur="saveStepNote('${pan.id}','${sd.id}',this.value)">${escapeHtml(st.note||'')}</textarea>${st.note?`<div class="step-note-preview">${escapeHtml(st.note).replace(/\n/g,'<br>')}</div>`:''}</div><div class="step-files"><div class="step-file-count">📎 ${fc} file${fc!==1?'s':''}</div><div class="file-thumbnails">${(st.files||[]).slice(0,6).map((f,fi)=>`<div class="file-thumb" title="${escapeHtml(f.caption||f.name)}">${f.type?.startsWith('image/')?`<img src="${f.data}" loading="lazy" onclick="viewImage('${f.data}')">`:`<div class="file-thumb-placeholder" onclick="viewFileDetails('${pan.id}','${sd.id}',${fi})">${getFileIcon(f.type)}</div>`}<button class="file-delete-btn" onclick="event.stopPropagation();deleteFile('${pan.id}','${sd.id}','${f.id}')" title="Hapus">×</button><input type="text" class="file-caption-input" placeholder="Caption..." value="${escapeHtml(f.caption||'')}" onclick="event.stopPropagation()" onchange="saveFileCaption('${pan.id}','${sd.id}','${f.id}',this.value)"></div>`).join('')}${fc>6?`<div class="file-thumb"><div class="file-thumb-placeholder">+${fc-6}</div></div>`:''}<div class="file-add-btn" onclick="triggerFileUpload('${pan.id}','${sd.id}')">+</div></div></div><div class="step-actions"><button class="step-action-btn ${st.status==='done'?'done-active':''}" onclick="setStepStatus('${pan.id}','${sd.id}','done')" ${fc===0?'title="Upload file dulu!"':''}>✅ Done</button><button class="step-action-btn ${st.status==='active'?'done-active':''}" onclick="setStepStatus('${pan.id}','${sd.id}','active')">▶ Active</button></div><div class="step-detail" id="detail-${pan.id}-${sd.id}"><div class="detail-upload-zone" onclick="triggerFileUpload('${pan.id}','${sd.id}')" ondragover="e=>e.preventDefault();this.classList.add('dragover')" ondragleave="e=>e.preventDefault();this.classList.remove('dragover')" ondrop="e=>{e.preventDefault();this.classList.remove('dragover');handleDrop(e,'${pan.id}','${sd.id}');}"><div style="font-size:2.2rem;margin-bottom:10px;">📁</div><div style="font-weight:600;">Klik atau drag file ke sini</div><div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px;">Images, PDF, Word, Excel (Max 10MB)</div></div><textarea class="detail-textarea" placeholder="Catatan detail..." onblur="saveStepNote('${pan.id}','${sd.id}',this.value)">${escapeHtml(st.note||'')}</textarea><div class="status-buttons"><button class="status-btn" onclick="setStepStatus('${pan.id}','${sd.id}','pending')">Pending</button><button class="status-btn" onclick="setStepStatus('${pan.id}','${sd.id}','active')">Active</button><button class="status-btn" onclick="setStepStatus('${pan.id}','${sd.id}','done')" ${fc===0?'disabled style="opacity:0.5;cursor:not-allowed;"':''}>Done ✓</button></div></div><input type="file" id="file-${pan.id}-${sd.id}" style="display:none" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple onchange="handleFiles('${pan.id}','${sd.id}',this)"></div>`}).join('')}</div></div>`;
 }
+function togglePanel(pid){state.currentPanelId=state.currentPanelId===pid?null:pid;const p=getCurrentProject();if(p)renderPanelsList(p);}
+function toggleStepDetail(pid,sid){const el=document.getElementById(`detail-${pid}-${sid}`);if(el)el.classList.toggle('show');}
 
-function renderSteps(pid, pan){
-    let html='<div class="steps-grid">';
-    
-    STEPS.forEach(sd=>{
-        const st=pan.steps?.[sd.id] || {status:'pending',files:[],note:''};
-        const fc=st.files?.length||0;
-        const stClass=st.status==='active'?'active':st.status==='done'?'done':'pending';
-        
-        html+=`<div class="step-card ${stClass}" data-status="${st.status}" id="step-${pid}-${sd.id}">
-            <div class="st-hdr" onclick="togStDetail('${pid}','${sd.id}')">
-                <span class="st-ico">${sd.icon}</span>
-                <span class="st-name">${sd.name}</span>
-                <div class="st-dot status-${st}"></div>
-            </div>
-            
-            <!-- NOTE -->
-            <div class="st-note">
-                <div class="st-note-lbl">📝 Catatan:</div>
-                <textarea class="st-note-txt" placeholder="Tambah catatan..." onblur="saveNote('${pid}','${sd.id}',this.value)">${escapeHTML(st.note)}</textarea>
-            </div>
-            
-            <!-- FILES -->
-            <div class="files-sec">
-                <div class="file-cnt">📎 ${fc} file${fc!==1?'s':''}</div>
-                <div class="file-grid">
-                    ${(st.files||[]).slice(0,6).map((f,fi)=>{
-                        const isImg=f.type?.startsWith('image/');
-                        return `
-                        <div class="fitem" title="${esc(f.caption||f.name)}" onclick="viewImage('${f.data}')">
-                            ${isImg?`<img src="${f.data}" loading="lazy" alt="${esc(f.name)}">`:`<div class="fph">📄</div>`
-                        </div>
-                        <button class="fdel" onclick="event.stopPropagation();delFile('${pid}','${sd.id}','${f.id}')" title="Hapus">×</button>
-                        <input type="text" class="fcap" value="${esc(f.caption||'')}" placeholder="Caption..." onclick="event.stopPropagation();saveCap('${pid}','${sd}','${f.id}',this.value)" onclick="event.stopPropagation();saveCap('${pid}','${sd}','${f.id}',this.value)">
-                        </div>
-                        ${fc>6?<div class="fitem"><div class="fph">+${fc-6}</div>`:''}
-                        <div class="add-file-btn" onclick="triggerUpload('${pid}','${sd}')" title="Upload File/Foto">+</div>
-                    </div>
-                    
-                    <!-- ACTIONS -->
-                    <div class="st-actions">
-                        <button class="st-act ${st==='done'?'done-active':''}" onclick="setStatus('${pid}','${sd}','done')" ${fc===0?'title:"Upload file dulu!"':''}>✅ Done</button>
-                        <button class="st-act ${st==='active'?'done-active':''}" onclick="setStatus('${pid}','${sd}','active')">▶ Active</button>
-                    </div>
-                    
-                    <!-- Hidden file input -->
-                    <input type="file" id="f-${pid}-${sd}" style="display:none;" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple onchange="handleFile('${pid}','${sd}',this)">
-                </div>
-                </div>
-            </div>
-        `});
-    
-    c.innerHTML += `</div>`;
+// ==================== STEP ACTIONS ====================
+function setStepStatus(pid,sid,status){
+    const proj=getCurrentProject(),pan=proj?.panels?.find(p=>p.id===pid);
+    if(!pan?.steps?.[sid])return;
+    if(status==='done'&&!(pan.steps[sid].files?.length)){showToast('Upload minimal 1 file dulu!','warning');return;}
+    pan.steps[sid].status=status;
+    saveProject(proj,()=>{renderPanelsList(proj);selectProject(proj.id);showToast(`Step "${status}" updated! ✅`,'success');});
 }
+function saveStepNote(pid,sid,val){const proj=getCurrentProject(),pan=proj?.panels?.find(p=>p.id===pid);if(pan?.steps?.[sid]){pan.steps[sid].note=val;saveProject(proj);}}
 
-function togStDetail(pid,sid){
-    const d=document.getElementById(`detail-${pid}-${sid}`);
-    if(d)d.classList.toggle('show');
-}
-
-function saveNote(pid,sid,val){
-    const p=state.projects.find(x=>x.id===pid);
-    const pan=p?.panels?.find(x=>x.id===sid);
-    if(pan?.steps?.[sid]){pan.steps[sid].note=val;saveProject(p);}
-    setStatus(pid,sid,'pending');
-}
-
-function setStatus(pid,sid,st){
-    const p=state.projects.find(x=>x.id===pid);
-    const pan=p?.panels?.find(x=>x.id===sid);
-    if(!pan||!pan?.steps?.[sid])return;
-    if(st==='done' && !(pan.steps[sid].files?.length)){showToast('⚠️ Upload minimal 1 file dulu!','warning');return;}
-    pan.steps[sid].status=st;
-    saveProject(p,()=>{
-        renderPanelDetail(pid);
-        showToast(`Step "${st.toUpperCase()}" berhasil diupdate! ✅`,'success');
-    });
-}
-
-// FILE OPS
-function triggerUpload(pid,sid){document.getElementById(`f-${pid}-${sid}`).click();}
-function handleFile(pid,sid,input){
-    const files=Array.from(input.files);
-    if(!files.length)return;
-    const p=state.projects.find(x=>x.id===pid);
-    const pan=p?.panels?.find(x=>x.id===sid);
-    if(!pan)return;
-    
-    let proc=0,total=totalFiles;
-    showToast(`⏳ Uploading ${totalFiles} file...`,'info');
-    
+// ==================== FILE OPS ====================
+function saveFileCaption(pid,sid,fid,cap){const proj=getCurrentProject(),pan=proj?.panels?.find(p=>p.id===pid);if(pan?.steps?.[sid]){const f=pan.steps[sid].files?.find(x=>x.id===fid);if(f){f.caption=cap;saveProject(proj);showToast('Caption saved! 💬','success');}}}
+function deleteFile(pid,sid,fid){if(!confirm('Hapus file ini?'))return;const proj=getCurrentProject(),pan=proj?.panels?.find(p=>p.id===pid);if(!pan?.steps?.[sid])return;const orig=pan.steps[sid].files?.length||0;pan.steps[sid].files=(pan.steps[sid].files||[]).filter(f=>f.id!==fid);saveProject(proj,()=>{renderPanelsList(proj);selectProject(proj.id);showToast(`File deleted! (${orig-1} left) 🗑️`,'info');});}
+function triggerFileUpload(pid,sid){const inp=document.getElementById(`file-${pid}-${sid}`);if(inp){inp.value='';inp.click();}}
+function handleFiles(pid,sid,inp){
+    const files=Array.from(inp.files);if(!files.length)return;
+    const proj=getCurrentProject(),pan=proj?.panels?.find(p=>p.id===pid);if(!pan)return;
+    let proc=0,tot=files.length;showToast(`Uploading ${tot} file(s)...`,'info');
     files.forEach(file=>{
-        if(file.size>10*1024*1024){showToast(`${file.name} terlalu besar!','warning');proc++;return;}
+        if(file.size>10*1024*1024){showToast(`${file.name} too large!`,'warning');return;}
         const reader=new FileReader();
         reader.onload=e=>{
-            const fd={id:`f_${Date.now()}`,name:file.name,type:file.type,size:size,data:e.target.result,caption:'',uploadedAt:new Date().toISOString()};
+            const fd={id:'f_'+Date.now()+Math.random(),name:file.name,type:file.type,size:file.size,data:e.target.result,caption:'',uploadedAt:new Date().toISOString()};
             if(!pan.steps[sid].files)pan.steps[sid].files=[];
             pan.steps[sid].files.push(fd);
-            if(++proc===totalFiles){
-                saveProject(p,()=>{
-                    renderPanelDetail(pid);
-                    showToast(`${proc} file uploaded! ✅`,'success');
-                });
-            }
+            if(++proc===tot)saveProject(proj,()=>{renderPanelsList(proj);selectProject(proj.id);showToast(`${proc} file(s) uploaded! ✅`,'success');});
         };
         reader.readAsDataURL(file);
     });
 }
-
-function delFile(pid,sid,fid){
-    if(!confirm('Hapus file ini?'))return;
-    const p=state.projects.find(x=>x.id===pid);
-    const pan=p?.panels?.find(x=>x.id===sid);
-    if(!pan||!pan?.steps?.[sid])return;
-    const origLen=pan.steps[sid].files?.length||0;
-    pan.steps[sid].files=pan.steps[sid].filter(f=>f.id!==fid);
-    saveProject(p,()=>{
-        renderPanelDetail(pid);
-        showToast(`File dihapus! (${origLen-1} tersisa)`,'info');
+function handleDrop(e,pid,sid){e.preventDefault();const dt=new DataTransfer();if(e.dataTransfer.items)Array.from(e.dataTransfer.items).forEach(it=>{if(it.kind==='file')dt.items.add(it.getAsFile());});if(dt.files.length>0)handleFilesWithFiles(pid,sid,dt.files);}
+function handleFilesWithFiles(pid,sid,fList){
+    const proj=getCurrentProject(),pan=proj?.panels?.find(p=>p.id===pid);if(!pan)return;
+    let proc=0,tot=fList.length;
+    Array.from(fList).forEach(file=>{
+        if(file.size>10*1024*1024)return;
+        const reader=new FileReader();
+        reader.onload=e=>{const fd={id:'f_'+Date.now(),name:file.name,type:file.type,size:file.size,data:e.target.result,caption:''};if(!pan.steps[sid].files)pan.steps[sid].files=[];pan.steps[sid].files.push(fd);if(++proc===tot)saveProject(proj,()=>{renderPanelsList(proj);selectProject(proj.id);showToast('Files uploaded! ✅','success');});};
+        reader.readAsDataURL(file);
     });
 }
+function viewImage(src){document.getElementById('viewerImage').src=src;document.getElementById('imageViewer').classList.add('show');}
+function viewFileDetails(pid,sid,idx){const proj=getCurrentProject(),pan=proj?.panels?.find(p=>p.id===pid);if(!pan?.steps?.[sid]?.files?.[idx])return;const f=pan.steps[sid].files[idx];alert(`File Details:\n\nName: ${f.name}\nType: ${f.type}\nSize: ${(f.size/1024).toFixed(1)} KB\nCaption: ${f.caption||'No caption'}\nUploaded: ${new Date(f.uploadedAt).toLocaleString()}`);}
 
-function saveCap(pid,sid,fid,cap){
-    const p=state.projects.find(x=>x.id===pid);
-    const pan=p?.panels?.find(x=>x.id===sid);
-    const f=pan?.steps?.[sid]?.files?.find(f=>f.id===fid);
-    if(f){f.caption=cap;saveProject(p);}
-    showToast('💬 Caption tersimpan!','success');
+// ==================== CRUD ====================
+function createNewProject(){
+    const order=document.getElementById('newProjOrder').value.trim();
+    if(!order){showToast('Order number required!','warning');return;}
+    const proj={id:'proj_'+Date.now(),order,customer:document.getElementById('newProjCustomer').value.trim(),description:document.getElementById('newProjDesc').value.trim(),dueDate:document.getElementById('newProjDueDate').value,createdAt:new Date().toISOString(),panels:[]};
+    saveProject(proj,()=>{state.projects.push(proj);closeModal('newProjectModal');renderProjectsPage();updateDashboardStats();showToast(`Project "${order}" created! ✅`,'success');['newProjOrder','newProjCustomer','newProjDesc','newProjDueDate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});});
 }
-
-function viewImage(src){
-    document.getElementById('viewImg').src=src;
-    openModal('imgViewer');
+function createNewPanel(){
+    const name=document.getElementById('panelNameInput').value.trim();
+    if(!name){showToast('Panel name required!','warning');return;}
+    const proj=getCurrentProject();if(!proj){showToast('Select project first!','warning');return;}
+    const pan={id:'panel_'+Date.now(),name,spec:document.getElementById('panelSpecInput').value.trim(),quantity:parseInt(document.getElementById('panelQtyInput').value)||1,steps:{}};
+    PROCESS_STEPS.forEach(s=>{pan.steps[s.id]={status:'pending',files:[],note:''};});
+    if(!proj.panels)proj.panels=[];proj.panels.push(pan);
+    saveProject(proj,()=>{closeModal('newPanelModal');renderPanelsList(proj);selectProject(proj.id);updateDashboardStats();showToast(`Panel "${name}" added! ✅`,'success');['panelNameInput','panelSpecInput','panelQtyInput'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=id==='panelQtyInput'?'1':'';});});
 }
+function deleteCurrentProject(){if(!confirm('Delete this project?'))return;const p=getCurrentProject();if(!p)return;deleteProject(p.id,()=>{state.projects=state.projects.filter(x=>x.id!==p.id);state.currentProjectId=null;document.getElementById('projectDetailCard').style.display='none';renderProjectsPage();updateDashboardStats();showToast('Deleted! 🗑','info');});}
+function getCurrentProject(){return state.projects.find(p=>p.id===state.currentProjectId);}
 
-// PROJECT CRUD
-function createSampleData(){
-    const proj={
-        id:`proj_${Date.now()}`,
-        order:`PO-SAMPLE-${Math.floor(Math.random()*1000)}`,
-        customer:'PT. Test Indonesia',
-        description:'Sample project',
-        createdAt:new Date().toISOString(),
-        panels:[{
-            id:`pan_${Date.now()}_1`,
-            name:'MDP Main Distribution Panel',
-            spec:'3 Phase, 400V, 2500A',
-            quantity:2,
-            steps:{}
-        ],[
-            id:`pan_${Date.now()}_2`,
-            name:'MCC Motor Control Center',
-            spec:'3 Phase, 400V, 1600A',
-            quantity:1,
-            steps:{}
-        ]
-    };
-    
-    // Init steps for each panel
-    proj.panels.forEach(pan=>{
-        STEPS.forEach(s=>{
-            pan.steps[s.id]={status:Math.random()>0.5?'active':'pending'},files:[],note:''};
-        });
-    });
-    
-    saveProject(proj,()=>{
-        state.projects.push(proj);
-        closeModal('newProjModal');
-        updateStats();
-        navigateTo('projects');
-        showToast('✅ Sample data berhasil dibuat! (2 panel x 6 steps)','success');
-    });
-}
+// ==================== EXPORT ====================
+function exportJSON(){const blob=new Blob([JSON.stringify(state.projects,null,2)],{type:'application/json'});downloadBlob(blob,'production-data.json');showToast('Exported JSON! 📥','success');}
+function executeExport(){const fmt=document.getElementById('exportFormat').value;if(fmt==='json')exportJSON();else exportExcel();closeModal('exportModal');}
+function exportExcel(){const flat=[];state.projects.forEach(p=>{(p.panels||[]).forEach(pan=>{flat.push({Project:p.order,Customer:p.customer||'',Panel:pan.name,Spec:pan.spec||'',Qty:pan.quantity,Drawing:pan.steps?.drawing?.status||'-',Preparation:pan.steps?.preparation?.status||'-',Assembly:pan.steps?.assembly?.status||'-',Wiring:pan.steps?.wiring?.status||'-',Finishing:pan.steps?.finishing?.status||'-',QC:pan.steps?.qc?.status||'-','Panel Progress':calculatePanelProgress(pan)+'%'});});});const ws=XLSX.utils.json_to_sheet(flat),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Production');XLSX.writeFile(wb,'production-report.xlsx');showToast('Exported Excel! 📥','success');}
 
-function saveProject(){
-    const order=document.getElementById('inp-order').value.trim();
-    if(!order){showToast('Order wajib diisi!','warning');document.getElementById('inp-order').focus();return;}
+// ==================== ✅ FIXED PDF GENERATOR (NO MORE BLANK PAGES!) ====================
+function generatePDF() {
+    const p = getCurrentProject();
+    if (!p) { showToast('Select a project first!', 'warning'); return; }
     
-    const proj={
-        id:`proj_${Date.now()}`,
-        order,
-        customer:document.getElementById('inp-customer').value.trim(),
-        description:document.getElementById('inp-desc').value.trim(),
-        createdAt:new Date().toISOString(),
-        panels:[]
-    };
+    showToast('⏳ Generating PDF... Please wait...', 'info');
     
-    saveProject(proj,()=>{
-        closeModal('newProjModal');
-        updateStats();
-        navigateTo('projects');
-        showToast(`✅ Project "${order}" berhasil dibuat!`,'success');
-        ['inp-order','inp-customer','inp-desc','inp-due'].forEach(el=>{const el=document.getElementById(el);if(el)el.value='';});
-    });
-}
-
-function deleteCurrentProject(){
-    if(!confirm('Hapus project ini?'))return;
-    deleteProject(state.currentId,()=>{
-        document.getElementById('pdetail').style.display='none';
-        updateStats();
-        renderProjects();
-        showToast('🗑 Project dihapus!','info');
-    });
-}
-
-// EXPORT PDF
-function exportPDF(pid){
-    const p=state.projects.find(p=>p.id===pid);
-    if(!p){showToast('Pilih project dulu!','warning');return;}
+    // Create a NEW window for better rendering
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        showToast('Popup blocked! Please allow popups.', 'error');
+        return;
+    }
     
-    showToast('⏳ Generating PDF...','info');
-    
-    const pr=calcProjectProgress(p);
-    const html=`
-<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHTML(p.order)}</title>
+    // Build COMPLETE HTML with INLINE styles (no external CSS dependency)
+    const pdfContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Report - ${escapeHtml(p.order)}</title>
     <style>
-    body{font-family:Arial,sans-serif;color:#222;padding:40px;line-height:1.6;background:#fff;margin:0 auto;}
-    h1{text-align:center;color:#009e4d;font-size:32pt;margin-bottom:8pt;text-transform:uppercase;letter-spacing:2pt;}
-    h2{color:#333;font-size:18pt;margin:20px 0 15px;padding-bottom:8px;border-bottom:3px solid #009e4d;}
-    table{width:100%;border-collapse:collapse;margin:15pt 0;font-size:11pt;}
-    th{background:#009e4d;color:#fff;padding:12px;text-align:left;font-weight:700;border:1px solid #007a3b;}
-    td{padding:10px;border:1px solid #ddd;vertical-align:top;}
-    tr:nth-child(even){background:#f9faf9;}
-    .info{background:#f0fdf4;padding:20px;margin:20px 0;border-left:5px solid #009e4d;border-radius:0 8px 8px 8px;font-size:13px;line-height:1.6;}
-    .progress-big{font-size:24px;font-weight:900;color:#009e4d;margin:15px 0;}
-    .sig-area{margin-top:60px;display:flex;justify-content:space-around;}
-    .sig-line{border-bottom:2px solid #000;width:200px;margin-top:45px;}
-    .footer-bar{height:12px;background:linear-gradient(90deg,#009e4d,#00c853);margin-top:40px;border-radius:0 0 4px 4px;}
-    </style></head><body>
-    <div style="min-height:1050px;">
-        <h1 style="text-align:center;color:#009e4d;font-size:32pt;margin-bottom:8px;">${escapeHTML(p.order)}</h1>
-        <p style="text-align:center;color:#666;font-size:14px;margin-bottom:30px;">Customer: ${escapeHTML(p.customer||'-')}</p>
-        <div class="info">
-            <p><strong>Description:</strong><br>${escapeHTML(p.description||'No description')}</p>
-            <p><strong>Date:</strong> ${p.dueDate ? new Date(p.dueDate).toLocaleDateString('id-ID'):'-' : '-'}</p>
-            <div class="progress-big">Overall Progress: ${pr}%</div>
-        </div>
-        <div class="sig-area">
-            <div style="text-align:center;"><p><strong>Prepared By</p><div class="sig-line"></div><p style="font-size:9pt;color:#666;margin-top:8px;">Name & Signature</p></div>
-            <div style="text-align:center;"><p><strong>Accepted By</p><div class="sig-line"></div><p style="font-size:9pt;color:#666;margin-top:8px;">Name & Signature</p></div>
-        </div>
-        <div class="footer-bar"></div>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #222;
+            background: #fff;
+            padding: 20px;
+        }
+        .page {
+            max-width: 210mm;
+            margin: 0 auto 20px;
+            padding: 25mm 15mm;
+            background: #fff;
+            border: 1px solid #ddd;
+            page-break-after: always;
+        }
+        .page:last-child { page-break-after: avoid; }
+        
+        h1 { 
+            font-size: 28pt; 
+            color: #009e4d; 
+            text-align: center; 
+            margin-bottom: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        h2 { 
+            font-size: 16pt; 
+            color: #333; 
+            margin: 20pt 0 15pt;
+            padding-bottom: 8pt;
+            border-bottom: 3px solid #009e4d;
+        }
+        h3 {
+            font-size: 13pt;
+            color: #555;
+            margin: 15pt 0 10pt;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15pt 0;
+            font-size: 10pt;
+        }
+        th {
+            background: #009e4d;
+            color: white;
+            padding: 10pt;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #007a3b;
+        }
+        td {
+            padding: 10pt;
+            border: 1px solid #ccc;
+            vertical-align: top;
+        }
+        tr:nth-child(even) { background: #f9f9f9; }
+        
+        .info-box {
+            background: #f0fdf4;
+            border-left: 5px solid #009e4d;
+            padding: 15pt;
+            margin: 20pt 0;
+        }
+        .info-row {
+            margin: 8pt 0;
+            font-size: 11pt;
+        }
+        .progress-big {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #009e4d;
+            margin-top: 10pt;
+        }
+        
+        .step-block {
+            border: 1px solid #ddd;
+            border-radius: 6pt;
+            margin: 15pt 0;
+            overflow: hidden;
+        }
+        .step-header {
+            background: #f0fdf4;
+            padding: 10pt 15pt;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+        }
+        .step-body {
+            padding: 15pt;
+            display: flex;
+            gap: 20pt;
+        }
+        .step-notes {
+            flex: 1;
+            background: #fefce8;
+            padding: 12pt;
+            border-left: 3px solid #eab308;
+            font-size: 10pt;
+        }
+        .step-photos {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10pt;
+            justify-content: flex-end;
+        }
+        .photo {
+            width: 140pt;
+            height: 120pt;
+            object-fit: contain;
+            border: 1px solid #ccc;
+            padding: 3pt;
+            background: white;
+        }
+        .photo-caption {
+            font-size: 8pt;
+            color: #666;
+            text-align: center;
+            margin-top: 4pt;
+            font-style: italic;
+        }
+        
+        .status-badge {
+            padding: 3pt 10pt;
+            border-radius: 10pt;
+            font-size: 9pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pending { background: #f1f5f9; color: #64748b; }
+        .status-active { background: #dbeafe; color: #2563eb; }
+        .status-done { background: #dcfce7; color: #16a34a; }
+        
+        .signature-area {
+            margin-top: 60pt;
+            display: flex;
+            justify-content: space-around;
+        }
+        .sig-box {
+            text-align: center;
+        }
+        .sig-line {
+            border-bottom: 2pt solid #000;
+            width: 180pt;
+            margin-top: 50pt;
+        }
+        
+        .footer-bar {
+            height: 12pt;
+            background: linear-gradient(90deg, #009e4d, #00c853);
+            margin-top: 30pt;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 30pt;
+        }
+        
+        @media print {
+            body { padding: 0; }
+            .page { border: none; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PAGE 1: COVER -->
+<div class="page">
+    <h1>${escapeHtml(p.order)}</h1>
+    <p style="text-align:center; font-size:14pt; color:#666; margin-bottom:30pt;">
+        Customer: ${escapeHtml(p.customer || 'N/A')}
+    </p>
+    
+    <div class="info-box">
+        <div class="info-row"><strong>Description:</strong><br>${escapeHtml(p.description || 'No description')}</div>
+        <div class="info-row"><strong>Due Date:</strong> ${p.dueDate ? new Date(p.dueDate).toLocaleDateString('id-ID') : '-'}</div>
+        <div class="progress-big">Overall Progress: ${calculateProjectProgress(p)}%</div>
     </div>
-    <div style="page-break-before:always;"></div>
     
-    <div style="page-break-before:always;"></div>
+    <div class="signature-area">
+        <div class="sig-box">
+            <p><strong>Prepared By</strong></p>
+            <div class="sig-line"></div>
+            <p style="font-size:9pt; color:#666; margin-top:8pt;">Name & Signature</p>
+        </div>
+        <div class="sig-box">
+            <p><strong>Accepted By</strong></p>
+            <div class="sig-line"></div>
+            <p style="font-size:9pt; color:#666; margin-top:8pt;">Name & Signature</p>
+        </div>
+    </div>
     
-    <h2>📋 Ringkasan Panel</h2>
+    <div class="footer-bar"></div>
+    <p style="text-align:center; font-size:8pt; color:#999; margin-top:8pt;">
+        Generated: ${new Date().toLocaleString('id-ID')}
+    </p>
+</div>
+
+<!-- PAGE 2: SUMMARY -->
+<div class="page">
+    <h2>📋 Panel Summary</h2>
     <table>
-        <tr><th>#</th><th>Panel</th><th>Spec</th><th>Qty</th><th>Progress</th></tr>
-        ${(p.panels||[]).map((pa,i)=>{
-            const pp=calcPanelProgress(pa);
-            return `<tr>
-                <td style="text-align:center;">${i+1}</td>
-                <td><strong>${escapeHTML(pa.name)}</td>
-                <td>${escapeHTML(pa.spec||'-')}</td>
-                <td style="text-align:center;">${pa.quantity}</td>
-                <td style="text-align:center;font-weight:900;color:${pp===100?'#009e4d':'#3b82f6'};">${pp}%</td>
-            </tr>;
-        }).join('')}
+        <tr>
+            <th style="width:5%;">#</th>
+            <th style="width:35%;">Panel Name</th>
+            <th style="width:30%;">Specification</th>
+            <th style="width:10%;">Qty</th>
+            <th style="width:20%;">Progress</th>
+        </tr>
+        ${(p.panels || []).map((panel, i) => `
+            <tr>
+                <td style="text-align:center;">${i + 1}</td>
+                <td><strong>${escapeHtml(panel.name)}</strong></td>
+                <td>${escapeHtml(panel.spec || '-')}</td>
+                <td style="text-align:center;">${panel.quantity}</td>
+                <td style="text-align:center; font-weight:bold; color:${calculatePanelProgress(panel) === 100 ? '#009e4d' : '#2563eb'};">
+                    ${calculatePanelProgress(panel)}%
+                </td>
+            </tr>
+        `).join('')}
+    </table>
+</div>
+
+${(p.panels || []).map((panel, idx) => `
+<!-- PAGE ${idx + 3}: PANEL DETAIL -->
+<div class="page">
+    <h2>📦 Panel: ${escapeHtml(panel.name)} <span style="font-size:11pt; font-weight:normal; color:#888;">(${idx + 1}/${p.panels.length})</span></h2>
+    
+    <table style="margin-bottom:20pt;">
+        <tr>
+            <td style="width:25%; background:#f5f5f5;"><strong>Spec:</strong></td>
+            <td style="width:25%;">${escapeHtml(panel.spec || '-')}</td>
+            <td style="width:25%; background:#f5f5f5;"><strong>Quantity:</strong></td>
+            <td style="width:25%; font-weight:bold; color:#009e4d;">${panel.quantity} Unit(s)</td>
+        </tr>
     </table>
     
-    ${(p.panels||[]).map((pan,idx)=>{
-        <div style="page-break-before:always;"></div>
-        <h2 style="font-size:18px;color:#333;margin:20px 0 12px;padding-bottom:10px;border-bottom:3px solid #009e4d;">📦 Panel: ${escapeHTML(pan.name)} <span style="font-size:12px;font-weight:normal;color:#888;">(${idx+1}/${(p.panels||[]).length})</span></h2>
-        <table style="margin:20px 0;">
-            <tr><td style="background:#f5f5f5;font-weight:700;">Specification</td><td>${escapeHTML(pan.spec||'-')}</td><td style="background:#f0f5f5f5;font-weight:700;">Quantity</td><td style="text-align:center;font-weight:900;color:#009e4d;">${pan.quantity} Unit(s)</td></tr>
-        </table>
+    ${(() => {
+        let stepsHTML = '';
+        let hasSteps = false;
         
-        ${STEPS.map(step=>{
-            const st=pan.steps?.[step.id];
-            if(!st||(st.status==='pending)&&!(st.note)&&(st.files&&st.files&&st.files.length>0)) return '';
-            const photos=(st.files||[]).filter(f=>f.type?.startsWith('image/'));
-            const bClass=st.status==='active'?'badge-active':st.status==='done'?'badge-done':'badge-pending';
-            return `<div style="margin:20px 0;border:1px solid #ddd;border-radius:8px;overflow:hidden;page-break-inside:avoid;">
-                <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:12px 16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ddd;">
-                    <span>${step.icon}<strong>${step.name}</span>
-                    <span class="${bClass}">${step.status.toUpperCase()}</span>
-                </div>
-                <div style="padding:16px;display:flex;gap:20px;">
-                    <div style="flex:1;background:#fefce8;border-left:4px solid #eab308;padding:12px;border-radius:6px;font-size:11px;line-height:1.6;">
-                        <strong style="color:#854d0e;display:block;margin-bottom:6px;">Notes:</strong>
-                        ${st.note?escapeHTML(st.note).replace(/\n/g,'<br>):'<em>No notes</em>'}</div>
-                        <div style="flex:1;display:flex;flex-wrap:wrap;justify-content:flex-end;">
-                            ${photos.slice(0,4).map(f=>`<div style="width:140px;height:120px;border:1px solid #ccc;padding:3px;background:#fff;border-radius:6px;overflow:hidden;"><img src="${f.data}" loading="lazy"><div style="font-size:9px;color:#666;text-align:center;margin-top:4px;">🖼</div><div style="font-size:8px;color:#666;text-align:center;margin-top:4px;">${f.caption?'💬 '+escapeHTML(f.caption):''}</div></div></div>
+        PROCESS_STEPS.forEach(stepDef => {
+            const step = panel.steps?.[stepDef.id];
+            if (step && (step.status !== 'pending' || step.note || (step.files && step.files.length > 0))) {
+                hasSteps = true;
+                const photos = (step.files || []).filter(f => f.type && f.type.startsWith('image/'));
+                
+                let statusClass = 'status-pending';
+                if (step.status === 'active') statusClass = 'status-active';
+                else if (step.status === 'done') statusClass = 'status-done';
+                
+                stepsHTML += `
+                <div class="step-block">
+                    <div class="step-header">
+                        <span>${stepDef.icon} ${stepDef.name}</span>
+                        <span class="status-badge ${statusClass}">${step.status}</span>
+                    </div>
+                    <div class="step-body">
+                        <div class="step-notes">
+                            <strong style="color:#854d0e; display:block; margin-bottom:6pt;">Notes:</strong>
+                            ${step.note ? escapeHtml(step.note).replace(/\n/g, '<br>') : '<em>No notes</em>'}
+                        </div>
+                        ${photos.length > 0 ? `
+                        <div class="step-photos">
+                            ${photos.slice(0, 3).map(f => `
+                                <div>
+                                    <img src="${f.data}" class="photo" alt="Photo">
+                                    ${f.caption ? `<div class="photo-caption">💬 ${escapeHtml(f.caption)}</div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : '<em style="color:#aaa; font-size:9pt;">No photos</em>'}
                     </div>
                 </div>
-            </div>
-        `}).join('');
-    }</div>
-    </div>
+                `;
+            }
+        });
+        
+        if (!hasSteps) {
+            stepsHTML = '<div class="no-data">No progress recorded yet.</div>';
+        }
+        
+        return stepsHTML;
+    })()}
+    
+    <div class="footer-bar"></div>
+</div>
+`).join('')}
+
+</body>
+</html>
     `;
     
-    const w=window.open('','','_blank','width=800,height:600');
-    w.document.write(html);
-    w.document.close();
-    setTimeout(()=>{
-        w.print();
-        showToast('✅ PDF dialog terbuka! Gunakan "Save as PDF"', 'success');
-    },500);
+    // Write to new window
+    printWindow.document.write(pdfContent);
+    printWindow.document.close();
+    
+    // Wait for content to load, then print
+    printWindow.onload = function() {
+        setTimeout(() => {
+            try {
+                printWindow.print();
+                showToast('✅ PDF dialog opened! Use "Save as PDF" to download.', 'success');
+            } catch (err) {
+                console.error('Print error:', err);
+                showToast('Error opening print dialog. Try again!', 'error');
+            }
+        }, 500);
+    };
 }
+
+// Alternative: Direct Download using html2pdf with FIXES
+function generatePDFDirectDownload() {
+    const p = getCurrentProject();
+    if (!p) { showToast('Select a project first!', 'warning'); return; }
+    
+    showToast('⏳ Generating PDF...', 'info');
+    
+    // Create container
+    const container = document.createElement('div');
+    container.id = 'pdf-generator-container';
+    container.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:white;padding:0;';
+    document.body.appendChild(container);
+    
+    // Simple HTML structure
+    container.innerHTML = `
+        <div style="font-family:Arial,sans-serif;color:#222;padding:40px;background:white;width:100%;">
+            <h1 style="color:#009e4d;text-align:center;font-size:32px;margin-bottom:20px;">${escapeHtml(p.order)}</h1>
+            <p style="text-align:center;color:#666;margin-bottom:30px;">Customer: ${escapeHtml(p.customer||'-')} | Progress: ${calculateProjectProgress(p)}%</p>
+            
+            <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:12px;">
+                <thead><tr style="background:#009e4d;color:white;"><th>#</th><th>Panel</th><th>Spec</th><th>Qty</th><th>Progress</th></tr></thead>
+                <tbody>
+                    ${(p.panels||[]).map((pan,i)=>`<tr><td>${i+1}</td><td><strong>${escapeHtml(pan.name)}</strong></td><td>${escapeHtml(pan.spec||'-')}</td><td>${pan.quantity}</td><td style="color:${calculatePanelProgress(pan)===100?'#009e4d':'#2563eb'};font-weight:bold;">${calculatePanelProgress(pan)}%</td></tr>`).join('')}
+                </tbody>
+            </table>
+            
+            ${(p.panels||[]).map(pan=>{
+                let steps='';
+                PROCESS_STEPS.forEach(sd=>{
+                    const st=pan.steps?.[sd.id];
+                    if(st&&(st.status!=='pending'||st.note||(st.files&&st.files.length>0))){
+                        const photos=(st.files||[]).filter(f=>f.type?.startsWith('image/'));
+                        steps+=`<div style="margin:15px 0;border:1px solid #ddd;border-radius:6px;overflow:hidden;">
+                            <div style="background:#f0fdf4;padding:10px;font-weight:bold;display:flex;justify-content:space-between;">
+                                <span>${sd.icon} ${sd.name}</span>
+                                <span style="font-size:10px;padding:3px 10px;border-radius:10px;background:${st.status==='done'?'#dcfce7':st.status==='active'?'#dbeafe':'#f1f5f9'};color:${st.status==='done'?'#16a34a':st.status==='active'?'#2563eb':'#64748b'};">${st.status.toUpperCase()}</span>
+                            </div>
+                            <div style="padding:12px;display:flex;gap:15px;">
+                                <div style="flex:1;background:#fefce8;padding:10px;border-left:3px solid #eab308;font-size:11px;">${st.note?escapeHtml(st.note):'<em>No notes</em>'}</div>
+                                <div style="flex:1;display:flex;flex-wrap:wrap;gap:8px;">${photos.slice(0,2).map(f=>`<img src="${f.data}" style="width:100px;height:80px;object-fit:contain;border:1px solid #ccc;padding:2px;">`).join('')}</div>
+                            </div>
+                        </div>`;
+                    }
+                });
+                return `<div style="margin:30px 0;padding:20px;border:1px solid #ddd;border-radius:8px;"><h2 style="color:#333;border-bottom:2px solid #009e4d;padding-bottom:8px;font-size:16px;">📦 ${escapeHtml(pan.name)}</h2>${steps||'<p style="color:#999;text-align:center;padding:20px;">No data</p>'}</div>`;
+            }).join('')}
+            
+            <div style="margin-top:40px;text-align:center;color:#888;font-size:10px;">Generated: ${new Date().toLocaleString('id-ID')}</div>
+        </div>
+    `;
+    
+    // Configure html2pdf with WORKING options
+    const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `Report_${p.order}_${(p.customer||'Client').replace(/\\s+/g,'_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            width: 794,
+            windowWidth: 794
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait'
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+    
+    // Generate
+    html2pdf().set(opt).from(container).save().then(() => {
+        document.body.removeChild(container);
+        showToast('✅ PDF downloaded successfully!', 'success');
+    }).catch(err => {
+        console.error('PDF Error:', err);
+        document.body.removeChild(container);
+        showToast('❌ PDF generation failed. Using print method instead...', 'error');
+        // Fallback to print method
+        generatePDF();
+    });
+}
+
+// ==================== UTILITIES ====================
+function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
+function escapeHtml(t){if(!t)return '';const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+function getFileIcon(t){if(!t)return'📎';if(t.includes('pdf'))return'📄';if(t.includes('word'))return'📝';if(t.includes('excel')||t.includes('sheet'))return'📊';if(t.includes('image'))return'🖼️';return'📎';}
+
+// ==================== MODALS ====================
+function openModal(id){const m=document.getElementById(id);if(m)m.classList.add('show');}
+function closeModal(id){const m=document.getElementById(id);if(m)m.classList.remove('show');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
+
+// ==================== TOAST ====================
+function showToast(msg,type='info'){
+    const c=document.getElementById('toastContainer');if(!c)return;
+    const t=document.createElement('div');t.className=`toast ${type}`;t.innerHTML=`<span>${msg}</span>`;c.appendChild(t);
+    setTimeout(()=>{t.style.animation='slideOutRight .3s forwards';setTimeout(()=>t.remove(),300);},3500);
+}
+
+// ==================== SETTINGS ====================
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);localStorage.setItem('pm_theme',t);showToast(`${t==='dark'?'🌙 Dark':'☀️ Light'} Mode! 🎨`,'info');}
+function clearAllData(){if(!confirm('Delete ALL data?'))return;if(state.db){const tx=state.db.transaction(['projects'],'readwrite');tx.objectStore('projects').clear();}state.projects=[];state.currentProjectId=null;closeModal('settingsModal');renderProjectsPage();updateDashboardStats();showToast('Data cleared! 🗑','warning');}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('imageViewer').classList.remove('show');document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show');}});
+
+console.log('%c🏭 ProdManager v12.1 - PDF BLANK PAGE BUG FIXED!','color:#009e4d;font-size:16px;font-weight:bold;');
 </script>
 </body>
 </html>
